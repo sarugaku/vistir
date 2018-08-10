@@ -71,12 +71,12 @@ Usage
 Importing a utility
 ////////////////////
 
-You can import utilities directly from **vistir**::
+You can import utilities directly from **vistir**:
 
   ::
 
-    from vistir import with_cd
-    with_cd('/path/to/somedir'):
+    from vistir import cd
+    cd('/path/to/somedir'):
         do_stuff_in('somedir')
 
 
