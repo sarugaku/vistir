@@ -14,6 +14,8 @@ pytest-xdist = '*'
 pytest-cov = '*'
 sphinx = '*'
 sphinx-rtd-theme = '*'
+hypothesis-fspaths = "*"
+six = "*"
 
 [scripts]
 release = 'inv release'

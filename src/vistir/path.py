@@ -3,6 +3,7 @@ from __future__ import absolute_import, unicode_literals
 
 import errno
 import os
+import posixpath
 import shutil
 import stat
 import warnings
@@ -10,25 +11,44 @@ import warnings
 import six
 
 from six.moves.urllib import request as urllib_request
-from six.moves.urllib import urlparse as urllib_parse
+from six.moves import urllib_parse
 
-from compat import Path, ResourceWarning
+from .compat import Path, ResourceWarning
 
 
 __all__ = [
-    "path_to_url",
-    "url_to_path",
-    "is_valid_url",
+    "check_for_unc_path",
+    "get_converted_relative_path",
+    "handle_remove_readonly",
     "is_file_url",
     "is_readonly_path",
+    "is_valid_url",
     "mkdir_p",
-    "set_write_bit",
+    "path_to_url",
     "rmtree",
-    "handle_remove_readonly",
-    "walk_up",
-    "get_converted_relative_path",
     "safe_expandvars",
+    "set_write_bit",
+    "url_to_path",
+    "walk_up",
 ]
+
+
+def normalize_drive(path):
+    """Normalize drive in path so they stay consistent.
+
+    This currently only affects local drives on Windows, which can be
+    identified with either upper or lower cased drive names. The case is
+    always converted to uppercase because it seems to be preferred.
+    """
+    if os.name != "nt" or not isinstance(path, six.string_types):
+        return path
+
+    drive, tail = os.path.splitdrive(path)
+    # Only match (lower cased) local drives (e.g. 'c:'), not UNC mounts.
+    if drive.islower() and len(drive) == 2 and drive[1] == ":":
+        return "{}{}".format(drive.upper(), tail)
+
+    return path
 
 
 def path_to_url(path):
@@ -42,6 +62,8 @@ def path_to_url(path):
     'file:///home/user/code/myrepo/myfile.zip'
     """
 
+    if not path:
+        return path
     return Path(normalize_drive(os.path.abspath(path))).as_uri()
 
 
@@ -62,12 +84,16 @@ def url_to_path(url):
 
 def is_valid_url(url):
     """Checks if a given string is an url"""
+    if not url:
+        return url
     pieces = urllib_parse.urlparse(url)
     return all([pieces.scheme, pieces.netloc])
 
 
 def is_file_url(url):
     """Returns true if the given url is a file url"""
+    if not url:
+        return url
     if not isinstance(url, six.string_types):
         try:
             url = getattr(url, "url")
@@ -203,6 +229,19 @@ def walk_up(bottom):
 
     for x in walk_up(new_path):
         yield x
+
+
+def check_for_unc_path(path):
+    """ Checks to see if a pathlib `Path` object is a unc path or not"""
+    if (
+        os.name == "nt"
+        and len(path.drive) > 2
+        and not path.drive[0].isalpha()
+        and path.drive[1] != ":"
+    ):
+        return True
+    else:
+        return False
 
 
 def get_converted_relative_path(path, relative_to=os.curdir):
