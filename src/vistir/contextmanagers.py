@@ -1,13 +1,20 @@
 # -*- coding=utf-8 -*-
 from __future__ import absolute_import, unicode_literals
-from .compat import Path
-from contextlib import contextmanager
-from .misc import run
-from .path import url_to_path, is_file_url
+
 import json
 import os
-import six
 import sys
+
+from contextlib import contextmanager
+
+import six
+
+from .compat import Path
+from .misc import run
+from .path import is_file_url, url_to_path
+
+
+__all__ = ["temp_environ", "temp_path", "cd", "atomic_open_for_write", "open_file"]
 
 
 # Borrowed from Pew.
@@ -119,7 +126,7 @@ def atomic_open_for_write(target, binary=False, newline=None, encoding=None):
         os.rename(f.name, target)  # No os.replace() on Python 2.
 
 
-@contextlib.contextmanager
+@contextmanager
 def open_file(link, session=None):
     """
     Open local or remote file for reading.
@@ -141,17 +148,17 @@ def open_file(link, session=None):
         if os.path.isdir(local_path):
             raise ValueError("Cannot open directory for read: {}".format(url))
         else:
-            with open(local_path, 'rb') as local_file:
+            with open(local_path, "rb") as local_file:
                 yield local_file
     else:
         # Remote URL
         headers = {"Accept-Encoding": "identity"}
         if not session:
             from requests import Session
+
             session = Session()
         response = session.get(url, headers=headers, stream=True)
         try:
             yield response.raw
         finally:
             response.close()
-

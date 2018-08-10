@@ -1,15 +1,22 @@
 # -*- coding=utf-8 -*-
 from __future__ import absolute_import, unicode_literals
+
 import functools
 import io
 import os
 import sys
 import warnings
 
-from tempfile import _bin_openflags, gettempdir, _mkstemp_inner, mkdtemp
+from tempfile import _bin_openflags, _mkstemp_inner, gettempdir, mkdtemp
 
-from ..compat import finalize
 from ..path import rmtree
+
+
+try:
+    from weakref import finalize
+except ImportError:
+    from backports.weakref import finalize
+
 
 __all__ = ["TemporaryDirectory", "NamedTemporaryFile"]
 

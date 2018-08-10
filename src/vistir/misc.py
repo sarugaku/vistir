@@ -1,13 +1,22 @@
 # -*- coding=utf-8 -*-
 from __future__ import absolute_import, unicode_literals
-from itertools import chain
-from collections import OrderedDict
-from .cmdparse import Script
-from .compat import partialmethod
+
 import locale
 import os
-import six
 import subprocess
+
+from collections import OrderedDict
+from itertools import chain
+
+import six
+
+from .cmdparse import Script
+from .compat import partialmethod
+
+
+__all__ = [
+    "shell_escape", "unnest", "dedup", "run", "load_path", "partialclass"
+]
 
 
 def shell_escape(cmd, args=None):
@@ -49,7 +58,7 @@ def run(cmd):
 
 def load_path(python):
     """Load the :mod:`sys.path` from the given python executable's environment as json
-    
+
     :param str python: Path to a valid python executable
     :return: A python representation of the `sys.path` value of the given python executable.
     :rtype: list

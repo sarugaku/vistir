@@ -6,7 +6,7 @@ import invoke
 import parver
 
 from towncrier._builder import (
-    find_fragments, render_fragments, split_fragments,
+    find_fragments, render_fragments, split_fragments
 )
 from towncrier._settings import load_config
 
