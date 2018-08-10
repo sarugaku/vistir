@@ -12,7 +12,7 @@ from towncrier._settings import load_config
 
 
 def _get_git_root(ctx):
-    return Path(ctx.run('git rev-parse --show-toplevel', hide=True).stdout.strip())
+    return pathlib.Path(ctx.run('git rev-parse --show-toplevel', hide=True).stdout.strip())
 
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
@@ -142,14 +142,16 @@ def release(ctx, type_, repo, prebump=PREBUMP):
 
 @invoke.task
 def build_docs(ctx):
-    _current_version = _read_version()
-    minor = [str(i) for i in _current_version[:2]]
+    from vistir import __version__
+    _current_version = parver.Version.parse(__version__)
+    minor = [str(i) for i in _current_version.release[:2]]
     docs_folder = (_get_git_root(ctx) / 'docs').as_posix()
     if not docs_folder.endswith('/'):
         docs_folder = '{0}/'.format(docs_folder)
     args = ["--ext-autodoc", "--ext-viewcode", "-o", docs_folder]
     args.extend(["-A", "'Dan Ryan <dan@danryan.co>'"])
-    args.extend(["-R", _current_version])
+    args.extend(["-R", str(_current_version)])
+
     args.extend(["-V", ".".join(minor)])
     args.extend(["-e", "-M", "-F", f"src/{PACKAGE_NAME}"])
     print("Building docs...")
