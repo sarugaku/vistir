@@ -1,6 +1,7 @@
 # -*- coding=utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 
+import json
 import locale
 import os
 import subprocess
@@ -11,7 +12,7 @@ from itertools import chain
 import six
 
 from .cmdparse import Script
-from .compat import partialmethod
+from .compat import partialmethod, Path
 
 
 __all__ = [
@@ -19,7 +20,7 @@ __all__ = [
 ]
 
 
-def shell_escape(cmd, args=None):
+def shell_escape(cmd):
     """Escape strings for use in :func:`~subprocess.Popen` and :func:`run`.
 
     This is a passthrough method for instantiating a :class:`~vistir.cmdparse.Script`
@@ -29,10 +30,32 @@ def shell_escape(cmd, args=None):
     return cmd.cmdify()
 
 
-def unnest(item):
-    if isinstance(next((i for i in item), None), (list, tuple)):
-        return chain(*filter(None, item))
-    return chain(filter(None, item))
+def unnest(elem):
+    """Flatten an arbitrarily nested iterable
+
+    :param elem: An iterable to flatten
+    :type elem: :class:`~collections.Iterable`
+
+    >>> nested_iterable = (1234, (3456, 4398345, (234234)), (2396, (23895750, 9283798, 29384, (289375983275, 293759, 2347, (2098, 7987, 27599)))))
+    >>> list(vistir.misc.unnest(nested_iterable))
+    [1234, 3456, 4398345, 234234, 2396, 23895750, 9283798, 29384, 289375983275, 293759, 2347, 2098, 7987, 27599]
+    """
+
+    if _is_iterable(elem):
+        for item in elem:
+            if _is_iterable(item):
+                for sub_item in unnest(item):
+                    yield sub_item
+            else:
+                yield item
+    else:
+        raise ValueError("Expecting an iterable, got %r" % elem)
+
+
+def _is_iterable(elem):
+    if getattr(elem, "__iter__", False):
+        return True
+    return False
 
 
 def dedup(iterable):

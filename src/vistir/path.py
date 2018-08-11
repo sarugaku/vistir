@@ -93,7 +93,7 @@ def is_valid_url(url):
 def is_file_url(url):
     """Returns true if the given url is a file url"""
     if not url:
-        return url
+        return False
     if not isinstance(url, six.string_types):
         try:
             url = getattr(url, "url")
@@ -108,7 +108,7 @@ def is_readonly_path(fn):
     Permissions check is `bool(path.stat & stat.S_IREAD)` or `not os.access(path, os.W_OK)`
     """
     if os.path.exists(fn):
-        return (os.stat(fn).st_mode & stat.S_IREAD) or not os.access(fn, os.W_OK)
+        return bool(os.stat(fn).st_mode & stat.S_IREAD) and not os.access(fn, os.W_OK)
     return False
 
 

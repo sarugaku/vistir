@@ -13,7 +13,8 @@ __all__ = [
     "partialmethod",
     "JSONDecodeError",
     "ResourceWarning",
-    "FileNotFoundError" "fs_str",
+    "FileNotFoundError",
+    "fs_str",
     "TemporaryDirectory",
     "NamedTemporaryFile",
 ]

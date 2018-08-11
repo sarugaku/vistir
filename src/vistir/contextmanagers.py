@@ -1,16 +1,15 @@
 # -*- coding=utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 
-import json
 import os
+import stat
 import sys
 
 from contextlib import contextmanager
 
 import six
 
-from .compat import Path
-from .misc import run
+from .compat import NamedTemporaryFile, Path
 from .path import is_file_url, url_to_path
 
 
@@ -86,6 +85,11 @@ def atomic_open_for_write(target, binary=False, newline=None, encoding=None):
     to handle only writing, and skip many multi-process/thread edge cases
     handled by Werkzeug.
 
+    :param str target: Target filename to write
+    :param bool binary: Whether to open in binary mode, default False
+    :param str newline: The newline character to use when writing, determined from system if not supplied
+    :param str encoding: The encoding to use when writing, defaults to system encoding
+
     How this works:
 
     * Create a temp file (in the same directory of the actual target), and
@@ -94,8 +98,45 @@ def atomic_open_for_write(target, binary=False, newline=None, encoding=None):
       is not touched whatsoever.
     * If everything goes well, close the temp file, and replace the actual
       target with this new file.
+
+    .. code:: python
+
+        >>> fn = "test_file.txt"
+        >>> def read_test_file(filename=fn):
+                with open(filename, 'r') as fh:
+                    print(fh.read().strip())
+
+        >>> with open(fn, "w") as fh:
+                fh.write("this is some test text")
+        >>> read_test_file()
+        this is some test text
+
+        >>> def raise_exception_while_writing(filename):
+                with open(filename, "w") as fh:
+                    fh.write("writing some new text")
+                    raise RuntimeError("Uh oh, hope your file didn't get overwritten")
+
+        >>> raise_exception_while_writing(fn)
+        Traceback (most recent call last):
+            ...
+        RuntimeError: Uh oh, hope your file didn't get overwritten
+        >>> read_test_file()
+        writing some new text
+
+        # Now try with vistir
+        >>> def raise_exception_while_writing(filename):
+                with vistir.contextmanagers.atomic_open_for_write(filename) as fh:
+                    fh.write("Overwriting all the text from before with even newer text")
+                    raise RuntimeError("But did it get overwritten now?")
+
+        >>> raise_exception_while_writing(fn)
+            Traceback (most recent call last):
+                ...
+            RuntimeError: But did it get overwritten now?
+
+        >>> read_test_file()
+            writing some new text
     """
-    from ._compat import NamedTemporaryFile
 
     mode = "w+b" if binary else "w"
     f = NamedTemporaryFile(
@@ -146,7 +187,7 @@ def open_file(link, session=None):
         # Local URL
         local_path = url_to_path(link)
         if os.path.isdir(local_path):
-            raise ValueError("Cannot open directory for read: {}".format(url))
+            raise ValueError("Cannot open directory for read: {}".format(link))
         else:
             with open(local_path, "rb") as local_file:
                 yield local_file
@@ -157,7 +198,7 @@ def open_file(link, session=None):
             from requests import Session
 
             session = Session()
-        response = session.get(url, headers=headers, stream=True)
+        response = session.get(link, headers=headers, stream=True)
         try:
             yield response.raw
         finally:
