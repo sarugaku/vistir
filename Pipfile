@@ -6,7 +6,7 @@ invoke = '*'
 flake8 = '*'
 parver = '*'
 rope = '*'
-black = '*'
+black = {version = "*", markers = "python_version>='3.6'"}
 towncrier = '*'
 wheel = '*'
 pytest = '*'
