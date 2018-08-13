@@ -20,7 +20,7 @@ def test_shell_escape():
     multicommand = "bash -c \"cd docs && make html\""
     assert vistir.misc.shell_escape(multicommand) == 'bash -c "cd docs && make html"'
     escaped_python = "\"{0}\" -c 'print(\"hello\")'".format(sys.executable)
-    if os.name == 'nt':
+    if os.name == 'nt' and " " in sys.executable:
         expected = '"{0}" -c print("hello")'.format(sys.executable)
     else:
         expected = '{0} -c print("hello")'.format(sys.executable)

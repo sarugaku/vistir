@@ -12,7 +12,7 @@ import vistir
 from hypothesis_fspaths import fspaths
 
 from .strategies import legal_path_chars, relative_paths, url_alphabet, urls
-from .utils import NON_WRITE_OR_EXEC, NON_WRITEABLE, WRITEABLE, get_mode
+from .utils import NON_WRITE_OR_EXEC, NON_WRITEABLE, WRITEABLE, READ_ONLY, get_mode
 
 
 def test_safe_expandvars():
@@ -55,8 +55,6 @@ def test_is_readonly_path(tmpdir):
     assert not vistir.path.is_readonly_path(new_file.strpath)
     os.chmod(new_file.strpath, get_mode(new_file.strpath) & NON_WRITEABLE)
     assert vistir.path.is_readonly_path(new_file.strpath)
-    os.chmod(new_dir.strpath, get_mode(new_dir.strpath) & NON_WRITEABLE)
-    assert vistir.path.is_readonly_path(new_dir.strpath)
     for pth in [new_file.strpath, new_dir.strpath]:
         os.chmod(pth, get_mode(pth) & WRITEABLE)
 
