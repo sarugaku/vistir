@@ -11,7 +11,7 @@ environment:
     - PYTHON: "C:\\Python35-x64"
 
 install:
-  - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
+  - "SET PATH=%PYTHON%\\;%PYTHON%\\Scripts;%PATH%"
   - "python --version"
   - "python -m pip install --upgrade pip pipenv"
   - "python -m pipenv install --dev"

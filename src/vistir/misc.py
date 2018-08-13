@@ -63,15 +63,17 @@ def dedup(iterable):
     return iter(OrderedDict.fromkeys(iterable))
 
 
-def run(cmd):
+def run(cmd, env=None):
     """Use `subprocess.Popen` to get the output of a command and decode it.
 
     :param list cmd: A list representing the command you want to run.
     :returns: A 2-tuple of (output, error)
     """
     encoding = locale.getdefaultlocale()[1] or "utf-8"
+    if not env:
+        env = os.environ.copy()
     c = subprocess.Popen(
-        cmd, env=os.environ.copy(), stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        cmd, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE
     )
     out, err = c.communicate()
     return out.decode(encoding).strip(), err.decode(encoding).strip()
