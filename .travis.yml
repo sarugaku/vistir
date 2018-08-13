@@ -7,10 +7,10 @@ matrix:
   fast_finish: true
 
 install:
-  - "pip install --upgrade pip"
-  - "pip install -e .[tests]"
+  - "pip install --upgrade pip pipenv"
+  - "pipenv install --dev"
 script:
-    - "py.test -v -n 8 tests/"
+    - "pipenv run pytest -v -n 8 tests/"
 
 jobs:
   include:
@@ -31,7 +31,7 @@ jobs:
     - stage: coverage
       python: "3.6"
       install:
-        - "pip install --upgrade pip"
-        - "pip install --upgrade -e .[tests]"
+        - "pip install --upgrade pip pipenv"
+        - "pipenv install --dev"
       script:
-        - "pytest --timeout 300 --cov=vistir --cov-report=term-missing --cov-report=xml --cov-report=html tests"
+        - "pipenv run pytest --timeout 300 --cov=vistir --cov-report=term-missing --cov-report=xml --cov-report=html tests"
