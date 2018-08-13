@@ -2,7 +2,6 @@
 from __future__ import absolute_import, unicode_literals
 
 import os
-import shutil
 import stat
 
 from hypothesis import assume, given, example
@@ -129,3 +128,13 @@ def test_walk_up(tmpdir):
         results = next(walk_up)
         results = (results[0], sorted(results[1]), sorted(results[2]))
         assert results == expected[i]
+
+
+def test_handle_remove_readonly(tmpdir):
+    test_file = tmpdir.join("test_file.txt")
+    test_file.write_text("a bunch of text", encoding="utf-8")
+    os.chmod(test_file.strpath, NON_WRITE_OR_EXEC)
+    fake_oserror = OSError("Fake os error")
+    fake_oserror.errno = 13  # EACCES error
+    vistir.path.handle_remove_readonly(os.unlink, test_file.strpath, (OSError, fake_oserror, "Fake Traceback"))
+    assert not os.path.exists(test_file.strpath)
