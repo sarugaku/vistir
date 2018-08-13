@@ -38,10 +38,9 @@ def test_mkdir_p(base_dir, subdir):
 def test_rmtree(tmpdir):
     """This will also test `handle_remove_readonly` and `set_write_bit`."""
     new_dir = tmpdir.join("test_dir").mkdir()
-    new_file = tmpdir.join("test_file.py")
+    new_file = new_dir.join("test_file.py")
     new_file.write_text(u"some test text", encoding="utf-8")
     os.chmod(new_file.strpath, stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
-    os.chmod(new_dir.strpath, stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
     assert new_dir.exists()
     vistir.path.rmtree(new_dir.strpath)
     assert not new_dir.exists()
@@ -91,7 +90,6 @@ def test_path_to_url(filepath):
 
 
 @given(fspaths())
-@example("")
 def test_normalize_drive(filepath):
     filename = vistir.path._encode_path(filepath)
     if filepath and filename:

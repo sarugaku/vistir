@@ -44,7 +44,7 @@ def test_unnest(seed_ints, additional_lists):
                     list_copies[i - 1].append(additional_lists[i])
                 else:
                     composite_list.append(list_copies[i])
-    assert all(isinstance(x, int) for x in flattened_list), flattened_list
+    assert all(x.isdigit() for x in flattened_list), flattened_list
     assert sorted(list(vistir.misc.unnest(composite_list))) == sorted(flattened_list)
 
 
