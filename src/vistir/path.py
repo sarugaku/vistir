@@ -265,7 +265,6 @@ def walk_up(bottom):
 
 def check_for_unc_path(path):
     """ Checks to see if a pathlib `Path` object is a unc path or not"""
-    path = _encode_path(path)
     if (
         os.name == "nt"
         and len(path.drive) > 2
