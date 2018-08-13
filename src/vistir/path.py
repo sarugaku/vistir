@@ -13,7 +13,7 @@ import six
 from six.moves.urllib import request as urllib_request
 from six.moves import urllib_parse
 
-from .compat import Path
+from .compat import Path, _fs_encoding
 
 
 __all__ = [
@@ -33,6 +33,15 @@ __all__ = [
 ]
 
 
+def _decode_path(path):
+    if not isinstance(path, six.text_type):
+        try:
+            return path.decode(_fs_encoding, 'ignore')
+        except (UnicodeError, LookupError):
+            return path.decode('utf-8', 'ignore')
+    return path
+
+
 def _encode_path(path):
     """Transform the provided path to a text encoding."""
     if not isinstance(path, six.string_types + (six.binary_type,)):
@@ -42,10 +51,8 @@ def _encode_path(path):
             raise RuntimeError("Failed encoding path, unknown object type: %r" % path)
         else:
             path = path()
-    if isinstance(path, six.text_type):
-        return path
-    elif isinstance(path, six.binary_type):
-        return u"".join([u"{0}".format(chr(n)) for n in path])
+    path = Path(_decode_path(path))
+    return _decode_path(path.as_posix())
 
 
 def normalize_drive(path):
@@ -308,7 +315,7 @@ def get_converted_relative_path(path, relative_to=os.curdir):
     if check_for_unc_path(path):
         raise ValueError("The path argument does not currently accept UNC paths")
 
-    relpath_s = posixpath.normpath(path.as_posix())
+    relpath_s = _encode_path(posixpath.normpath(path.as_posix()))
     if not (relpath_s == "." or relpath_s.startswith("./")):
         relpath_s = posixpath.join(".", relpath_s)
     return relpath_s

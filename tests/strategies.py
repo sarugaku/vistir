@@ -8,6 +8,7 @@ from collections import namedtuple
 
 from hypothesis import strategies as st
 from six.moves.urllib import parse as urllib_parse
+import six
 
 
 parsed_url = namedtuple("ParsedUrl", "scheme netloc path params query fragment")
@@ -88,18 +89,22 @@ def urls():
 
 def legal_path_chars():
     # Control characters
-    blacklist = ["{0}".format(chr(n)).encode() for n in range(32)]
+    # blacklist = [u"{0}".format(chr(n)).encode() for n in range(32)]
+    blacklist = []
     if os.name == "nt":
         blacklist.extend(["<", ">", ":", '"', "/", "\\", "|", "?", "*"])
-    blacklist = "".join([codecs.decode(s, errors="surrogateescape") for s in blacklist])
+    # errors = "surrogateescape" if six.PY3 else "replace"
+    # blacklist = "".join([codecs.decode(s, "utf-8", errors) for s in blacklist])
     return (
         st.text(
-            st.characters(blacklist_characters=blacklist, blacklist_categories=("Cs",)),
+            st.characters(
+                blacklist_characters=blacklist,
+                blacklist_categories=("Cs",),
+                min_codepoint=32,
+            ),
             min_size=0,
             max_size=64,
-        )
-        .filter(lambda s: not s.endswith(" "))
-        .filter(lambda s: not s.startswith("/"))
+        ).filter(lambda s: not s.endswith(" ")).filter(lambda s: not s.startswith("/"))
     )
 
 

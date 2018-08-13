@@ -5,12 +5,10 @@ import functools
 import io
 import os
 import sys
-import warnings
 
-from tempfile import _bin_openflags, _mkstemp_inner, gettempdir, mkdtemp
+from tempfile import _bin_openflags, _mkstemp_inner, gettempdir
 
-from ..path import rmtree
-
+import six
 
 try:
     from weakref import finalize
@@ -18,7 +16,7 @@ except ImportError:
     from backports.weakref import finalize
 
 
-__all__ = ["TemporaryDirectory", "NamedTemporaryFile"]
+__all__ = ["finalize", "NamedTemporaryFile"]
 
 
 try:

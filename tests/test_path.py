@@ -39,23 +39,23 @@ def test_rmtree(tmpdir):
     """This will also test `handle_remove_readonly` and `set_write_bit`."""
     new_dir = tmpdir.join("test_dir").mkdir()
     new_file = tmpdir.join("test_file.py")
-    new_file.write_text("some test text", encoding="utf-8")
-    os.chmod(new_file, stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
-    os.chmod(new_dir, stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
+    new_file.write_text(u"some test text", encoding="utf-8")
+    os.chmod(new_file.strpath, stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
+    os.chmod(new_dir.strpath, stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
     assert new_dir.exists()
-    vistir.path.rmtree(new_dir)
+    vistir.path.rmtree(new_dir.strpath)
     assert not new_dir.exists()
 
 
 def test_is_readonly_path(tmpdir):
     new_dir = tmpdir.join("some_dir").mkdir()
     new_file = new_dir.join("some_file.txt")
-    new_file.write_text("this is some text", encoding="utf-8")
+    new_file.write_text(u"this is some text", encoding="utf-8")
     assert not vistir.path.is_readonly_path(new_dir.strpath)
     assert not vistir.path.is_readonly_path(new_file.strpath)
-    os.chmod(new_file, get_mode(new_file.strpath) & NON_WRITEABLE)
+    os.chmod(new_file.strpath, get_mode(new_file.strpath) & NON_WRITEABLE)
     assert vistir.path.is_readonly_path(new_file.strpath)
-    os.chmod(new_dir, get_mode(new_dir.strpath) & NON_WRITEABLE)
+    os.chmod(new_dir.strpath, get_mode(new_dir.strpath) & NON_WRITEABLE)
     assert vistir.path.is_readonly_path(new_dir.strpath)
     for pth in [new_file.strpath, new_dir.strpath]:
         os.chmod(pth, get_mode(pth) & WRITEABLE)
@@ -80,10 +80,10 @@ def test_is_valid_url(url):
 @example("")
 def test_path_to_url(filepath):
     filename = vistir.path._encode_path(filepath)
-    if filepath:
+    if filepath and filename:
         assume(any(letter in filename for letter in url_alphabet))
     file_url = vistir.path.path_to_url(filename)
-    if filepath:
+    if filename:
         assume(file_url != filename)
         assert file_url.startswith("file:")
         assert vistir.path.is_file_url(file_url)
@@ -96,7 +96,7 @@ def test_path_to_url(filepath):
 @example("")
 def test_normalize_drive(filepath):
     filename = vistir.path._encode_path(filepath)
-    if filename:
+    if filepath and filename:
         assume(any(letter in filename for letter in url_alphabet))
     if os.name == 'nt':
         upper_drive = "C:"

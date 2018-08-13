@@ -115,7 +115,8 @@ def partialclass(cls, *args, **kwargs):
     {'url': 'https://pypi.org/simple', 'verify_ssl': True, 'name': 'pypi'}
     """
 
-    name_attrs = next(filter(None, (getattr(cls, name, None) for name in ("__name__", "__qualname__"))))
+    name_attrs = [n for n in (getattr(cls, name, str(cls)) for name in ("__name__", "__qualname__")) if n is not None]
+    name_attrs = name_attrs[0]
     type_ = type(
         name_attrs,
         (cls,),
