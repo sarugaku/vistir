@@ -27,11 +27,14 @@ def test_safe_expandvars():
 
 @given(legal_path_chars(), legal_path_chars())
 def test_mkdir_p(base_dir, subdir):
-    assume(not any((dir_name in ["", "."] for dir_name in [base_dir, subdir])))
+    assume(not any((dir_name in ["", ".", "./"] for dir_name in [base_dir, subdir])))
+    assume(not subdir.endswith("/."))
+    assume(os.path.abspath(base_dir) != os.path.abspath(os.path.join(base_dir, subdir)))
     with vistir.compat.TemporaryDirectory() as temp_dir:
-        new_dir_with_subdir = os.path.join(temp_dir.name, base_dir, subdir)
-        vistir.path.mkdir_p(new_dir_with_subdir)
-        assert os.path.exists(new_dir_with_subdir)
+        joined_path = os.path.join(temp_dir.name, base_dir, subdir)
+        assume(os.path.abspath(joined_path) != os.path.abspath(os.path.join(temp_dir.name, base_dir)))
+        vistir.path.mkdir_p(joined_path)
+        assert os.path.exists(joined_path)
 
 
 def test_rmtree(tmpdir):

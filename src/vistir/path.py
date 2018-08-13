@@ -137,19 +137,19 @@ def mkdir_p(newdir):
     :raises: OSError if a file is encountered along the way
     """
     # http://code.activestate.com/recipes/82465-a-friendly-mkdir/
-    if os.path.isdir(newdir):
-        pass
-    elif os.path.isfile(newdir):
-        raise OSError(
-            "a file with the same name as the desired dir, '{0}', already exists.".format(
-                newdir
+    if os.path.exists(newdir):
+        if not os.path.isdir(newdir):
+            raise OSError(
+                "a file with the same name as the desired dir, '{0}', already exists.".format(
+                    newdir
+                )
             )
-        )
+        pass
     else:
         head, tail = os.path.split(newdir)
         if head and not os.path.isdir(head):
             mkdir_p(head)
-        if tail:
+        if tail and not os.path.isdir(newdir):
             os.mkdir(newdir)
 
 
