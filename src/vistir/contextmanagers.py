@@ -10,7 +10,7 @@ from contextlib import contextmanager
 import six
 
 from .compat import NamedTemporaryFile, Path
-from .path import is_file_url, url_to_path
+from .path import is_file_url, is_valid_url, path_to_url, url_to_path
 
 
 __all__ = ["temp_environ", "temp_path", "cd", "atomic_open_for_write", "open_file"]
@@ -182,6 +182,9 @@ def open_file(link, session=None):
             link = link.url_without_fragment
         except AttributeError:
             raise ValueError("Cannot parse url from unkown type: {0!r}".format(link))
+
+    if not is_valid_url(link) and os.path.exists(link):
+        link = path_to_url(link)
 
     if is_file_url(link):
         # Local URL

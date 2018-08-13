@@ -33,6 +33,21 @@ __all__ = [
 ]
 
 
+def _encode_path(path):
+    """Transform the provided path to a text encoding."""
+    if not isinstance(path, six.string_types + (six.binary_type,)):
+        try:
+            path = getattr(path, "__fspath__")
+        except AttributeError:
+            raise RuntimeError("Failed encoding path, unknown object type: %r" % path)
+        else:
+            path = path()
+    if isinstance(path, six.text_type):
+        return path
+    elif isinstance(path, six.binary_type):
+        return u"".join([u"{0}".format(chr(n)) for n in path])
+
+
 def normalize_drive(path):
     """Normalize drive in path so they stay consistent.
 
@@ -64,6 +79,7 @@ def path_to_url(path):
 
     if not path:
         return path
+    path = _encode_path(path)
     return Path(normalize_drive(os.path.abspath(path))).as_uri()
 
 
@@ -107,6 +123,7 @@ def is_readonly_path(fn):
 
     Permissions check is `bool(path.stat & stat.S_IREAD)` or `not os.access(path, os.W_OK)`
     """
+    fn = _encode_path(fn)
     if os.path.exists(fn):
         return bool(os.stat(fn).st_mode & stat.S_IREAD) and not os.access(fn, os.W_OK)
     return False
@@ -143,6 +160,7 @@ def set_write_bit(fn):
     :param str fn: The target filename or path
     """
 
+    fn = _encode_path(fn)
     if isinstance(fn, six.string_types) and not os.path.exists(fn):
         return
     os.chmod(fn, stat.S_IWRITE | stat.S_IWUSR | stat.S_IRUSR)
@@ -162,6 +180,7 @@ def rmtree(directory, ignore_errors=False):
        Setting `ignore_errors=True` may cause this to silently fail to delete the path
     """
 
+    directory = _encode_path(directory)
     shutil.rmtree(
         directory, ignore_errors=ignore_errors, onerror=handle_remove_readonly
     )
@@ -233,6 +252,7 @@ def walk_up(bottom):
 
 def check_for_unc_path(path):
     """ Checks to see if a pathlib `Path` object is a unc path or not"""
+    path = _encode_path(path)
     if (
         os.name == "nt"
         and len(path.drive) > 2
@@ -266,6 +286,8 @@ def get_converted_relative_path(path, relative_to=os.curdir):
     '.'
     """
 
+    path = _encode_path(path)
+    relative_to = _encode_path(relative_to)
     start_path = Path(relative_to)
     try:
         start = start_path.resolve()

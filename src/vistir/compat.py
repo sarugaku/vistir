@@ -1,9 +1,12 @@
 # -*- coding=utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 
+import os
 import sys
 
 import six
+import warnings
+from tempfile import mkdtemp
 
 
 __all__ = [
@@ -27,9 +30,9 @@ else:
 
 if sys.version_info < (3, 3):
     from backports.shutil_get_terminal_size import get_terminal_size
-    from .backports.tempfile import NamedTemporaryFile, TemporaryDirectory
+    from .backports.tempfile import NamedTemporaryFile
 else:
-    from tempfile import NamedTemporaryFile, TemporaryDirectory
+    from tempfile import NamedTemporaryFile
     from shutil import get_terminal_size
 
 try:
@@ -39,7 +42,7 @@ except ImportError:
 
 try:
     from functools import partialmethod
-except:
+except Exception:
     from .backports.functools import partialmethod
 
 try:
@@ -55,9 +58,64 @@ if six.PY2:
     class FileNotFoundError(IOError):
         pass
 
+else:
+    from builtins import ResourceWarning, FileNotFoundError
 
-ResourceWarning = ResourceWarning
-FileNotFoundError = FileNotFoundError
+    class ResourceWarning(ResourceWarning):
+        pass
+
+    class FileNotFoundError(FileNotFoundError):
+        pass
+
+
+class TemporaryDirectory(object):
+    """Create and return a temporary directory.  This has the same
+    behavior as mkdtemp but can be used as a context manager.  For
+    example:
+
+        with TemporaryDirectory() as tmpdir:
+            ...
+
+    Upon exiting the context, the directory and everything contained
+    in it are removed.
+    """
+
+    def __init__(self, suffix=None, prefix=None, dir=None):
+        if "RAM_DISK" in os.environ:
+            import uuid
+
+            name = uuid.uuid4().hex
+            dir_name = os.path.join(os.environ["RAM_DISK"].strip(), name)
+            os.mkdir(dir_name)
+            self.name = dir_name
+        else:
+            self.name = mkdtemp(suffix, prefix, dir)
+        self._finalizer = finalize(
+            self,
+            self._cleanup,
+            self.name,
+            warn_message="Implicitly cleaning up {!r}".format(self),
+        )
+
+    @classmethod
+    def _cleanup(cls, name, warn_message):
+        from .path import rmtree
+        rmtree(name)
+        warnings.warn(warn_message, ResourceWarning)
+
+    def __repr__(self):
+        return "<{} {!r}>".format(self.__class__.__name__, self.name)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc, value, tb):
+        self.cleanup()
+
+    def cleanup(self):
+        from .path import rmtree
+        if self._finalizer.detach():
+            rmtree(self.name)
 
 
 def fs_str(string):

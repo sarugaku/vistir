@@ -12,9 +12,9 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-# import os
-# import sys
-# sys.path.insert(0, '/home/hawk/git/vistir/src/vistir')
+import os
+import sys
+sys.path.insert(0, '/home/hawk/git/vistir/src/vistir')
 
 
 # -- Project information -----------------------------------------------------
@@ -72,6 +72,7 @@ exclude_patterns = ['_build', '_man', 'Thumbs.db', '.DS_Store']
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
+autosummary_generate = True
 
 
 # -- Options for HTML output -------------------------------------------------
@@ -117,7 +118,7 @@ html_theme_options = {
     'style_external_links': True,
     'vcs_pageview_mode': '',
     # Toc options
-    'collapse_navigation': False,
+    'collapse_navigation': True,
     'sticky_navigation': True,
     'navigation_depth': 4,
     'includehidden': True,

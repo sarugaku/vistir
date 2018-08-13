@@ -5,14 +5,12 @@ import json
 import locale
 import os
 import subprocess
+import sys
 
 from collections import OrderedDict
-from itertools import chain
-
-import six
 
 from .cmdparse import Script
-from .compat import partialmethod, Path
+from .compat import Path, partialmethod
 
 
 __all__ = [
@@ -91,9 +89,9 @@ def load_path(python):
     """
 
     python = Path(python).as_posix()
-    c = run([python, "-c", '"import json, sys; print(json.dumps(sys.path));"'])
-    if c.return_code == 0:
-        return json.loads(c.out.strip())
+    out, err = run([python, "-c", "import json, sys; print(json.dumps(sys.path))"])
+    if out:
+        return json.loads(out)
     else:
         return []
 
@@ -120,8 +118,10 @@ def partialclass(cls, *args, **kwargs):
     name_attrs = next(filter(None, (getattr(cls, name, None) for name in ("__name__", "__qualname__"))))
     type_ = type(
         name_attrs,
-        cls.__bases__,
-        {}
+        (cls,),
+        {
+            "__init__": partialmethod(cls.__init__, *args, **kwargs),
+        }
     )
     # Swiped from attrs.make_class
     try:
@@ -130,5 +130,4 @@ def partialclass(cls, *args, **kwargs):
         )
     except (AttributeError, ValueError):
         pass
-    type_.__init__ = partialmethod(cls.__init__, *args, **kwargs)
     return type_

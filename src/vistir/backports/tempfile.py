@@ -37,54 +37,6 @@ except ImportError:
         return _types.pop()
 
 
-class TemporaryDirectory(object):
-    """Create and return a temporary directory.  This has the same
-    behavior as mkdtemp but can be used as a context manager.  For
-    example:
-
-        with TemporaryDirectory() as tmpdir:
-            ...
-
-    Upon exiting the context, the directory and everything contained
-    in it are removed.
-    """
-
-    def __init__(self, suffix=None, prefix=None, dir=None):
-        if "RAM_DISK" in os.environ:
-            import uuid
-
-            name = uuid.uuid4().hex
-            dir_name = os.path.join(os.environ["RAM_DISK"].strip(), name)
-            os.mkdir(dir_name)
-            self.name = dir_name
-        else:
-            self.name = mkdtemp(suffix, prefix, dir)
-        self._finalizer = finalize(
-            self,
-            self._cleanup,
-            self.name,
-            warn_message="Implicitly cleaning up {!r}".format(self),
-        )
-
-    @classmethod
-    def _cleanup(cls, name, warn_message):
-        rmtree(name)
-        warnings.warn(warn_message, ResourceWarning)
-
-    def __repr__(self):
-        return "<{} {!r}>".format(self.__class__.__name__, self.name)
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc, value, tb):
-        self.cleanup()
-
-    def cleanup(self):
-        if self._finalizer.detach():
-            rmtree(self.name)
-
-
 def _sanitize_params(prefix, suffix, dir):
     """Common parameter processing for most APIs in this module."""
     output_type = _infer_return_type(prefix, suffix, dir)

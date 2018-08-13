@@ -95,7 +95,7 @@ You can import utilities directly from **vistir**:
 
 .. note::
 
-   The backports should be imported via :module:`~vistir.compat` which will provide the
+   The backports should be imported via :mod:`~vistir.compat` which will provide the
    native versions of the backported items if possible.
 
 
@@ -160,6 +160,8 @@ middle under normal circumstances, your original file is already gone.
         writing some new text
 
 
+.. _`cd`:
+
 **cd**
 ///////
 
@@ -175,6 +177,8 @@ A context manager for temporarily changing the working directory.
     /tmp/vistir_test
 
 
+.. _`open_file`:
+
 **open_file**
 ///////////////
 
@@ -185,18 +189,21 @@ to pair this with an iterator which employs a sensible chunk size.
 .. code:: python
 
     >>> filecontents = b""
-        with vistir.contextmanagers.open_file("https://norvig.com/") as fp:
-            for chunk in iter(lambda: fp.read(16384)):
+        with vistir.contextmanagers.open_file("https://norvig.com/big.txt") as fp:
+            for chunk in iter(lambda: fp.read(16384), b""):
                 filecontents.append(chunk)
     >>> import io
     >>> import shutil
     >>> filecontents = io.BytesIO(b"")
-    >>> with vistir.contextmanagers.open_file("https://norvig.com/") as fp:
+    >>> with vistir.contextmanagers.open_file("https://norvig.com/big.txt") as fp:
             shutil.copyfileobj(fp, filecontents)
 
 
+
+.. _`temp_environ`:
+
 **temp_environ**
-///////////////
+/////////////////
 
 Sets a temporary environment context to freely manipulate :data:`os.environ` which will
 be reset upon exiting the context.
@@ -214,6 +221,8 @@ be reset upon exiting the context.
     >>> os.environ['MY_KEY']
     'test'
 
+
+.. _`temp_path`:
 
 **temp_path**
 //////////////
@@ -248,6 +257,8 @@ The following Miscellaneous utilities are available as helper methods:
     * :func:`~vistir.misc.partialclass`
 
 
+.. _`shell_escape`:
+
 **shell_escape**
 /////////////////
 
@@ -258,6 +269,8 @@ Escapes a string for use as shell input when passing *shell=True* to :func:`os.P
     >>> vistir.misc.shell_escape("/tmp/test/test script.py hello")
     '/tmp/test/test script.py hello'
 
+
+.. _`unnest`:
 
 **unnest**
 ///////////
@@ -271,6 +284,8 @@ Unnests nested iterables into a flattened one.
     [1234, 3456, 4398345, 234234, 2396, 23895750, 9283798, 29384, 289375983275, 293759, 2347, 2098, 7987, 27599]
 
 
+.. _`dedup`:
+
 **dedup**
 //////////
 
@@ -281,6 +296,8 @@ Deduplicates an iterable (like a :class:`set`, but preserving order).
     >>> iterable = ["repeatedval", "uniqueval", "repeatedval", "anotherval", "somethingelse"]
     >>> list(vistir.misc.dedup(iterable))
     ['repeatedval', 'uniqueval', 'anotherval', 'somethingelse']
+
+.. _`run`:
 
 **run**
 ////////
@@ -294,6 +311,8 @@ Runs the given command using :func:`subprocess.Popen` and passing sane defaults.
     'Linux version 4.15.0-27-generic (buildd@lgw01-amd64-044) (gcc version 7.3.0 (Ubuntu 7.3.0-16ubuntu3)) #29-Ubuntu SMP Wed Jul 11 08:21:57 UTC 2018'
 
 
+.. _`load_path`:
+
 **load_path**
 //////////////
 
@@ -304,6 +323,8 @@ Load the :data:`sys.path` from the given python executable's environment as json
     >>> load_path("/home/user/.virtualenvs/requirementslib-5MhGuG3C/bin/python")
     ['', '/home/user/.virtualenvs/requirementslib-5MhGuG3C/lib/python37.zip', '/home/user/.virtualenvs/requirementslib-5MhGuG3C/lib/python3.7', '/home/user/.virtualenvs/requirementslib-5MhGuG3C/lib/python3.7/lib-dynload', '/home/user/.pyenv/versions/3.7.0/lib/python3.7', '/home/user/.virtualenvs/requirementslib-5MhGuG3C/lib/python3.7/site-packages', '/home/user/git/requirementslib/src']
 
+
+.. _`partialclass`:
 
 **partialclass**
 /////////////////
@@ -339,6 +360,8 @@ Create a partially instantiated class.
     * :func:`vistir.path.walk_up`
 
 
+.. _`get_converted_relative_path`:
+
 **get_converted_relative_path**
 ////////////////////////////////
 
@@ -356,6 +379,8 @@ Convert the supplied path to a relative path (relative to :data:`os.curdir`)
     '.'
 
 
+.. _`handle_remove_readonly`:
+
 **handle_remove_readonly**
 ///////////////////////////
 
@@ -367,6 +392,8 @@ set them as writeable and then proceed with deletion.
 This function will call check :func:`vistir.path.is_readonly_path` before attempting to
 call :func:`vistir.path.set_write_bit` on the target path and try again.
 
+
+.. _`is_file_url`:
 
 **is_file_url**
 ////////////////
@@ -381,6 +408,8 @@ Checks whether the given url is a properly formatted ``file://`` uri.
     False
 
 
+.. _`is_readonly_path`:
+
 **is_readonly_path**
 /////////////////////
 
@@ -393,6 +422,8 @@ Check if a provided path exists and is readonly by checking for ``bool(path.stat
     >>> vistir.path.is_readonly_path('/home/user/.bashrc')
     False
 
+
+.. _`is_valid_url`:
 
 **is_valid_url**
 /////////////////
@@ -407,6 +438,8 @@ a netloc.
     >>> vistir.path.is_valid_url("/home/user/somefile")
     False
 
+
+.. _`mkdir_p`:
 
 **mkdir_p**
 /////////////
@@ -424,6 +457,8 @@ already exist.  Fails silently if they do.
     ['subsubchild']
 
 
+.. _`path_to_url`:
+
 **path_to_url**
 ////////////////
 
@@ -434,6 +469,8 @@ Convert the supplied local path to a file uri.
     >>> path_to_url("/home/user/code/myrepo/myfile.zip")
     'file:///home/user/code/myrepo/myfile.zip'
 
+
+.. _`rmtree`:
 
 **rmtree**
 ///////////
@@ -454,6 +491,8 @@ written by certain source control systems.
     Setting `ignore_errors=True` may cause this to silently fail to delete the path
 
 
+.. _`safe_expandvars`:
+
 **safe_expandvars**
 ////////////////////
 
@@ -465,6 +504,8 @@ Call :func:`os.path.expandvars` if value is a string, otherwise do nothing.
     >>> vistir.path.safe_expandvars("https://myuser:${TEST_VAR}@myfakewebsite.com")
     'https://myuser:MY_TEST_VALUE@myfakewebsite.com'
 
+
+.. _`set_write_bit`:
 
 **set_write_bit**
 //////////////////
@@ -478,6 +519,8 @@ if the path doesn't exist.
     >>> with open('/path/to/some/file', 'w') as fh:
             fh.write("test text!")
 
+
+.. _`url_to_path`:
 
 **url_to_path**
 ////////////////
