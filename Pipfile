@@ -1,5 +1,5 @@
 [packages]
-vistir = { path = '.', editable = true }
+vistir = { path = '.', editable = true, extras = ["tests"] }
 
 [dev-packages]
 invoke = '*'
