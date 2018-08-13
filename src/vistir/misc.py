@@ -10,7 +10,7 @@ import sys
 from collections import OrderedDict
 
 from .cmdparse import Script
-from .compat import Path, partialmethod
+from .compat import Path, partialmethod, fs_str
 
 
 __all__ = [
@@ -72,6 +72,11 @@ def run(cmd, env=None):
     encoding = locale.getdefaultlocale()[1] or "utf-8"
     if not env:
         env = os.environ.copy()
+    else:
+        env = env.copy()
+    _env = {}
+    for key, val in _env.items():
+        _env[fs_str(key)] = fs_str(val)
     c = subprocess.Popen(
         cmd, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE
     )
