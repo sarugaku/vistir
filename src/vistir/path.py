@@ -52,6 +52,8 @@ def _encode_path(path):
                 path = getattr(path, "as_posix")
             except AttributeError:
                 raise RuntimeError("Failed encoding path, unknown object type: %r" % path)
+            else:
+                path()
         else:
             path = path()
     path = Path(_decode_path(path))
