@@ -78,7 +78,7 @@ def run(cmd, env=None):
     for key, val in _env.items():
         _env[fs_str(key)] = fs_str(val)
     c = subprocess.Popen(
-        cmd, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        cmd, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True
     )
     out, err = c.communicate()
     return out.decode(encoding).strip(), err.decode(encoding).strip()
