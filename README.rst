@@ -95,7 +95,7 @@ You can import utilities directly from **vistir**:
 
 .. note::
 
-   The backports should be imported via :mod:`~vistir.compat` which will provide the
+   The backports should be imported via ``vistir.compat`` which will provide the
    native versions of the backported items if possible.
 
 
@@ -104,20 +104,20 @@ You can import utilities directly from **vistir**:
 
 Shims are provided for full API compatibility from python 2.7 through 3.7 for the following:
 
-    * :func:`weakref.finalize`
-    * :func:`functools.partialmethod` (via :func:`~vistir.backports.functools.partialmethod`)
-    * :class:`tempfile.TemporaryDirectory` (via :class:`~vistir.backports.tempfile.TemporaryDirectory`)
-    * :class:`tempfile.NamedTemporaryFile` (via :class:`~vistir.backports.tempfile.NamedTemporaryFile`)
-    * :class:`~vistir.compat.Path`
-    * :func:`~vistir.compat.get_terminal_size`
-    * :class:`~vistir.compat.JSONDecodeError`
-    * :exc:`~vistir.compat.ResourceWarning`
-    * :exc:`~vistir.compat.FileNotFoundError`
+    * ``weakref.finalize``
+    * ``functools.partialmethod`` (via ``vistir.backports.functools.partialmethod``)
+    * ``tempfile.TemporaryDirectory`` (via ``vistir.backports.tempfile.TemporaryDirectory``)
+    * ``tempfile.NamedTemporaryFile`` (via ``vistir.backports.tempfile.NamedTemporaryFile``)
+    * ``vistir.compat.Path``
+    * ``vistir.compat.get_terminal_size``
+    * ``vistir.compat.JSONDecodeError``
+    * ``vistir.compat.ResourceWarning``
+    * ``vistir.compat.FileNotFoundError``
 
 The following additional function is provided for encoding strings to the filesystem
 defualt encoding:
 
-    * :func:`~vistir.compat.fs_str`
+    * ``vistir.compat.fs_str``
 
 
 🐉 Context Managers
@@ -125,11 +125,11 @@ defualt encoding:
 
 **vistir** provides the following context managers as utility contexts:
 
-    * :func:`~vistir.contextmanagers.atomic_open_for_write`
-    * :func:`~vistir.contextmanagers.cd`
-    * :func:`~vistir.contextmanagers.open_file`
-    * :func:`~vistir.contextmanagers.temp_environ`
-    * :func:`~vistir.contextmanagers.temp_path`
+    * ``vistir.contextmanagers.atomic_open_for_write``
+    * ``vistir.contextmanagers.cd``
+    * ``vistir.contextmanagers.open_file``
+    * ``vistir.contextmanagers.temp_environ``
+    * ``vistir.contextmanagers.temp_path``
 
 
 .. _`atomic_open_for_write`:
@@ -205,7 +205,7 @@ to pair this with an iterator which employs a sensible chunk size.
 **temp_environ**
 /////////////////
 
-Sets a temporary environment context to freely manipulate :data:`os.environ` which will
+Sets a temporary environment context to freely manipulate ``os.environ`` which will
 be reset upon exiting the context.
 
 
@@ -227,7 +227,7 @@ be reset upon exiting the context.
 **temp_path**
 //////////////
 
-Sets a temporary environment context to freely manipulate :data:`sys.path` which will
+Sets a temporary environment context to freely manipulate ``sys.path`` which will
 be reset upon exiting the context.
 
 
@@ -249,12 +249,12 @@ be reset upon exiting the context.
 
 The following Miscellaneous utilities are available as helper methods:
 
-    * :func:`~vistir.misc.shell_escape`
-    * :func:`~vistir.misc.unnest`
-    * :func:`~vistir.misc.dedup`
-    * :func:`~vistir.misc.run`
-    * :func:`~vistir.misc.load_path`
-    * :func:`~vistir.misc.partialclass`
+    * ``vistir.misc.shell_escape``
+    * ``vistir.misc.unnest``
+    * ``vistir.misc.dedup``
+    * ``vistir.misc.run``
+    * ``vistir.misc.load_path``
+    * ``vistir.misc.partialclass``
 
 
 .. _`shell_escape`:
@@ -262,7 +262,7 @@ The following Miscellaneous utilities are available as helper methods:
 **shell_escape**
 /////////////////
 
-Escapes a string for use as shell input when passing *shell=True* to :func:`os.Popen`.
+Escapes a string for use as shell input when passing *shell=True* to ``os.Popen``.
 
 .. code:: python
 
@@ -289,7 +289,7 @@ Unnests nested iterables into a flattened one.
 **dedup**
 //////////
 
-Deduplicates an iterable (like a :class:`set`, but preserving order).
+Deduplicates an iterable (like a ``set``, but preserving order).
 
 .. code:: python
 
@@ -302,7 +302,7 @@ Deduplicates an iterable (like a :class:`set`, but preserving order).
 **run**
 ////////
 
-Runs the given command using :func:`subprocess.Popen` and passing sane defaults.
+Runs the given command using ``subprocess.Popen`` and passing sane defaults.
 
 .. code:: python
 
@@ -316,7 +316,7 @@ Runs the given command using :func:`subprocess.Popen` and passing sane defaults.
 **load_path**
 //////////////
 
-Load the :data:`sys.path` from the given python executable's environment as json.
+Load the ``sys.path`` from the given python executable's environment as json.
 
 .. code:: python
 
@@ -346,18 +346,18 @@ Create a partially instantiated class.
 
 **vistir** provides utilities for interacting with filesystem paths:
 
-    * :func:`vistir.path.get_converted_relative_path`
-    * :func:`vistir.path.handle_remove_readonly`
-    * :func:`vistir.path.is_file_url`
-    * :func:`vistir.path.is_readonly_path`
-    * :func:`vistir.path.is_valid_url`
-    * :func:`vistir.path.mkdir_p`
-    * :func:`vistir.path.path_to_url`
-    * :func:`vistir.path.rmtree`
-    * :func:`vistir.path.safe_expandvars`
-    * :func:`vistir.path.set_write_bit`
-    * :func:`vistir.path.url_to_path`
-    * :func:`vistir.path.walk_up`
+    * ``vistir.path.get_converted_relative_path``
+    * ``vistir.path.handle_remove_readonly``
+    * ``vistir.path.is_file_url``
+    * ``vistir.path.is_readonly_path``
+    * ``vistir.path.is_valid_url``
+    * ``vistir.path.mkdir_p``
+    * ``vistir.path.path_to_url``
+    * ``vistir.path.rmtree``
+    * ``vistir.path.safe_expandvars``
+    * ``vistir.path.set_write_bit``
+    * ``vistir.path.url_to_path``
+    * ``vistir.path.walk_up``
 
 
 .. _`get_converted_relative_path`:
@@ -365,7 +365,7 @@ Create a partially instantiated class.
 **get_converted_relative_path**
 ////////////////////////////////
 
-Convert the supplied path to a relative path (relative to :data:`os.curdir`)
+Convert the supplied path to a relative path (relative to ``os.curdir``)
 
 
 .. code:: python
@@ -389,8 +389,8 @@ Error handler for shutil.rmtree.
 Windows source repo folders are read-only by default, so this error handler attempts to
 set them as writeable and then proceed with deletion.
 
-This function will call check :func:`vistir.path.is_readonly_path` before attempting to
-call :func:`vistir.path.set_write_bit` on the target path and try again.
+This function will call check ``vistir.path.is_readonly_path`` before attempting to
+call ``vistir.path.set_write_bit`` on the target path and try again.
 
 
 .. _`is_file_url`:
@@ -475,7 +475,7 @@ Convert the supplied local path to a file uri.
 **rmtree**
 ///////////
 
-Stand-in for :func:`~shutil.rmtree` with additional error-handling.
+Stand-in for ``shutil.rmtree`` with additional error-handling.
 
 This version of `rmtree` handles read-only paths, especially in the case of index files
 written by certain source control systems.
@@ -496,7 +496,7 @@ written by certain source control systems.
 **safe_expandvars**
 ////////////////////
 
-Call :func:`os.path.expandvars` if value is a string, otherwise do nothing.
+Call ``os.path.expandvars`` if value is a string, otherwise do nothing.
 
 .. code:: python
 
