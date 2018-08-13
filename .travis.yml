@@ -7,8 +7,8 @@ matrix:
   fast_finish: true
 
 install:
-  - "pip install --upgrade pip pytest pytest-xdist"
-  - "pip install -e . "
+  - "pip install --upgrade pip"
+  - "pip install -e .[tests]"
 script:
     - "py.test -v -n 8 tests/"
 
@@ -31,7 +31,7 @@ jobs:
     - stage: coverage
       python: "3.6"
       install:
-        - "pip install --upgrade pip pytest pytest-cov pytest-timeout pytest-xdist"
-        - "pip install --upgrade -e ."
+        - "pip install --upgrade pip"
+        - "pip install --upgrade -e .[tests]"
       script:
         - "pytest --timeout 300 --cov=vistir --cov-report=term-missing --cov-report=xml --cov-report=html tests"

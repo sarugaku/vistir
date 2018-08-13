@@ -2,7 +2,6 @@
 from __future__ import absolute_import, unicode_literals
 import os
 import stat
-import itertools
 
 
 NON_WRITEABLE = ~stat.S_IWUSR & ~stat.S_IWGRP & ~stat.S_IWOTH

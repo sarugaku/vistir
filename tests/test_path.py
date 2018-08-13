@@ -5,8 +5,7 @@ import os
 import shutil
 import stat
 
-from hypothesis import assume, given
-from hypothesis import strategies as st
+from hypothesis import assume, given, example
 from six.moves.urllib import parse as urllib_parse
 
 import vistir
@@ -39,7 +38,7 @@ def test_mkdir_p(base_dir, subdir):
 
 def test_rmtree(tmpdir):
     """This will also test `handle_remove_readonly` and `set_write_bit`."""
-    new_dir = tmpdir.mkdir("test_dir")
+    new_dir = tmpdir.join("test_dir").mkdir()
     new_file = tmpdir.join("test_file.py")
     new_file.write_text("some test text", encoding="utf-8")
     os.chmod(new_file, stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
@@ -50,7 +49,7 @@ def test_rmtree(tmpdir):
 
 
 def test_is_readonly_path(tmpdir):
-    new_dir = tmpdir.mkdir("some_dir")
+    new_dir = tmpdir.join("some_dir").mkdir()
     new_file = new_dir.join("some_file.txt")
     new_file.write_text("this is some text", encoding="utf-8")
     assert not vistir.path.is_readonly_path(new_dir.strpath)
@@ -79,10 +78,54 @@ def test_is_valid_url(url):
 
 
 @given(fspaths())
+@example("")
 def test_path_to_url(filepath):
-    filename = str(filepath)
-    assume(any(letter in filename for letter in url_alphabet))
+    filename = vistir.path._encode_path(filepath)
+    if filepath:
+        assume(any(letter in filename for letter in url_alphabet))
     file_url = vistir.path.path_to_url(filename)
-    assume(file_url != filename)
-    assert file_url.startswith("file:")
-    assert vistir.path.is_file_url(file_url)
+    if filepath:
+        assume(file_url != filename)
+        assert file_url.startswith("file:")
+        assert vistir.path.is_file_url(file_url)
+    else:
+        assert file_url == filename
+        assert not file_url
+
+
+@given(fspaths())
+@example("")
+def test_normalize_drive(filepath):
+    filename = vistir.path._encode_path(filepath)
+    if filename:
+        assume(any(letter in filename for letter in url_alphabet))
+    if os.name == 'nt':
+        upper_drive = "C:"
+        lower_drive = upper_drive.lower()
+        lower_path = os.path.join(lower_drive, filename)
+        upper_path = os.path.join(upper_drive, filename)
+        assert vistir.path.normalize_drive(lower_path) == upper_path
+        assert vistir.path.normalize_drive(upper_path) == upper_path
+    assert vistir.path.normalize_drive(filename) == filename
+
+
+def test_walk_up(tmpdir):
+    tmpdir.join("test.txt").write_text("some random text", encoding="utf-8")
+    one_down = tmpdir.join("one_down").mkdir()
+    one_down.join("test.txt").write_text("some random text", encoding="utf-8")
+    one_down.join("test1.txt").write_text("some random text 2", encoding="utf-8")
+    one_down.join("test2.txt").write_text("some random text 3", encoding="utf-8")
+    two_down = one_down.join("two_down").mkdir()
+    two_down.join("test2.txt").write_text("some random text", encoding="utf-8")
+    two_down.join("test2_1.txt").write_text("some random text 2", encoding="utf-8")
+    two_down.join("test2_2.txt").write_text("some random text 3", encoding="utf-8")
+    expected = (
+        (os.path.abspath(two_down.strpath), [], sorted(["test2.txt", "test2_1.txt", "test2_2.txt"])),
+        (os.path.abspath(one_down.strpath), sorted([two_down.purebasename,]), sorted(["test.txt", "test1.txt", "test2.txt"])),
+        (os.path.abspath(tmpdir.strpath), sorted([one_down.purebasename,]), sorted(["test.txt",])),
+    )
+    walk_up = vistir.path.walk_up(two_down.strpath)
+    for i in range(3):
+        results = next(walk_up)
+        results = (results[0], sorted(results[1]), sorted(results[2]))
+        assert results == expected[i]

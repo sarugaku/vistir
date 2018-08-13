@@ -1,7 +1,6 @@
 # -*- coding=utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 
-import pytest
 import vistir
 import os
 import sys
@@ -20,7 +19,7 @@ def test_path():
 
 
 def test_cd(tmpdir):
-    second_dir = tmpdir.mkdir("second_dir")
+    second_dir = tmpdir.join("second_dir").mkdir()
     original_dir = os.path.abspath(os.curdir)
     assert original_dir != os.path.abspath(second_dir.strpath)
     with vistir.contextmanagers.cd(second_dir.strpath):
