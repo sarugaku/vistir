@@ -13,7 +13,7 @@ import six
 from six.moves.urllib import request as urllib_request
 from six.moves import urllib_parse
 
-from .compat import Path, ResourceWarning
+from .compat import Path
 
 
 __all__ = [
@@ -200,6 +200,7 @@ def handle_remove_readonly(func, path, exc):
     :func:`set_write_bit` on the target path and try again.
     """
     # Check for read-only attribute
+    from .compat import ResourceWarning
     default_warning_message = (
         "Unable to remove file due to permissions restriction: {!r}"
     )
