@@ -316,7 +316,10 @@ def get_converted_relative_path(path, relative_to=None):
 
     if not relative_to:
         relative_to = os.getcwdu() if six.PY2 else os.getcwd()
-    path = to_text(path, encoding="utf-8")
+    if six.PY2:
+        path = to_bytes(path, encoding="utf-8")
+    else:
+        path = to_text(path, encoding="utf-8")
     relative_to = to_text(relative_to, encoding="utf-8")
     start_path = Path(relative_to)
     try:
