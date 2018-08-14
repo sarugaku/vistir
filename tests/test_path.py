@@ -2,6 +2,7 @@
 from __future__ import absolute_import, unicode_literals
 
 import os
+import six
 import stat
 
 from hypothesis import assume, given, example
@@ -38,10 +39,12 @@ def test_mkdir_p(base_dir, subdir):
     assume(not subdir.endswith("/."))
     assume(os.path.abspath(base_dir) != os.path.abspath(os.path.join(base_dir, subdir)))
     with vistir.compat.TemporaryDirectory() as temp_dir:
-        joined_path = os.path.join(temp_dir.name, base_dir, subdir)
-        assume(os.path.abspath(joined_path) != os.path.abspath(os.path.join(temp_dir.name, base_dir)))
-        vistir.path.mkdir_p(joined_path)
-        assert os.path.exists(joined_path)
+        target = os.path.join(temp_dir.name, base_dir, subdir)
+        assume(vistir.path.abspathu(target) != vistir.path.abspathu(os.path.join(temp_dir.name, base_dir)))
+        if six.PY2:
+            target = vistir.misc.to_bytes(target, encoding="utf-8")
+        vistir.path.mkdir_p(target)
+        assert os.path.exists(target)
 
 
 def test_rmtree(tmpdir):
