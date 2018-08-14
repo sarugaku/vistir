@@ -2,6 +2,7 @@
 from __future__ import absolute_import, unicode_literals
 
 import json
+import locale
 import os
 import subprocess
 import sys
@@ -12,11 +13,12 @@ from functools import partial
 import six
 
 from .cmdparse import Script
-from .compat import Path, fs_str, partialmethod, to_bytes, to_text, locale_encoding
+from .compat import Path, fs_str, partialmethod
 
 
 __all__ = [
-    "shell_escape", "unnest", "dedup", "run", "load_path", "partialclass"
+    "shell_escape", "unnest", "dedup", "run", "load_path", "partialclass", "to_text",
+    "to_bytes", "locale_encoding"
 ]
 
 
@@ -146,3 +148,84 @@ def partialclass(cls, *args, **kwargs):
     except (AttributeError, ValueError):
         pass
     return type_
+
+
+# Borrowed from django -- force bytes and decode -- see link for details:
+# https://github.com/django/django/blob/fc6b90b/django/utils/encoding.py#L112
+def to_bytes(string, encoding="utf-8", errors="ignore"):
+    """Force a value to bytes.
+
+    :param string: Some input that can be converted to a bytes.
+    :type string: str or bytes unicode or a memoryview subclass
+    :param encoding: The encoding to use for conversions, defaults to "utf-8"
+    :param encoding: str, optional
+    :return: Corresponding byte representation (for use in filesystem operations)
+    :rtype: bytes
+    """
+
+    if not errors:
+        if encoding.lower() == "utf-8":
+            errors = "surrogateescape" if six.PY3 else "ignore"
+        else:
+            errors = "strict"
+    if isinstance(string, bytes):
+        if encoding.lower() == "utf-8":
+            return string
+        else:
+            return string.decode('utf-8').encode(encoding, errors)
+    elif isinstance(string, memoryview):
+        return bytes(string)
+    elif not isinstance(string, six.string_types):
+        try:
+            if six.PY3:
+                return six.text_type(string).encode(encoding, errors)
+            else:
+                return bytes(string)
+        except UnicodeEncodeError:
+            if isinstance(string, Exception):
+                return b' '.join(to_bytes(arg, encoding, errors) for arg in string)
+            return six.text_type(string).encode(encoding, errors)
+    else:
+        return string.encode(encoding, errors)
+
+
+def to_text(string, encoding="utf-8", errors=None):
+    """Force a value to a text-type.
+
+    :param string: Some input that can be converted to a unicode representation.
+    :type string: str or bytes unicode
+    :param encoding: The encoding to use for conversions, defaults to "utf-8"
+    :param encoding: str, optional
+    :return: The unicode representation of the string
+    :rtype: str
+    """
+
+    if not errors:
+        if encoding.lower() == "utf-8":
+            errors = "surrogateescape" if six.PY3 else "ignore"
+        else:
+            errors = "strict"
+    if issubclass(type(string), six.text_type):
+        return string
+    try:
+        if not issubclass(type(string), six.string_types):
+            if six.PY3:
+                if isinstance(string, bytes):
+                    string = six.text_type(string, encoding, errors)
+                else:
+                    string = six.text_type(string)
+            elif hasattr(string, '__unicode__'):
+                string = six.text_type(string)
+            else:
+                string = six.text_type(bytes(string), encoding, errors)
+        else:
+            string = string.decode(encoding, errors)
+    except UnicodeDecodeError as e:
+            string = ' '.join(to_text(arg, encoding, errors) for arg in string)
+    return string
+
+
+try:
+    locale_encoding = locale.getdefaultencoding()[1] or 'ascii'
+except Exception:
+    locale_encoding = 'ascii'

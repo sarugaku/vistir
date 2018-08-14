@@ -1,14 +1,14 @@
 # -*- coding=utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 
-import codecs
 import os
 
 from collections import namedtuple
 
 from hypothesis import strategies as st
 from six.moves.urllib import parse as urllib_parse
-import six
+
+from vistir.misc import to_text
 
 
 parsed_url = namedtuple("ParsedUrl", "scheme netloc path params query fragment")
@@ -83,18 +83,17 @@ def urls():
             ),
             min_size=1,
             max_size=10,
-        ).map("".join),
+        )
+        .map(to_text)
+        .map("".join),
     )
 
 
 def legal_path_chars():
     # Control characters
-    # blacklist = [u"{0}".format(chr(n)).encode() for n in range(32)]
     blacklist = []
     if os.name == "nt":
         blacklist.extend(["<", ">", ":", '"', "/", "\\", "|", "?", "*"])
-    # errors = "surrogateescape" if six.PY3 else "replace"
-    # blacklist = "".join([codecs.decode(s, "utf-8", errors) for s in blacklist])
     return (
         st.text(
             st.characters(
@@ -104,14 +103,16 @@ def legal_path_chars():
             ),
             min_size=0,
             max_size=64,
-        ).filter(lambda s: not s.endswith(" ")).filter(lambda s: not s.startswith("/"))
+        )
+        .filter(lambda s: not s.endswith(" "))
+        .filter(lambda s: not s.startswith("/"))
     )
 
 
 def relative_paths():
     relative_leaders = (".", "..")
     separators = [
-        sep for sep in (os.sep, os.path.sep, os.path.altsep) if sep is not None
+        to_text(sep) for sep in (os.sep, os.path.sep, os.path.altsep) if sep is not None
     ]
     return st.builds(
         relative_path,

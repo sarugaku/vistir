@@ -62,8 +62,8 @@ def test_is_readonly_path(tmpdir):
 def test_get_converted_relative_path(path):
     path = "".join(path)
     relpath = vistir.path.get_converted_relative_path(path)
-    assert relpath.startswith(".")
-    assert os.path.abspath(relpath) == os.path.abspath(vistir.path._encode_path(path))
+    assert relpath.startswith(u".")
+    assert os.path.abspath(relpath) == os.path.abspath(vistir.misc.to_text(path))
 
 
 @given(urls())
@@ -74,9 +74,8 @@ def test_is_valid_url(url):
 
 
 @given(fspaths())
-@example("")
 def test_path_to_url(filepath):
-    filename = vistir.path._encode_path(filepath)
+    filename = vistir.misc.to_text(filepath)
     if filepath and filename:
         assume(any(letter in filename for letter in url_alphabet))
     file_url = vistir.path.path_to_url(filename)
@@ -91,7 +90,7 @@ def test_path_to_url(filepath):
 
 @given(fspaths())
 def test_normalize_drive(filepath):
-    filename = vistir.path._encode_path(filepath)
+    filename = vistir.misc.to_text(filepath)
     if filepath and filename:
         assume(any(letter in filename for letter in url_alphabet))
     if os.name == 'nt':

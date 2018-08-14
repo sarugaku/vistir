@@ -1,12 +1,14 @@
 # -*- coding=utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 
-import vistir
-import os
-import sys
-from .utils import read_file
 import io
+import os
 import shutil
+import sys
+
+import vistir
+
+from .utils import read_file
 
 
 def test_path():
@@ -64,7 +66,9 @@ def test_atomic_open(tmpdir):
 
 
 def test_open_file(tmpdir):
-    target_file = "https://www2.census.gov/geo/tiger/GENZ2017/shp/cb_2017_02_tract_500k.zip"
+    target_file = (
+        "https://www2.census.gov/geo/tiger/GENZ2017/shp/cb_2017_02_tract_500k.zip"
+    )
     filecontents = io.BytesIO(b"")
     with vistir.contextmanagers.open_file(target_file) as fp:
         shutil.copyfileobj(fp, filecontents)

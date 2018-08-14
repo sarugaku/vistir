@@ -13,7 +13,8 @@ import six
 from six.moves.urllib import request as urllib_request
 from six.moves import urllib_parse
 
-from .compat import Path, _fs_encoding
+from .compat import Path
+from .misc import to_bytes, to_text, locale_encoding
 
 
 __all__ = [
@@ -33,33 +34,6 @@ __all__ = [
 ]
 
 
-def _decode_path(path):
-    if not isinstance(path, six.text_type):
-        try:
-            return path.decode(_fs_encoding, 'ignore')
-        except (UnicodeError, LookupError):
-            return path.decode('utf-8', 'ignore')
-    return path
-
-
-def _encode_path(path):
-    """Transform the provided path to a text encoding."""
-    if not isinstance(path, six.string_types + (six.binary_type,)):
-        try:
-            path = getattr(path, "__fspath__")
-        except AttributeError:
-            try:
-                path = getattr(path, "as_posix")
-            except AttributeError:
-                raise RuntimeError("Failed encoding path, unknown object type: %r" % path)
-            else:
-                path()
-        else:
-            path = path()
-    path = Path(_decode_path(path))
-    return _decode_path(path.as_posix())
-
-
 def normalize_drive(path):
     """Normalize drive in path so they stay consistent.
 
@@ -75,7 +49,7 @@ def normalize_drive(path):
     if drive.islower() and len(drive) == 2 and drive[1] == ":":
         return "{}{}".format(drive.upper(), tail)
 
-    return path
+    return to_text(path, encoding="utf-8")
 
 
 def path_to_url(path):
@@ -91,8 +65,9 @@ def path_to_url(path):
 
     if not path:
         return path
-    path = _encode_path(path)
-    return Path(normalize_drive(os.path.abspath(path))).as_uri()
+    path = to_bytes(path, encoding="utf-8")
+    normalized_path = to_text(normalize_drive(os.path.abspath(path)), encoding="utf-8")
+    return to_text(Path(normalized_path).as_uri(), encoding="utf-8")
 
 
 def url_to_path(url):
@@ -107,7 +82,7 @@ def url_to_path(url):
         netloc = "\\\\" + netloc
 
     path = urllib_request.url2pathname(netloc + path)
-    return path
+    return to_bytes(path, encoding="utf-8")
 
 
 def is_valid_url(url):
@@ -127,6 +102,7 @@ def is_file_url(url):
             url = getattr(url, "url")
         except AttributeError:
             raise ValueError("Cannot parse url from unknown type: {0!r}".format(url))
+    url = to_text(url, encoding="utf-8")
     return urllib_parse.urlparse(url.lower()).scheme == "file"
 
 
@@ -135,7 +111,7 @@ def is_readonly_path(fn):
 
     Permissions check is `bool(path.stat & stat.S_IREAD)` or `not os.access(path, os.W_OK)`
     """
-    fn = _encode_path(fn)
+    fn = to_bytes(fn, encoding="utf-8")
     if os.path.exists(fn):
         return bool(os.stat(fn).st_mode & stat.S_IREAD) and not os.access(fn, os.W_OK)
     return False
@@ -172,8 +148,8 @@ def set_write_bit(fn):
     :param str fn: The target filename or path
     """
 
-    fn = _encode_path(fn)
-    if isinstance(fn, six.string_types) and not os.path.exists(fn):
+    fn = to_bytes(fn, encoding=locale_encoding)
+    if not os.path.exists(fn):
         return
     os.chmod(fn, stat.S_IWRITE | stat.S_IWUSR | stat.S_IRUSR)
 
@@ -192,7 +168,7 @@ def rmtree(directory, ignore_errors=False):
        Setting `ignore_errors=True` may cause this to silently fail to delete the path
     """
 
-    directory = _encode_path(directory)
+    directory = to_bytes(directory, encoding=locale_encoding)
     shutil.rmtree(
         directory, ignore_errors=ignore_errors, onerror=handle_remove_readonly
     )
@@ -218,6 +194,7 @@ def handle_remove_readonly(func, path, exc):
     )
     # split the initial exception out into its type, exception, and traceback
     exc_type, exc_exception, exc_tb = exc
+    path = to_bytes(path, encoding=locale_encoding)
     if is_readonly_path(path):
         # Apply write permission and call original function
         set_write_bit(path)
@@ -225,11 +202,18 @@ def handle_remove_readonly(func, path, exc):
             func(path)
         except (OSError, IOError) as e:
             if e.errno in [errno.EACCES, errno.EPERM]:
-                warnings.warn(default_warning_message.format(path), ResourceWarning)
+                warnings.warn(
+                    default_warning_message.format(
+                        to_text(path, encoding=locale_encoding)
+                    ), ResourceWarning
+                )
                 return
 
     if exc_exception.errno in [errno.EACCES, errno.EPERM]:
-        warnings.warn(default_warning_message.format(path), ResourceWarning)
+        warnings.warn(
+            default_warning_message.format(to_text(path, encoding=locale_encoding)),
+            ResourceWarning
+        )
         return
 
     raise
@@ -298,8 +282,8 @@ def get_converted_relative_path(path, relative_to=os.curdir):
     '.'
     """
 
-    path = _encode_path(path)
-    relative_to = _encode_path(relative_to)
+    path = to_text(path, encoding="utf-8")
+    relative_to = to_text(relative_to, encoding="utf-8")
     start_path = Path(relative_to)
     try:
         start = start_path.resolve()
@@ -319,9 +303,11 @@ def get_converted_relative_path(path, relative_to=os.curdir):
     if check_for_unc_path(path):
         raise ValueError("The path argument does not currently accept UNC paths")
 
-    relpath_s = _encode_path(posixpath.normpath(path.as_posix()))
-    if not (relpath_s == "." or relpath_s.startswith("./")):
-        relpath_s = posixpath.join(".", relpath_s)
+    relpath_s = to_text(posixpath.normpath(path.as_posix()))
+    dot = "."
+    dot_slash = "./"
+    if not (relpath_s == dot or relpath_s.startswith(dot_slash)):
+        relpath_s = posixpath.join(dot, relpath_s)
     return relpath_s
 
 

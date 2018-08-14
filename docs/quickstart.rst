@@ -255,6 +255,8 @@ The following Miscellaneous utilities are available as helper methods:
     * :func:`~vistir.misc.run`
     * :func:`~vistir.misc.load_path`
     * :func:`~vistir.misc.partialclass`
+    * :func:`~vistir.misc.to_text`
+    * :func:`~vistir.misc.to_bytes`
 
 
 .. _`shell_escape`:
@@ -339,6 +341,34 @@ Create a partially instantiated class.
     <__main__.Source object at 0x7f23af189b38>
     >>> new_source.__dict__
     {'url': 'https://pypi.org/simple', 'verify_ssl': True, 'name': 'pypi'}
+
+
+.. _`to_text`:
+
+**to_text**
+////////////
+
+Convert arbitrary text-formattable input to text while handling errors.
+
+.. code:: python
+
+    >>> vistir.misc.to_text(b"these are bytes")
+    'these are bytes'
+
+
+.. _`to_bytes`:
+
+**to_bytes**
+/////////////
+
+Converts arbitrary byte-convertable input to bytes while handling errors.
+
+.. code:: python
+
+    >>> vistir.misc.to_bytes("this is some text")
+    b'this is some text'
+    >>> vistir.misc.to_bytes(u"this is some text")
+    b'this is some text'
 
 
 🐉 Path Utilities
