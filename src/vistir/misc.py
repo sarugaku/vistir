@@ -2,15 +2,16 @@
 from __future__ import absolute_import, unicode_literals
 
 import json
-import locale
 import os
 import subprocess
 import sys
 
 from collections import OrderedDict
 
+import six
+
 from .cmdparse import Script
-from .compat import Path, partialmethod, fs_str
+from .compat import Path, fs_str, partialmethod
 
 
 __all__ = [
@@ -63,25 +64,26 @@ def dedup(iterable):
     return iter(OrderedDict.fromkeys(iterable))
 
 
-def run(cmd, env=None):
+def run(cmd, env={}):
     """Use `subprocess.Popen` to get the output of a command and decode it.
 
     :param list cmd: A list representing the command you want to run.
+    :param dict env: Additional environment settings to pass through to the subprocess.
     :returns: A 2-tuple of (output, error)
     """
-    encoding = locale.getdefaultlocale()[1] or "utf-8"
-    if not env:
-        env = os.environ.copy()
-    else:
-        env = env.copy()
-    _env = {}
-    for key, val in _env.items():
-        _env[fs_str(key)] = fs_str(val)
+    _env = {k: fs_str(v) for k, v in os.environ.items()}
+    for key, val in env.items():
+        _env[key] = fs_str(val)
+    if six.PY2:
+        if isinstance(cmd, six.string_types):
+            cmd = cmd.encode("utf-8")
+        elif isinstance(cmd, (list, tuple)):
+            cmd = [c.encode("utf-8") for c in cmd]
     c = subprocess.Popen(
-        cmd, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True
+        cmd, env=_env, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True
     )
     out, err = c.communicate()
-    return out.decode(encoding).strip(), err.decode(encoding).strip()
+    return out.strip(), err.strip()
 
 
 def load_path(python):

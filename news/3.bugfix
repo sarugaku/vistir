@@ -1,0 +1,1 @@
+Fixed encoding issues when passing commands and environments to ``vistir.misc.run()``.
