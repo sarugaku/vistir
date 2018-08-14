@@ -32,7 +32,9 @@ def test_safe_expandvars():
 
 @given(legal_path_chars(), legal_path_chars())
 def test_mkdir_p(base_dir, subdir):
-    assume(not any((dir_name in ["", ".", "./"] for dir_name in [base_dir, subdir])))
+    assume(not any((dir_name in ["", ".", "./", ".."] for dir_name in [base_dir, subdir])))
+    assume(not (os.path.relpath(subdir, start=base_dir) == "."))
+    assume(not any(base_dir.endswith(illegal_character) for illegal_character in [".", "/", "./", "/."]))
     assume(not subdir.endswith("/."))
     assume(os.path.abspath(base_dir) != os.path.abspath(os.path.join(base_dir, subdir)))
     with vistir.compat.TemporaryDirectory() as temp_dir:
