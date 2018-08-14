@@ -5,7 +5,7 @@ import os
 import six
 import stat
 
-from hypothesis import assume, given, example
+from hypothesis import assume, given, HealthCheck, settings
 from six.moves.urllib import parse as urllib_parse
 
 import vistir
@@ -32,11 +32,10 @@ def test_safe_expandvars():
 
 
 @given(legal_path_chars(), legal_path_chars())
+@settings(suppress_health_check=(HealthCheck.filter_too_much,))
 def test_mkdir_p(base_dir, subdir):
     assume(not any((dir_name in ["", ".", "./", ".."] for dir_name in [base_dir, subdir])))
     assume(not (os.path.relpath(subdir, start=base_dir) == "."))
-    assume(not any(base_dir.endswith(illegal_character) for illegal_character in [".", "/", "./", "/."]))
-    assume(not subdir.endswith("/."))
     assume(os.path.abspath(base_dir) != os.path.abspath(os.path.join(base_dir, subdir)))
     with vistir.compat.TemporaryDirectory() as temp_dir:
         target = os.path.join(temp_dir.name, base_dir, subdir)
@@ -87,6 +86,7 @@ def test_is_valid_url(url):
 
 
 @given(fspaths())
+@settings(suppress_health_check=(HealthCheck.filter_too_much,))
 def test_path_to_url(filepath):
     filename = vistir.misc.to_text(filepath)
     if filepath and filename:
@@ -102,6 +102,7 @@ def test_path_to_url(filepath):
 
 
 @given(fspaths())
+@settings(suppress_health_check=(HealthCheck.filter_too_much,))
 def test_normalize_drive(filepath):
     filename = vistir.misc.to_text(filepath)
     if filepath and filename:
