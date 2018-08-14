@@ -12,7 +12,14 @@ import vistir
 from hypothesis_fspaths import fspaths
 
 from .strategies import legal_path_chars, relative_paths, url_alphabet, urls
-from .utils import NON_WRITE_OR_EXEC, NON_WRITEABLE, WRITEABLE, READ_ONLY, get_mode
+from .utils import NON_WRITE_OR_EXEC, NON_WRITEABLE, WRITEABLE, get_mode
+
+
+def test_abspathu(tmpdir):
+    tmpdir.mkdir("new_dir")
+    new_dir = tmpdir.join("new_dir")
+    with vistir.contextmanagers.cd(tmpdir.strpath):
+        assert vistir.path.abspathu(new_dir.purebasename) == vistir.misc.to_text(new_dir.strpath)
 
 
 def test_safe_expandvars():
@@ -63,7 +70,7 @@ def test_get_converted_relative_path(path):
     path = "".join(path)
     relpath = vistir.path.get_converted_relative_path(path)
     assert relpath.startswith(u".")
-    assert os.path.abspath(relpath) == os.path.abspath(vistir.misc.to_text(path))
+    assert vistir.path.abspathu(relpath) == os.path.abspath(vistir.misc.to_text(path))
 
 
 @given(urls())

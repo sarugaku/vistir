@@ -13,7 +13,7 @@ import six
 from six.moves.urllib import request as urllib_request
 from six.moves import urllib_parse
 
-from .compat import Path
+from .compat import Path, _fs_encoding
 from .misc import to_bytes, to_text, locale_encoding
 
 
@@ -32,6 +32,35 @@ __all__ = [
     "url_to_path",
     "walk_up",
 ]
+
+
+def unicode_path(path):
+    # Paths are supposed to be represented as unicode here
+    if six.PY2 and not isinstance(path, six.text_type):
+        return path.decode(_fs_encoding)
+    return path
+
+
+def native_path(path):
+    if six.PY2 and not isinstance(path, bytes):
+        return path.encode(_fs_encoding)
+    return path
+
+
+# once again thank you django...
+# https://github.com/django/django/blob/fc6b90b/django/utils/_os.py
+if six.PY3 or os.name == 'nt':
+    abspathu = os.path.abspath
+else:
+    def abspathu(path):
+        """
+        Version of os.path.abspath that uses the unicode representation
+        of the current working directory, thus avoiding a UnicodeDecodeError
+        in join when the cwd has non-ASCII characters.
+        """
+        if not os.path.isabs(path):
+            path = os.path.join(os.getcwdu(), path)
+        return os.path.normpath(path)
 
 
 def normalize_drive(path):
@@ -260,7 +289,7 @@ def check_for_unc_path(path):
         return False
 
 
-def get_converted_relative_path(path, relative_to=os.curdir):
+def get_converted_relative_path(path, relative_to=None):
     """Convert `path` to be relative.
 
     Given a vague relative path, return the path relative to the given
@@ -282,6 +311,8 @@ def get_converted_relative_path(path, relative_to=os.curdir):
     '.'
     """
 
+    if not relative_to:
+        relative_to = os.getcwdu() if six.PY2 else os.getcwd()
     path = to_text(path, encoding="utf-8")
     relative_to = to_text(relative_to, encoding="utf-8")
     start_path = Path(relative_to)
@@ -304,9 +335,7 @@ def get_converted_relative_path(path, relative_to=os.curdir):
         raise ValueError("The path argument does not currently accept UNC paths")
 
     relpath_s = to_text(posixpath.normpath(path.as_posix()))
-    dot = "."
-    dot_slash = "./"
-    if not (relpath_s == dot or relpath_s.startswith(dot_slash)):
+    if not (relpath_s == u"." or relpath_s.startswith(u"./")):
         relpath_s = posixpath.join(dot, relpath_s)
     return relpath_s
 
