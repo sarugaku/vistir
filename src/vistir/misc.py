@@ -67,11 +67,36 @@ def dedup(iterable):
     return iter(OrderedDict.fromkeys(iterable))
 
 
-def run(cmd, env={}):
+def _spawn_subprocess(script, env={}):
+    from distutils.spawn import find_executable
+    command = find_executable(script.command)
+    options = {
+        "env": env,
+        "universal_newlines": True,
+        "stdout": subprocess.PIPE,
+        "stderr": subprocess.PIPE,
+    }
+    # Command not found, maybe this is a shell built-in?
+    if not command:  # Try to use CreateProcess directly if possible.
+        return subprocess.Popen(script.cmdify(), shell=True, **options)
+    # Try to use CreateProcess directly if possible. Specifically catch
+    # Windows error 193 "Command is not a valid Win32 application" to handle
+    # a "command" that is non-executable. See pypa/pipenv#2727.
+    try:
+        return subprocess.Popen([command] + script.args, **options)
+    except WindowsError as e:
+        if e.winerror != 193:
+            raise
+    # Try shell mode to use Windows's file association for file launch.
+    return subprocess.Popen(script.cmdify(), shell=True, **options)
+
+
+def run(cmd, env={}, return_object=False):
     """Use `subprocess.Popen` to get the output of a command and decode it.
 
     :param list cmd: A list representing the command you want to run.
     :param dict env: Additional environment settings to pass through to the subprocess.
+    :param bool return_object: When True, returns the whole subprocess instance
     :returns: A 2-tuple of (output, error)
     """
     if six.PY2:
@@ -86,11 +111,13 @@ def run(cmd, env={}):
             cmd = cmd.encode("utf-8")
         elif isinstance(cmd, (list, tuple)):
             cmd = [c.encode("utf-8") for c in cmd]
-    c = subprocess.Popen(
-        cmd, env=_env, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True
-    )
+    if not isinstance(cmd, Script):
+        cmd = Script.parse(cmd)
+    c = _spawn_subprocess(cmd, env=_env)
     out, err = c.communicate()
-    return out.strip(), err.strip()
+    if not return_object:
+        return out.strip(), err.strip()
+    return c
 
 
 def load_path(python):
