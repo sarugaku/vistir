@@ -336,7 +336,7 @@ def get_converted_relative_path(path, relative_to=None):
 
     relpath_s = to_text(posixpath.normpath(path.as_posix()))
     if not (relpath_s == u"." or relpath_s.startswith(u"./")):
-        relpath_s = posixpath.join(dot, relpath_s)
+        relpath_s = posixpath.join(u".", relpath_s)
     return relpath_s
 
 
