@@ -91,9 +91,9 @@ def urls():
 
 def legal_path_chars():
     # Control characters
-    blacklist = []
+    blacklist = ["/"]
     if os.name == "nt":
-        blacklist.extend(["<", ">", ":", '"', "/", "\\", "|", "?", "*"])
+        blacklist.extend(["<", ">", ":", '"', "\\", "|", "?", "*"])
     return (
         st.text(
             st.characters(
@@ -104,8 +104,9 @@ def legal_path_chars():
             min_size=0,
             max_size=64,
         )
-        .filter(lambda s: not s.endswith(" "))
+        .filter(lambda s: not any(s.endswith(c) for c in [".", "/", "./", "/.", " "]))
         .filter(lambda s: not s.startswith("/"))
+        .filter(lambda s: s not in ["", ".", "./", ".."])
     )
 
 
