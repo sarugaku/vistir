@@ -67,6 +67,7 @@ def test_is_readonly_path(tmpdir):
 
 @given(relative_paths())
 def test_get_converted_relative_path(path):
+    assume(not vistir.path.abspathu("".join(path)) == vistir.path.abspathu(os.curdir))
     path = "".join(path)
     relpath = vistir.path.get_converted_relative_path(path)
     assert relpath.startswith(u".")
