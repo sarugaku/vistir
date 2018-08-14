@@ -7,11 +7,12 @@ import subprocess
 import sys
 
 from collections import OrderedDict
+from functools import partial
 
 import six
 
 from .cmdparse import Script
-from .compat import Path, fs_str, partialmethod
+from .compat import Path, fs_str, partialmethod, to_bytes, to_text, locale_encoding
 
 
 __all__ = [
@@ -71,9 +72,13 @@ def run(cmd, env={}):
     :param dict env: Additional environment settings to pass through to the subprocess.
     :returns: A 2-tuple of (output, error)
     """
-    _env = {k: fs_str(v) for k, v in os.environ.items()}
-    for key, val in env.items():
-        _env[key] = fs_str(val)
+    if six.PY2:
+        fs_encode = partial(to_bytes, encoding=locale_encoding)
+        _env = {fs_encode(k): fs_encode(v) for k, v in os.environ.items()}
+        for key, val in env.items():
+            _env[fs_encode(key)] = fs_encode(val)
+    else:
+        _env = {k: fs_str(v) for k, v in os.environ.items()}
     if six.PY2:
         if isinstance(cmd, six.string_types):
             cmd = cmd.encode("utf-8")

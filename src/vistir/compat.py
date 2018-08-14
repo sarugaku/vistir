@@ -1,12 +1,14 @@
 # -*- coding=utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 
+import locale
 import os
 import sys
+import warnings
+
+from tempfile import mkdtemp
 
 import six
-import warnings
-from tempfile import mkdtemp
 
 
 __all__ = [
@@ -20,6 +22,9 @@ __all__ = [
     "fs_str",
     "TemporaryDirectory",
     "NamedTemporaryFile",
+    "locale_encoding",
+    "to_text",
+    "to_bytes"
 ]
 
 if sys.version_info >= (3, 5):
@@ -134,3 +139,74 @@ def fs_str(string):
 
 
 _fs_encoding = sys.getfilesystemencoding() or sys.getdefaultencoding()
+
+
+# Borrowed from django -- force bytes and decode -- see link for details:
+# https://github.com/django/django/blob/fc6b90b/django/utils/encoding.py#L112
+def to_bytes(string, encoding="utf-8"):
+    """Force a value to bytes.
+
+    :param string: Some input that can be converted to a bytes.
+    :type string: str or bytes unicode or a memoryview subclass
+    :param encoding: The encoding to use for conversions, defaults to "utf-8"
+    :param encoding: str, optional
+    :return: Corresponding byte representation (for use in filesystem operations)
+    :rtype: bytes
+    """
+
+    if isinstance(string, bytes):
+        if encoding == "utf-8":
+            return string
+        else:
+            return string.encode("utf-8").decode(encoding)
+    elif isinstance(string, memoryview):
+        return bytes(string)
+    elif not isinstance(string, six.string_types):
+        try:
+            if six.PY3:
+                return six.text_type(string).encode(encoding)
+            else:
+                return bytes(string)
+        except UnicodeEncodeError:
+            if isinstance(string, Exception):
+                return b' '.join(to_bytes(arg, encoding) for arg in string)
+            return six.text_type(string).encode(encoding)
+    else:
+        return string.encode(encoding)
+
+
+def to_text(string, encoding="utf-8"):
+    """Force a value to a text-type.
+
+    :param string: Some input that can be converted to a unicode representation.
+    :type string: str or bytes unicode
+    :param encoding: The encoding to use for conversions, defaults to "utf-8"
+    :param encoding: str, optional
+    :return: The unicode representation of the string
+    :rtype: str
+    """
+
+    if issubclass(type(string), six.text_type):
+        return string
+    try:
+        if not issubclass(type(string), six.string_types):
+            if six.PY3:
+                if isinstance(string, bytes):
+                    string = six.text_type(string, encoding)
+                else:
+                    string = six.text_type(string)
+            elif hasattr(string, '__unicode__'):
+                string = six.text_type(string)
+            else:
+                string = six.text_type(bytes(string), encoding)
+        else:
+            string = string.decode(encoding)
+    except UnicodeDecodeError as e:
+            string = ' '.join(to_text(arg, encoding) for arg in string)
+    return string
+
+
+try:
+    locale_encoding = locale.getdefaultencoding()[1] or 'ascii'
+except Exception:
+    locale_encoding = 'ascii'
