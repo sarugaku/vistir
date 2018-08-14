@@ -154,6 +154,7 @@ def mkdir_p(newdir):
     :raises: OSError if a file is encountered along the way
     """
     # http://code.activestate.com/recipes/82465-a-friendly-mkdir/
+    newdir = abspathu(newdir)
     if os.path.exists(newdir):
         if not os.path.isdir(newdir):
             raise OSError(
