@@ -72,6 +72,7 @@ def _render_log():
         split_fragments(fragments, definitions),
         definitions,
         config['underlines'][1:],
+        False,  # Don't add newlines to wrapped text.
     )
     return rendered
 
