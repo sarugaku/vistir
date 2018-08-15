@@ -1,3 +1,22 @@
+0.1.1 (2018-08-14)
+==================
+
+Features
+--------
+
+- Added suport for coverage and tox builds.  `#2 <https://github.com/sarugaku/vistir/issues/2>`_
+  
+- Enhanced subprocess runner to reproduce the behavior of pipenv's subprocess runner.  `#4 <https://github.com/sarugaku/vistir/issues/4>`_
+  
+
+Bug Fixes
+---------
+
+- Fixed an issue where ``vistir.misc.run`` would fail to encode environment variables to the proper filesystem encoding on windows.  `#1 <https://github.com/sarugaku/vistir/issues/1>`_
+  
+- Fixed encoding issues when passing commands and environments to ``vistir.misc.run()``.  `#3 <https://github.com/sarugaku/vistir/issues/3>`_
+
+
 0.1.0 (2018-08-12)
 =======================
 

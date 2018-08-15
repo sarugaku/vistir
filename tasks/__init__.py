@@ -99,7 +99,7 @@ PREBUMP = 'patch'
 
 
 @invoke.task(pre=[clean])
-def release(ctx, type_, repo, prebump=PREBUMP):
+def release(ctx, repo, prebump=PREBUMP):
     """Make a new release.
     """
     if prebump not in REL_TYPES:
@@ -107,8 +107,8 @@ def release(ctx, type_, repo, prebump=PREBUMP):
     prebump = REL_TYPES.index(prebump)
 
     version = _read_version()
-    version = _bump_release(version, type_)
-    _write_version(version)
+    # version = _bump_release(version, type_)
+    # _write_version(version)
 
     # Needs to happen before Towncrier deletes fragment files.
     tag_content = _render_log()
