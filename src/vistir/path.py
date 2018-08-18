@@ -169,7 +169,7 @@ def mkdir_p(newdir, mode=0o777):
             mkdir_p(head, mode=mode)
         # Make sure the tail doesn't point to the asame place as the head
         if tail and not os.path.isdir(newdir) and os.path.relpath(tail, start=head) != ".":
-            os.mkdirs(newdir, mode)
+            os.makedirs(newdir, mode)
 
 
 def set_write_bit(fn):
