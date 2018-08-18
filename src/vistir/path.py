@@ -146,7 +146,7 @@ def is_readonly_path(fn):
     return False
 
 
-def mkdir_p(newdir, mode=0o755):
+def mkdir_p(newdir, mode=0o777):
     """Recursively creates the target directory and all of its parents if they do not
     already exist.  Fails silently if they do.
 
@@ -168,9 +168,8 @@ def mkdir_p(newdir, mode=0o755):
         if head and not os.path.isdir(head):
             mkdir_p(head, mode=mode)
         # Make sure the tail doesn't point to the asame place as the head
-        head_base = os.path.basename(head)
-        if tail and not os.path.isdir(newdir) and os.path.relpath(tail, start=head_base) != ".":
-            os.mkdir(newdir, mode)
+        if tail and not os.path.isdir(newdir) and os.path.relpath(tail, start=head) != ".":
+            os.mkdirs(newdir, mode)
 
 
 def set_write_bit(fn):

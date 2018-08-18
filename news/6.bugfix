@@ -1,0 +1,1 @@
+Fixed an issue which caused ``mkdir_p`` to use incorrect permissions and throw errors when creating intermediary paths.
