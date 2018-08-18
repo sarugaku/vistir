@@ -1,6 +1,7 @@
 # -*- coding=utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 
+import io
 import os
 import six
 import stat
@@ -43,6 +44,35 @@ def test_mkdir_p(base_dir, subdir):
         target = vistir.misc.to_bytes(target, encoding="utf-8")
         vistir.path.mkdir_p(target)
         assert os.path.exists(target)
+
+
+@given(legal_path_chars(), legal_path_chars())
+@settings(suppress_health_check=(HealthCheck.filter_too_much,))
+def test_ensure_mkdir_p(base_dir, subdir):
+    assume(not any((dir_name in ["", ".", "./", ".."] for dir_name in [base_dir, subdir])))
+    assume(not (os.path.relpath(subdir, start=base_dir) == "."))
+    assume(os.path.abspath(base_dir) != os.path.abspath(os.path.join(base_dir, subdir)))
+    with vistir.compat.TemporaryDirectory() as temp_dir:
+        temp_dirname = temp_dir.name
+
+        @vistir.path.ensure_mkdir_p(mode=0o777)
+        def join_with_dir(_base_dir, _subdir, base=temp_dirname):
+            return os.path.join(base, _base_dir, _subdir)
+
+        target = join_with_dir(base_dir, subdir)
+        assume(vistir.path.abspathu(target) != vistir.path.abspathu(os.path.join(temp_dir.name, base_dir)))
+        target = vistir.misc.to_bytes(target, encoding="utf-8")
+        assert os.path.exists(target)
+
+
+def test_create_tracked_tempdir(tmpdir):
+    subdir = tmpdir.join("subdir")
+    subdir.mkdir()
+    temp_dir = vistir.path.create_tracked_tempdir(prefix="test_dir", dir=subdir.strpath)
+    assert os.path.basename(temp_dir).startswith("test_dir")
+    with io.open(os.path.join(temp_dir, "test_file.txt"), "w") as fh:
+        fh.write("this is a test")
+    assert len(os.listdir(temp_dir)) > 0
 
 
 def test_rmtree(tmpdir):

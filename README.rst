@@ -382,6 +382,8 @@ Converts arbitrary byte-convertable input to bytes while handling errors.
     * ``vistir.path.is_readonly_path``
     * ``vistir.path.is_valid_url``
     * ``vistir.path.mkdir_p``
+    * ``vistir.path.ensure_mkdir_p``
+    * ``vistir.path.create_tracked_tempdir``
     * ``vistir.path.path_to_url``
     * ``vistir.path.rmtree``
     * ``vistir.path.safe_expandvars``
@@ -486,6 +488,46 @@ already exist.  Fails silently if they do.
     >>> os.listdir('/tmp/test_dir/child/subchild')
     ['subsubchild']
 
+
+.. _`ensure_mkdir_p`:
+
+**ensure_mkdir_p**
+///////////////////
+
+A decorator which ensures that the caller function's return value is created as a
+directory on the filesystem.
+
+.. code:: python
+
+    >>> @ensure_mkdir_p
+    def return_fake_value(path):
+        return path
+    >>> return_fake_value('/tmp/test_dir')
+    >>> os.listdir('/tmp/test_dir')
+    []
+    >>> return_fake_value('/tmp/test_dir/child/subchild/subsubchild')
+    >>> os.listdir('/tmp/test_dir/child/subchild')
+    ['subsubchild']
+
+
+.. _`create_tracked_tempdir`:
+
+**create_tracked_tempdir**
+////////////////////////////
+
+Creates a tracked temporary directory using ``vistir.path.TemporaryDirectory``, but does
+not remove the directory when the return value goes out of scope, instead registers a
+handler to cleanup on program exit.
+
+.. code:: python
+
+    >>> temp_dir = vistir.path.create_tracked_tempdir(prefix="test_dir")
+    >>> assert temp_dir.startswith("test_dir")
+    True
+    >>> with vistir.path.create_tracked_tempdir(prefix="test_dir") as temp_dir:
+        with io.open(os.path.join(temp_dir, "test_file.txt"), "w") as fh:
+            fh.write("this is a test")
+    >>> os.listdir(temp_dir)
 
 .. _`path_to_url`:
 

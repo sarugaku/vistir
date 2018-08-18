@@ -1,7 +1,9 @@
 # -*- coding=utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 
+import atexit
 import errno
+import functools
 import os
 import posixpath
 import shutil
@@ -10,11 +12,11 @@ import warnings
 
 import six
 
-from six.moves.urllib import request as urllib_request
 from six.moves import urllib_parse
+from six.moves.urllib import request as urllib_request
 
-from .compat import Path, _fs_encoding
-from .misc import to_bytes, to_text, locale_encoding
+from .compat import Path, _fs_encoding, TemporaryDirectory
+from .misc import locale_encoding, to_bytes, to_text
 
 
 __all__ = [
@@ -25,6 +27,8 @@ __all__ = [
     "is_readonly_path",
     "is_valid_url",
     "mkdir_p",
+    "ensure_mkdir_p",
+    "create_tracked_tempdir",
     "path_to_url",
     "rmtree",
     "safe_expandvars",
@@ -176,6 +180,40 @@ def mkdir_p(newdir, mode=0o777):
                     )
                 )
             os.makedirs(os.path.join(head, tail), mode)
+
+
+def ensure_mkdir_p(mode=0o777):
+    """Decorator to ensure `mkdir_p` is called to the function's return value.
+    """
+    def decorator(f):
+
+        @functools.wraps(f)
+        def decorated(*args, **kwargs):
+            path = f(*args, **kwargs)
+            mkdir_p(path, mode=mode)
+            return path
+
+        return decorated
+
+    return decorator
+
+
+TRACKED_TEMPORARY_DIRECTORIES = []
+
+
+def create_tracked_tempdir(*args, **kwargs):
+    """Create a tracked temporary directory.
+
+    This uses `TemporaryDirectory`, but does not remove the directory when
+    the return value goes out of scope, instead registers a handler to cleanup
+    on program exit.
+
+    The return value is the path to the created directory.
+    """
+    tempdir = TemporaryDirectory(*args, **kwargs)
+    TRACKED_TEMPORARY_DIRECTORIES.append(tempdir)
+    atexit.register(tempdir.cleanup)
+    return tempdir.name
 
 
 def set_write_bit(fn):
