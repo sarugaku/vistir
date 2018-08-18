@@ -1,3 +1,12 @@
+0.1.2 (2018-08-18)
+==================
+
+Features
+--------
+
+- Added ``mode`` parameter to ``vistir.path.mkdir_p``.  `#5 <https://github.com/sarugaku/vistir/issues/5>`_
+
+
 0.1.1 (2018-08-14)
 ==================
 
