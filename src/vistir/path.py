@@ -168,7 +168,8 @@ def mkdir_p(newdir, mode=0o777):
         if head and not os.path.isdir(head):
             mkdir_p(head, mode=mode)
         # Make sure the tail doesn't point to the asame place as the head
-        if tail and not os.path.isdir(newdir) and os.path.relpath(tail, start=head) != ".":
+        tail_and_head_match = os.path.relpath(tail, start=os.path.basename(head)) == "."
+        if tail and not os.path.isdir(newdir) and not tail_and_head_match:
             os.makedirs(newdir, mode)
 
 
