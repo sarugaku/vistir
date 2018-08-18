@@ -1,3 +1,12 @@
+0.1.3 (2018-08-18)
+==================
+
+Bug Fixes
+---------
+
+- Fixed an issue which caused ``mkdir_p`` to use incorrect permissions and throw errors when creating intermediary paths.  `#6 <https://github.com/sarugaku/vistir/issues/6>`_
+
+
 0.1.2 (2018-08-18)
 ==================
 
