@@ -1,1 +1,0 @@
-Use native implementation of ``os.makedirs`` to fix still-broken ``mkdir_p`` but provide additional error-handling logic.

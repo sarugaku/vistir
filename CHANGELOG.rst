@@ -1,3 +1,20 @@
+0.1.4 (2018-08-18)
+==================
+
+Features
+--------
+
+- Implemented ``vistir.path.ensure_mkdir_p`` decorator for wrapping the output of a function call to ensure it is created as a directory.
+
+  Added ``vistir.path.create_tracked_tmpdir`` functionality for creating a temporary directory which is tracked using an ``atexit`` handler rather than a context manager.  `#7 <https://github.com/sarugaku/vistir/issues/7>`_
+  
+
+Bug Fixes
+---------
+
+- Use native implementation of ``os.makedirs`` to fix still-broken ``mkdir_p`` but provide additional error-handling logic.  `#6 <https://github.com/sarugaku/vistir/issues/6>`_
+
+
 0.1.3 (2018-08-18)
 ==================
 
