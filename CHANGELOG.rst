@@ -1,3 +1,19 @@
+0.1.5 (2018-09-07)
+==================
+
+Features
+--------
+
+- Users may now pass ``block=False`` to create nonblocking subprocess calls to ``vistir.misc.run()``.
+  ``vistir.misc.run()`` will now provide a spinner when passed ``spinner=True``.  `#11 <https://github.com/sarugaku/vistir/issues/11>`_
+  
+
+Bug Fixes
+---------
+
+- ``vistir.misc.run()`` now provides the full subprocess object without communicating with it when passed ``return_object=True``.  `#11 <https://github.com/sarugaku/vistir/issues/11>`_
+
+
 0.1.4 (2018-08-18)
 ==================
 

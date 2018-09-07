@@ -1,1 +1,0 @@
-``vistir.misc.run()`` now provides the full subprocess object without communicating with it when passed ``return_object=True``.
