@@ -10,7 +10,7 @@ install:
   - "pip install --upgrade pip pipenv"
   - "pipenv install --dev"
 script:
-    - "pipenv run pytest -v -n 8 tests/"
+    - "pipenv run pytest -v -n auto tests/"
 
 jobs:
   include:
@@ -34,4 +34,4 @@ jobs:
         - "pip install --upgrade pip pipenv"
         - "pipenv install --dev"
       script:
-        - "pipenv run pytest --timeout 300 --cov=vistir --cov-report=term-missing --cov-report=xml --cov-report=html tests"
+        - "pipenv run pytest -n auto --timeout 300 --cov=vistir --cov-report=term-missing --cov-report=xml --cov-report=html tests"
