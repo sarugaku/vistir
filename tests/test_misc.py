@@ -63,6 +63,20 @@ def test_run():
     assert any(error_text in err for error_text in ["ImportError", "ModuleNotFoundError"])
 
 
+def test_run_return_subprocess():
+    c = vistir.misc.run(["python", "-c", "print('test')"], return_object=True)
+    assert c.returncode == 0
+    assert c.out.strip() == "test"
+
+
+def test_nonblocking_run():
+    c = vistir.misc.run(["python", "--help"], block=False, return_object=True)
+    assert c.returncode == 0
+    assert "PYTHONHOME" in c.out
+    out, err = vistir.misc.run(["python", "--help"], block=False)
+    assert "PYTHONHOME" in out
+
+
 def test_load_path():
     loaded_path = vistir.misc.load_path(sys.executable)
     assert any(sys.exec_prefix in loaded_sys_path for loaded_sys_path in loaded_path)
