@@ -1,3 +1,14 @@
+0.1.6 (2018-09-13)
+==================
+
+Features
+--------
+
+- Made ``yaspin`` an optional dependency which can be added as an extra by using ``pip install vistir[spinner]`` and can be toggled with ``vistir.misc.run(...nospin=True)``.  `#12 <https://github.com/sarugaku/vistir/issues/12>`_
+  
+- Added ``verbose`` flag to ``vistir.misc.run()`` to provide a way to prevent printing all subprocess output.  `#13 <https://github.com/sarugaku/vistir/issues/13>`_
+
+
 0.1.5 (2018-09-07)
 ==================
 
