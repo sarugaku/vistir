@@ -57,24 +57,34 @@ def test_dedup():
 
 
 def test_run():
-    out, err = vistir.misc.run(["python", "-c", "print('hello')"])
+    out, err = vistir.misc.run(["python", "-c", "print('hello')"], nospin=True)
     assert out == "hello"
-    out, err = vistir.misc.run(["python", "-c", "import ajwfoiejaoiwj"])
-    assert any(error_text in err for error_text in ["ImportError", "ModuleNotFoundError"])
+    out, err = vistir.misc.run(["python", "-c", "import ajwfoiejaoiwj"], nospin=True)
+    assert any(error_text in err for error_text in ["ImportError", "ModuleNotFoundError"]), "{0} => {1}".format(out, err)
 
 
 def test_run_return_subprocess():
-    c = vistir.misc.run(["python", "-c", "print('test')"], return_object=True)
+    c = vistir.misc.run(["python", "-c", "print('test')"], return_object=True, nospin=True)
     assert c.returncode == 0
     assert c.out.strip() == "test"
 
 
 def test_nonblocking_run():
-    c = vistir.misc.run(["python", "--help"], block=False, return_object=True)
+    c = vistir.misc.run(["python", "--help"], block=False, return_object=True, nospin=True)
     assert c.returncode == 0
-    assert "PYTHONHOME" in c.out
-    out, err = vistir.misc.run(["python", "--help"], block=False)
-    assert "PYTHONHOME" in out
+    c.wait()
+    assert "PYTHONDONTWRITEBYTECODE" in c.out, c.out
+    out, err = vistir.misc.run(["python", "--help"], block=False, nospin=True)
+    assert "PYTHONDONTWRITEBYTECODE" in out, out
+    # historical = []
+    # while out:
+    #     pos = out.find("\n")
+    #     if not pos:
+    #         historical.append(out)
+    #     line, _, out = out.partition("\n")
+    #     if line not in historical:
+    #         historical.append(line)
+    # assert any(["PYTHONHOME" in line for line in historical]), historical
 
 
 def test_load_path():

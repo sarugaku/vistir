@@ -121,7 +121,8 @@ def _create_subprocess(
     display_limit=200
 ):
     try:
-        c = _spawn_subprocess(cmd, env=env, block=block, cwd=cwd)
+        c = _spawn_subprocess(cmd, env=env, block=block, cwd=cwd,
+                                                    combine_stderr=combine_stderr)
     except Exception as exc:
         print("Error %s while executing command %s", exc, " ".join(cmd._parts))
         raise
@@ -181,7 +182,11 @@ def _create_subprocess(
     else:
         c.out, c.err = c.communicate()
     if not return_object:
-        return c.out.strip(), c.err.strip()
+        if not block:
+            c.wait()
+        out = c.out if c.out else ""
+        err = c.err if c.err else ""
+        return out.strip(), err.strip()
     return c
 
 
@@ -234,8 +239,9 @@ def run(
             cmd = [c.encode("utf-8") for c in cmd]
     if not isinstance(cmd, Script):
         cmd = Script.parse(cmd)
-    if block:
+    if block or not return_object:
         combine_stderr = False
+    sigmap = {}
     if nospin is False:
         try:
             import signal
@@ -250,15 +256,18 @@ def run(
         else:
             animation = getattr(spinners.Spinners, spinner)
             sigmap = {
-                signal.SIGINT: fancy_handler,
-                signal.CTRL_C_EVENT: fancy_handler,
-                signal.CTRL_BREAK_EVENT: fancy_handler
+                signal.SIGINT: fancy_handler
             }
+            if os.name == "nt":
+                sigmap.update({
+                    signal.CTRL_C_EVENT: fancy_handler,
+                    signal.CTRL_BREAK_EVENT: fancy_handler
+                })
             spinner_func = yaspin
     else:
 
         @contextmanager
-        def spinner_func(spin_type, text):
+        def spinner_func(spin_type, text, **kwargs):
             class FakeClass(object):
                 def __init__(self, text=""):
                     self.text = text
