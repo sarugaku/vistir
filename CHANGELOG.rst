@@ -1,3 +1,12 @@
+0.1.7 (2018-10-11)
+==================
+
+Features
+--------
+
+- Updated ``misc.run`` to accept new arguments for ``spinner``, ``combine_stderr``, and ``display_limit``.  `#16 <https://github.com/sarugaku/vistir/issues/16>`_
+
+
 0.1.6 (2018-09-13)
 ==================
 
