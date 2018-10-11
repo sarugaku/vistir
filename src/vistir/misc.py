@@ -307,7 +307,8 @@ def load_path(python):
     """
 
     python = Path(python).as_posix()
-    out, err = run([python, "-c", "import json, sys; print(json.dumps(sys.path))"])
+    out, err = run([python, "-c", "import json, sys; print(json.dumps(sys.path))"],
+                        nospin=True)
     if out:
         return json.loads(out)
     else:
