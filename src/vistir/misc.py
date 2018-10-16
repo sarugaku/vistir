@@ -106,7 +106,7 @@ def _spawn_subprocess(script, env={}, block=True, cwd=None, combine_stderr=True)
     try:
         return subprocess.Popen(cmd, **options)
     except WindowsError as e:
-        if getattr(e, "winerror", e.errno) != 193:
+        if getattr(e, "winerror", -9999) != 193:
             raise
     options["shell"] = True
     # Try shell mode to use Windows's file association for file launch.

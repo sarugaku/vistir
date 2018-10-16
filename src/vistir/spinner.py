@@ -24,7 +24,7 @@ elif yaspin and os.name != "nt":
 
 class DummySpinner(object):
     def __init__(self, text="", **kwargs):
-        self.text = text
+        print(text)
 
     def fail(self, exitcode=1, text=None):
         if text:
@@ -43,7 +43,7 @@ base_obj = yaspin.core.Yaspin if yaspin is not None else DummySpinner
 
 
 class VistirSpinner(base_obj):
-    def __init__(self, *args, text="", spinner_name=None, **kwargs):
+    def __init__(self, *args, **kwargs):
         """Get a spinner object or a dummy spinner to wrap a context.
 
         Keyword Arguments:
@@ -61,10 +61,15 @@ class VistirSpinner(base_obj):
                 signal.SIGBREAK: handler,
                 signal.SIGTERM: handler
             })
-        animation = getattr(Spinners, spinner_name, Spinners.bouncingBar)
-        kwargs["text"] = text
-        kwargs["sigmap"] = self.sigmap
-        args.insert(0, animation)
+        handler_map = kwargs.pop("handler_map", {})
+        if handler_map:
+            sigmap.update(handler_map)
+        spinner_name = kwargs.pop("spinner_name", "bouncingBar")
+        text = kwargs.pop("start_text", "") + " " + kwargs.pop("text", "")
+        if not text:
+            text = "Running..."
+        kwargs["sigmap"] = sigmap
+        kwargs["spinner"] = getattr(Spinners, spinner_name, Spinners.bouncingBar)
         super(VistirSpinner, self).__init__(*args, **kwargs)
         self.is_dummy = bool(yaspin is None)
 

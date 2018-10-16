@@ -128,7 +128,7 @@ def spinner(spinner_name=None, start_text=None, handler_map=None, nospin=False):
         spinner_name = None
     if not start_text:
         start_text = "Running..."
-    with spinner_func(spinner_name, text=start_text) as _spinner:
+    with spinner_func(spinner_name=spinner_name, text=start_text, handler_map=handler_map, nospin=nospin) as _spinner:
         yield _spinner
 
 
