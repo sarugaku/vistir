@@ -1,9 +1,10 @@
 # -*- coding=utf-8 -*-
+import os
 import signal
+import sys
 
 from .termcolors import colored
 
-import colorama
 import cursor
 import functools
 try:
@@ -14,12 +15,31 @@ except ImportError:
 else:
     from yaspin.spinners import Spinners
 
-base_obj = yaspin.core.Yaspin if yaspin is not None else object
 handler = None
 if yaspin and os.name == "nt":
     handler = yaspin.signal_handlers.default_handler
 elif yaspin and os.name != "nt":
     handler = yaspin.signal_handlers.fancy_handler
+
+
+class DummySpinner(object):
+    def __init__(self, text="", **kwargs):
+        self.text = text
+
+    def fail(self, exitcode=1, text=None):
+        if text:
+            print(text)
+        raise SystemExit(exitcode, text)
+
+    def ok(self, text=None):
+        print(text)
+        return 0
+
+    def write(self, text=None):
+        print(text)
+
+
+base_obj = yaspin.core.Yaspin if yaspin is not None else DummySpinner
 
 
 class VistirSpinner(base_obj):
@@ -32,11 +52,11 @@ class VistirSpinner(base_obj):
         handler_map {dict} -- Handler map for signals to be handled gracefully (default: {None})
         nospin {bool} -- If true, use the dummy spinner (default: {False})
         """
-        self.text = text
+
         self.handler = handler
-        self.sigmap = {}
+        sigmap = {}
         if handler:
-            self.sigmap.update({
+            sigmap.update({
                 signal.SIGINT: handler,
                 signal.SIGBREAK: handler,
                 signal.SIGTERM: handler
@@ -46,18 +66,16 @@ class VistirSpinner(base_obj):
         kwargs["sigmap"] = self.sigmap
         args.insert(0, animation)
         super(VistirSpinner, self).__init__(*args, **kwargs)
+        self.is_dummy = bool(yaspin is None)
 
-    def fail(self, exitcode=1, text=None):
-        if text:
-            print(text)
-        raise SystemExit(exitcode, text)
+    def fail(self, exitcode=1, *args, **kwargs):
+        super(VistirSpinner, self).fail(**kwargs)
 
-    def ok(self, text):
-        print(text)
-        return 0
+    def ok(self, *args, **kwargs):
+        super(VistirSpinner, self).ok(*args, **kwargs)
 
-    def write(self, text):
-        print(text)
+    def write(self, *args, **kwargs):
+        super(VistirSpinner, self).write(*args, **kwargs)
 
     def _compose_color_func(self):
         fn = functools.partial(
@@ -79,3 +97,10 @@ class VistirSpinner(base_obj):
     @staticmethod
     def _clear_line():
         sys.stdout.write(chr(27) + "[K")
+
+
+def create_spinner(*args, **kwargs):
+    nospin = kwargs.pop("nospin", False)
+    if nospin:
+        return DummySpinner(*args, **kwargs)
+    return VistirSpinner(*args, **kwargs)

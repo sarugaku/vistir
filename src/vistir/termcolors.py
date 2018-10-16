@@ -1,5 +1,6 @@
 # -*- coding=utf-8 -*-
 import colorama
+import os
 
 
 ATTRIBUTES = dict(

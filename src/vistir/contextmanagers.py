@@ -114,7 +114,8 @@ def spinner(spinner_name=None, start_text=None, handler_map=None, nospin=False):
         RuntimeError -- Raised if the spinner extra is not installed
     """
 
-    sigmap = {}
+    from .spinner import create_spinner
+    spinner_func = create_spinner
     if nospin is False:
         try:
             import yaspin
@@ -123,27 +124,11 @@ def spinner(spinner_name=None, start_text=None, handler_map=None, nospin=False):
                 "Failed to import spinner! Reinstall vistir with command:"
                 " pip install --upgrade vistir[spinner]"
             )
-        else:
-            if os.name == "nt":
-                handler = yaspin.signal_handlers.default_handler
-            else:
-                handler = yaspin.signal_handlers.fancy_handler
-            sigmap = {
-                signal.SIGINT: handler,
-                signal.SIGBREAK: handler,
-                signal.SIGTERM: handler
-            }
-            if handler_map:
-                sigmap.update(handler_map)
-            from yaspin.spinners import Spinners
-            animation = getattr(Spinners, spinner_name, Spinners.bouncingBar)
-            spinner_func = yaspin.yaspin
     else:
-        spinner_func = dummy_spinner
-        animation = None
+        spinner_name = None
     if not start_text:
         start_text = "Running..."
-    with spinner_func(animation, sigmap=sigmap, text=start_text) as _spinner:
+    with spinner_func(spinner_name, text=start_text) as _spinner:
         yield _spinner
 
 
