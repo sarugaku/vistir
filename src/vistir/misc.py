@@ -8,7 +8,6 @@ import subprocess
 import sys
 
 from collections import OrderedDict
-from contextlib import contextmanager
 from functools import partial
 
 import six
@@ -16,6 +15,10 @@ import six
 from .cmdparse import Script
 from .compat import Path, fs_str, partialmethod
 from .contextmanagers import spinner as spinner
+
+if os.name != "nt":
+    class WindowsError(OSError):
+        pass
 
 
 __all__ = [
@@ -103,7 +106,7 @@ def _spawn_subprocess(script, env={}, block=True, cwd=None, combine_stderr=True)
     try:
         return subprocess.Popen(cmd, **options)
     except WindowsError as e:
-        if e.winerror != 193:
+        if getattr(e, "winerror", e.errno) != 193:
             raise
     options["shell"] = True
     # Try shell mode to use Windows's file association for file launch.
