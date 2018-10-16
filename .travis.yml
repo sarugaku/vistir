@@ -9,6 +9,7 @@ matrix:
 install:
   - "pip install --upgrade pip pipenv"
   - "pipenv install --dev"
+  - "pipenv run pip install --upgrade -e .[spinner,tests]"
 script:
     - "pipenv run pytest -v -n auto tests/"
 
@@ -33,5 +34,6 @@ jobs:
       install:
         - "pip install --upgrade pip pipenv"
         - "pipenv install --dev"
+        - "pipenv run pip install --upgrade -e .[spinner,tests]"
       script:
         - "pipenv run pytest -n auto --timeout 300 --cov=vistir --cov-report=term-missing --cov-report=xml --cov-report=html tests"

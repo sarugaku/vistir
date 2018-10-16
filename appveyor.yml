@@ -15,6 +15,7 @@ install:
   - "python --version"
   - "python -m pip install --upgrade pip pipenv"
   - "python -m pipenv install --dev"
+  - "python -m pipenv run pip install -e .[tests,spinner]"
 
 build: off
 
