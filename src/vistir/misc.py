@@ -2,6 +2,7 @@
 from __future__ import absolute_import, unicode_literals
 
 import json
+import logging
 import locale
 import os
 import subprocess
@@ -32,6 +33,22 @@ __all__ = [
     "to_bytes",
     "locale_encoding",
 ]
+
+
+def _get_logger(name=None, level="ERROR"):
+    if not name:
+        name = __name__
+    if isinstance(level, six.string_types):
+        level = getattr(logging, level.upper())
+    logger = logging.getLogger(name)
+    logger.setLevel(level)
+    formatter = logging.Formatter(
+        "%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s"
+    )
+    handler = logging.StreamHandler()
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    return logger
 
 
 def shell_escape(cmd):
@@ -106,7 +123,7 @@ def _spawn_subprocess(script, env={}, block=True, cwd=None, combine_stderr=True)
     try:
         return subprocess.Popen(cmd, **options)
     except WindowsError as e:
-        if getattr(e, "winerror", -9999) != 193:
+        if getattr(e, "winerror", 9999) != 193:
             raise
     options["shell"] = True
     # Try shell mode to use Windows's file association for file launch.
@@ -132,6 +149,8 @@ def _create_subprocess(
         raise
     if not block:
         c.stdin.close()
+        log_level = "VERBOSE" if verbose else "WARN"
+        logger = _get_logger(cmd._parts[0], level=log_level)
         output = []
         err = []
         spinner_orig_text = ""
@@ -159,15 +178,24 @@ def _create_subprocess(
             if not (stdout_line or stderr_line):
                 break
             if stderr_line:
-                err.append(line)
+                err.append(stderr_line)
+                if verbose:
+                    if spinner:
+                        spinner.write(to_text(stderr_line))
+                    logger.error(to_text(stderr_line))
+                else:
+                    logger.debug(to_text(stderr_line))
             if stdout_line:
                 output.append(to_text(stdout_line))
                 display_line = stdout_line
                 if len(stdout_line) > display_limit:
                     display_line = "{0}...".format(stdout_line[:display_limit])
                 if verbose:
-                    spinner.write(to_bytes(display_line, encoding="utf-8"))
-                spinner.text = to_text("{0} {1}".format(spinner_orig_text, display_line))
+                    if spinner:
+                        spinner.write(to_text(display_line, encoding="utf-8"))
+                logger.debug(to_text(display_line))
+                if spinner:
+                    spinner.text = to_text("{0} {1}".format(spinner_orig_text, display_line))
                 continue
         try:
             c.wait()
@@ -179,9 +207,10 @@ def _create_subprocess(
         if spinner:
             if c.returncode > 0:
                 spinner.fail("Failed...cleaning up...")
-            spinner.text = "Complete!"
+            else:
+                spinner.text = "Complete!"
             if not os.name == "nt":
-                spinner.ok(u"✔")
+                spinner.ok("✔")
             else:
                 spinner.ok()
         c.out = "\n".join(output)

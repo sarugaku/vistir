@@ -228,6 +228,8 @@ def set_write_bit(fn):
     :param str fn: The target filename or path
     """
 
+    from .misc import to_bytes, locale_encoding
+    fn = to_bytes(fn, encoding=locale_encoding)
     if not os.path.exists(fn):
         return
     os.chmod(fn, stat.S_IWRITE | stat.S_IWUSR | stat.S_IRUSR)

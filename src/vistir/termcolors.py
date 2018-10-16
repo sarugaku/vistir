@@ -1,4 +1,5 @@
 # -*- coding=utf-8 -*-
+from __future__ import absolute_import, print_function, unicode_literals
 import colorama
 import os
 
@@ -56,7 +57,8 @@ RESET = colorama.Style.RESET_ALL
 
 
 def colored(text, color=None, on_color=None, attrs=None):
-    """Colorize text.
+    """Colorize text using a reimplementation of the colorizer from
+    https://github.com/pavdmyt/yaspin so that it works on windows.
 
     Available text colors:
         red, green, yellow, blue, magenta, cyan, white.

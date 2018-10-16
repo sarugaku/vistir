@@ -2,7 +2,6 @@
 from __future__ import absolute_import, unicode_literals
 
 import os
-import signal
 import stat
 import sys
 
@@ -14,7 +13,9 @@ from .compat import NamedTemporaryFile, Path
 from .path import is_file_url, is_valid_url, path_to_url, url_to_path
 
 
-__all__ = ["temp_environ", "temp_path", "cd", "atomic_open_for_write", "open_file"]
+__all__ = [
+    "temp_environ", "temp_path", "cd", "atomic_open_for_write", "open_file", "spinner"
+]
 
 
 # Borrowed from Pew.
@@ -104,17 +105,18 @@ def dummy_spinner(spin_type, text, **kwargs):
 def spinner(spinner_name=None, start_text=None, handler_map=None, nospin=False):
     """Get a spinner object or a dummy spinner to wrap a context.
 
-    Keyword Arguments:
-        spinner_name {str} -- a spinner type e.g. "dots" or "bouncingBar" (default: {"bouncingBar"})
-        start_text {str} -- text to start off the spinner with (default: {None})
-        handler_map {dict} -- Handler map for signals to be handled gracefully (default: {None})
-        nospin {bool} -- If true, use the dummy spinner (default: {False})
+    :param str spinner_name: A spinner type e.g. "dots" or "bouncingBar" (default: {"bouncingBar"})
+    :param str start_text: Text to start off the spinner with (default: {None})
+    :param dict handler_map: Handler map for signals to be handled gracefully (default: {None})
+    :param bool nospin: If true, use the dummy spinner (default: {False})
+    :return: A spinner object which can be manipulated while alive
+    :rtype: :class:`~vistir.spin.VistirSpinner`
 
     Raises:
         RuntimeError -- Raised if the spinner extra is not installed
     """
 
-    from .spinner import create_spinner
+    from .spin import create_spinner
     spinner_func = create_spinner
     if nospin is False:
         try:
@@ -128,7 +130,12 @@ def spinner(spinner_name=None, start_text=None, handler_map=None, nospin=False):
         spinner_name = None
     if not start_text:
         start_text = "Running..."
-    with spinner_func(spinner_name=spinner_name, text=start_text, handler_map=handler_map, nospin=nospin) as _spinner:
+    with spinner_func(
+        spinner_name=spinner_name,
+        text=start_text,
+        handler_map=handler_map,
+        nospin=nospin,
+    ) as _spinner:
         yield _spinner
 
 

@@ -128,6 +128,7 @@ defualt encoding:
     * :func:`~vistir.contextmanagers.atomic_open_for_write`
     * :func:`~vistir.contextmanagers.cd`
     * :func:`~vistir.contextmanagers.open_file`
+    * :func:`~vistir.contextmanagers.spinner`
     * :func:`~vistir.contextmanagers.temp_environ`
     * :func:`~vistir.contextmanagers.temp_path`
 
@@ -198,6 +199,31 @@ to pair this with an iterator which employs a sensible chunk size.
     >>> with vistir.contextmanagers.open_file("https://norvig.com/big.txt") as fp:
             shutil.copyfileobj(fp, filecontents)
 
+
+.. _`spinner`:
+
+**spinner**
+////////////
+
+A context manager for wrapping some actions with a threaded, interrupt-safe spinner. The
+spinner is fully compatible with all terminals (you can use ``bouncingBar`` on non-utf8
+terminals) and will allow you to update the text of the spinner itself by simply setting
+``spinner.text`` or write lines to the screen above the spinner by using
+``spinner.write(line)``. Success text can be indicated using ``spinner.ok("Text")`` and
+failure text can be indicated with ``spinner.fail("Fail text")``.
+
+.. code:: python
+
+    >>> lines = ["a", "b"]
+    >>> with vistir.contextmanagers.spinner(spinner_name="dots", text="Running...", handler_map={}, nospin=False) as sp:
+            for line in lines:
+            sp.write(line + "\n")
+            while some_variable = some_queue.pop():
+                sp.text = "Consuming item: %s" % some_variable
+            if success_condition:
+                sp.ok("Succeeded!")
+            else:
+                sp.fail("Failed!")
 
 
 .. _`temp_environ`:

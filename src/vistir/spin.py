@@ -24,7 +24,17 @@ elif yaspin and os.name != "nt":
 
 class DummySpinner(object):
     def __init__(self, text="", **kwargs):
-        print(text)
+        self.text = text
+
+    def __enter__(self):
+        print(self.text)
+        return self
+
+    def __exit__(self, exc_type, exc_val, traceback):
+        if not exc_type:
+            self.ok("Suceeded!")
+        print(traceback)
+        return False
 
     def fail(self, exitcode=1, text=None):
         if text:
@@ -47,10 +57,10 @@ class VistirSpinner(base_obj):
         """Get a spinner object or a dummy spinner to wrap a context.
 
         Keyword Arguments:
-        spinner_name {str} -- a spinner type e.g. "dots" or "bouncingBar" (default: {"bouncingBar"})
-        start_text {str} -- text to start off the spinner with (default: {None})
-        handler_map {dict} -- Handler map for signals to be handled gracefully (default: {None})
-        nospin {bool} -- If true, use the dummy spinner (default: {False})
+        :param str spinner_name: A spinner type e.g. "dots" or "bouncingBar" (default: {"bouncingBar"})
+        :param str start_text: Text to start off the spinner with (default: {None})
+        :param dict handler_map: Handler map for signals to be handled gracefully (default: {None})
+        :param bool nospin: If true, use the dummy spinner (default: {False})
         """
 
         self.handler = handler
