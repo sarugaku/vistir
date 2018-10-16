@@ -68,10 +68,13 @@ class VistirSpinner(base_obj):
         if handler:
             sigmap.update({
                 signal.SIGINT: handler,
-                signal.SIGBREAK: handler,
                 signal.SIGTERM: handler
             })
         handler_map = kwargs.pop("handler_map", {})
+        if os.name == "nt":
+            sigmap[signal.SIGBREAK] = handler
+        else:
+            sigmap[signal.SIGALRM] = handler
         if handler_map:
             sigmap.update(handler_map)
         spinner_name = kwargs.pop("spinner_name", "bouncingBar")
