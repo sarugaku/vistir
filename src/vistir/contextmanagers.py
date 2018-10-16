@@ -2,6 +2,7 @@
 from __future__ import absolute_import, unicode_literals
 
 import os
+import signal
 import stat
 import sys
 
@@ -75,6 +76,75 @@ def cd(path):
         yield
     finally:
         os.chdir(prev_cwd)
+
+
+@contextmanager
+def dummy_spinner(spin_type, text, **kwargs):
+    class FakeClass(object):
+        def __init__(self, text=""):
+            self.text = text
+
+        def fail(self, exitcode=1, text=None):
+            if text:
+                print(text)
+            raise SystemExit(exitcode, text)
+
+        def ok(self, text):
+            print(text)
+            return 0
+
+        def write(self, text):
+            print(text)
+
+    myobj = FakeClass(text)
+    yield myobj
+
+
+@contextmanager
+def spinner(spinner_name=None, start_text=None, handler_map=None, nospin=False):
+    """Get a spinner object or a dummy spinner to wrap a context.
+
+    Keyword Arguments:
+        spinner_name {str} -- a spinner type e.g. "dots" or "bouncingBar" (default: {"bouncingBar"})
+        start_text {str} -- text to start off the spinner with (default: {None})
+        handler_map {dict} -- Handler map for signals to be handled gracefully (default: {None})
+        nospin {bool} -- If true, use the dummy spinner (default: {False})
+
+    Raises:
+        RuntimeError -- Raised if the spinner extra is not installed
+    """
+
+    sigmap = {}
+    if nospin is False:
+        try:
+            import yaspin
+        except ImportError:
+            raise RuntimeError(
+                "Failed to import spinner! Reinstall vistir with command:"
+                " pip install --upgrade vistir[spinner]"
+            )
+        else:
+            if os.name == "nt":
+                handler = yaspin.signal_handlers.default_handler
+            else:
+                handler = yaspin.signal_handlers.fancy_handler
+            sigmap = {
+                signal.SIGINT: handler,
+                signal.SIGBREAK: handler,
+                signal.SIGTERM: handler
+            }
+            if handler_map:
+                sigmap.update(handler_map)
+            from yaspin.spinners import Spinners
+            animation = getattr(Spinners, spinner_name, Spinners.bouncingBar)
+            spinner_func = yaspin.yaspin
+    else:
+        spinner_func = dummy_spinner
+        animation = None
+    if not start_text:
+        start_text = "Running..."
+    with spinner_func(animation, sigmap=sigmap, text=start_text) as _spinner:
+        yield _spinner
 
 
 @contextmanager

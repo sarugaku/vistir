@@ -16,7 +16,6 @@ from six.moves import urllib_parse
 from six.moves.urllib import request as urllib_request
 
 from .compat import Path, _fs_encoding, TemporaryDirectory
-from .misc import locale_encoding, to_bytes, to_text
 
 
 __all__ = [
@@ -74,6 +73,7 @@ def normalize_drive(path):
     identified with either upper or lower cased drive names. The case is
     always converted to uppercase because it seems to be preferred.
     """
+    from .misc import to_text
     if os.name != "nt" or not isinstance(path, six.string_types):
         return path
 
@@ -95,6 +95,7 @@ def path_to_url(path):
     >>> path_to_url("/home/user/code/myrepo/myfile.zip")
     'file:///home/user/code/myrepo/myfile.zip'
     """
+    from .misc import to_text, to_bytes
 
     if not path:
         return path
@@ -108,6 +109,7 @@ def url_to_path(url):
 
     Follows logic taken from pip's equivalent function
     """
+    from .misc import to_bytes
     assert is_file_url(url), "Only file: urls can be converted to local paths"
     _, netloc, path, _, _ = urllib_parse.urlsplit(url)
     # Netlocs are UNC paths
@@ -128,6 +130,7 @@ def is_valid_url(url):
 
 def is_file_url(url):
     """Returns true if the given url is a file url"""
+    from .misc import to_text
     if not url:
         return False
     if not isinstance(url, six.string_types):
@@ -144,6 +147,7 @@ def is_readonly_path(fn):
 
     Permissions check is `bool(path.stat & stat.S_IREAD)` or `not os.access(path, os.W_OK)`
     """
+    from .misc import to_bytes
     fn = to_bytes(fn, encoding="utf-8")
     if os.path.exists(fn):
         return bool(os.stat(fn).st_mode & stat.S_IREAD) and not os.access(fn, os.W_OK)
@@ -158,6 +162,7 @@ def mkdir_p(newdir, mode=0o777):
     :raises: OSError if a file is encountered along the way
     """
     # http://code.activestate.com/recipes/82465-a-friendly-mkdir/
+    from .misc import to_bytes
     newdir = abspathu(to_bytes(newdir, "utf-8"))
     if os.path.exists(newdir):
         if not os.path.isdir(newdir):
@@ -223,7 +228,6 @@ def set_write_bit(fn):
     :param str fn: The target filename or path
     """
 
-    fn = to_bytes(fn, encoding=locale_encoding)
     if not os.path.exists(fn):
         return
     os.chmod(fn, stat.S_IWRITE | stat.S_IWUSR | stat.S_IRUSR)
@@ -243,6 +247,7 @@ def rmtree(directory, ignore_errors=False):
        Setting `ignore_errors=True` may cause this to silently fail to delete the path
     """
 
+    from .misc import locale_encoding, to_bytes
     directory = to_bytes(directory, encoding=locale_encoding)
     shutil.rmtree(
         directory, ignore_errors=ignore_errors, onerror=handle_remove_readonly
@@ -264,6 +269,7 @@ def handle_remove_readonly(func, path, exc):
     """
     # Check for read-only attribute
     from .compat import ResourceWarning
+    from .misc import locale_encoding, to_bytes, to_text
     default_warning_message = (
         "Unable to remove file due to permissions restriction: {!r}"
     )
@@ -356,6 +362,7 @@ def get_converted_relative_path(path, relative_to=None):
     >>> vistir.path.get_converted_relative_path('/home/user/code/myrepo/myfolder')
     '.'
     """
+    from .misc import to_text, to_bytes  # noqa
 
     if not relative_to:
         relative_to = os.getcwdu() if six.PY2 else os.getcwd()
