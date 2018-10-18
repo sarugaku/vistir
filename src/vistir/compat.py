@@ -25,9 +25,10 @@ __all__ = [
 
 if sys.version_info >= (3, 5):
     from pathlib import Path
-
+    from functools import lru_cache
 else:
     from pathlib2 import Path
+    from backports.functools_lru_cache import lru_cache
 
 if sys.version_info < (3, 3):
     from backports.shutil_get_terminal_size import get_terminal_size
