@@ -149,7 +149,7 @@ def _create_subprocess(
         raise
     if not block:
         c.stdin.close()
-        log_level = "VERBOSE" if verbose else "WARN"
+        log_level = "DEBUG" if verbose else "WARN"
         logger = _get_logger(cmd._parts[0], level=log_level)
         output = []
         err = []
