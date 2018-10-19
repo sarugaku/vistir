@@ -294,7 +294,7 @@ def handle_remove_readonly(func, path, exc):
 
     if exc_exception.errno in [errno.EACCES, errno.EPERM]:
         warnings.warn(
-            default_warning_message.format(to_text(path)),
+            default_warning_message.format(to_text(path, encoding=locale_encoding)),
             ResourceWarning
         )
         return

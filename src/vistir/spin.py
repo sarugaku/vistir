@@ -4,6 +4,7 @@ import signal
 import sys
 
 from .termcolors import colored
+from .compat import fs_str
 
 import cursor
 import functools
@@ -21,32 +22,44 @@ if yaspin and os.name == "nt":
 elif yaspin and os.name != "nt":
     handler = yaspin.signal_handlers.fancy_handler
 
+CLEAR_LINE = chr(27) + "[K"
+
 
 class DummySpinner(object):
     def __init__(self, text="", **kwargs):
         self.text = text
 
     def __enter__(self):
-        print(self.text)
+        if self.text:
+            self.write(self.text)
         return self
 
     def __exit__(self, exc_type, exc_val, traceback):
         if not exc_type:
-            self.ok("Suceeded!")
-        print(traceback)
+            self.ok()
+        else:
+            self.write_err(traceback)
         return False
 
     def fail(self, exitcode=1, text=None):
         if text:
-            print(text)
+            self.write_err(text)
         raise SystemExit(exitcode, text)
 
     def ok(self, text=None):
-        print(text)
+        if text:
+            self.write(self.text)
         return 0
 
     def write(self, text=None):
-        print(text)
+        if text:
+            line = fs_str("{0}\n".format(text))
+            sys.stdout.write(line)
+
+    def write_err(self, text=None):
+        if text:
+            line = fs_str("{0}\n".format(text))
+            sys.stderr.write(line)
 
 
 base_obj = yaspin.core.Yaspin if yaspin is not None else DummySpinner
@@ -95,6 +108,14 @@ class VistirSpinner(base_obj):
     def write(self, *args, **kwargs):
         super(VistirSpinner, self).write(*args, **kwargs)
 
+    def write_err(self, text):
+        """Write error text in the terminal without breaking the spinner."""
+
+        sys.stderr.write("\r")
+        self._clear_err()
+        text = fs_str("{0}\n".format(text))
+        sys.stderr.write(text)
+
     def _compose_color_func(self):
         fn = functools.partial(
             colored,
@@ -113,8 +134,12 @@ class VistirSpinner(base_obj):
         cursor.show()
 
     @staticmethod
+    def _clear_err():
+        sys.stderr.write(CLEAR_LINE)
+
+    @staticmethod
     def _clear_line():
-        sys.stdout.write(chr(27) + "[K")
+        sys.stdout.write(CLEAR_LINE)
 
 
 def create_spinner(*args, **kwargs):

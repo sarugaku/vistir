@@ -1,0 +1,1 @@
+``vistir.contextmanager.spinner`` and ``vistir.spin.VistirSpinner`` now provide ``write_err`` to write to standard error from the spinner.

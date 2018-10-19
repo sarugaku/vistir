@@ -1,0 +1,1 @@
+Suppress ``ResourceWarning`` at runtime if warnings are suppressed in general.

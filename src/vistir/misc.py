@@ -155,7 +155,7 @@ def _create_subprocess(
         err = []
         spinner_orig_text = ""
         if spinner:
-            spinner_orig_text = spinner.text
+            spinner_orig_text = getattr(spinner, "text", "")
         streams = {
             "stdout": c.stdout,
             "stderr": c.stderr
@@ -181,21 +181,21 @@ def _create_subprocess(
                 err.append(stderr_line)
                 if verbose:
                     if spinner:
-                        spinner.write(to_text(stderr_line))
-                    logger.error(to_text(stderr_line))
-                else:
-                    logger.debug(to_text(stderr_line))
+                        spinner.write_err(fs_str(stderr_line))
+                    else:
+                        logger.error(stderr_line)
             if stdout_line:
-                output.append(to_text(stdout_line))
+                output.append(stdout_line)
                 display_line = stdout_line
                 if len(stdout_line) > display_limit:
                     display_line = "{0}...".format(stdout_line[:display_limit])
                 if verbose:
                     if spinner:
-                        spinner.write(to_text(display_line, encoding="utf-8"))
-                logger.debug(to_text(display_line))
+                        spinner.write(fs_str(display_line))
+                    else:
+                        logger.debug(display_line)
                 if spinner:
-                    spinner.text = to_text("{0} {1}".format(spinner_orig_text, display_line))
+                    spinner.text = fs_str("{0} {1}".format(spinner_orig_text, display_line))
                 continue
         try:
             c.wait()
@@ -219,8 +219,8 @@ def _create_subprocess(
         c.out, c.err = c.communicate()
     if not block:
         c.wait()
-    c.out = "{0}".format(c.out) if c.out else ""
-    c.err = "{0}".format(c.err) if c.err else ""
+    c.out = fs_str("{0}".format(c.out)) if c.out else fs_str("")
+    c.err = fs_str("{0}".format(c.err)) if c.err else fs_str("")
     if not return_object:
         return c.out.strip(), c.err.strip()
     return c
