@@ -15,7 +15,7 @@ import six
 from six.moves import urllib_parse
 from six.moves.urllib import request as urllib_request
 
-from .compat import Path, _fs_encoding, TemporaryDirectory
+from .compat import Path, _fs_encoding, TemporaryDirectory, ResourceWarning
 
 
 __all__ = [
@@ -122,9 +122,10 @@ def url_to_path(url):
 
 def is_valid_url(url):
     """Checks if a given string is an url"""
+    from .misc import to_text
     if not url:
         return url
-    pieces = urllib_parse.urlparse(url)
+    pieces = urllib_parse.urlparse(to_text(url))
     return all([pieces.scheme, pieces.netloc])
 
 
@@ -162,8 +163,8 @@ def mkdir_p(newdir, mode=0o777):
     :raises: OSError if a file is encountered along the way
     """
     # http://code.activestate.com/recipes/82465-a-friendly-mkdir/
-    from .misc import to_bytes
-    newdir = abspathu(to_bytes(newdir, "utf-8"))
+    from .misc import to_bytes, to_text
+    newdir = to_bytes(newdir, "utf-8")
     if os.path.exists(newdir):
         if not os.path.isdir(newdir):
             raise OSError(
@@ -173,15 +174,16 @@ def mkdir_p(newdir, mode=0o777):
             )
         pass
     else:
-        head, tail = os.path.split(newdir)
+        head, tail = os.path.split(to_bytes(newdir, encoding="utf-8"))
         # Make sure the tail doesn't point to the asame place as the head
-        tail_and_head_match = os.path.relpath(tail, start=os.path.basename(head)) == "."
+        curdir = to_bytes(".", encoding="utf-8")
+        tail_and_head_match = os.path.relpath(tail, start=os.path.basename(head)) == curdir
         if tail and not tail_and_head_match and not os.path.isdir(newdir):
             target = os.path.join(head, tail)
             if os.path.exists(target) and os.path.isfile(target):
                 raise OSError(
                    "A file with the same name as the desired dir, '{0}', already exists.".format(
-                        newdir
+                        to_text(newdir, encoding="utf-8")
                     )
                 )
             os.makedirs(os.path.join(head, tail), mode)
@@ -215,9 +217,11 @@ def create_tracked_tempdir(*args, **kwargs):
 
     The return value is the path to the created directory.
     """
+
     tempdir = TemporaryDirectory(*args, **kwargs)
     TRACKED_TEMPORARY_DIRECTORIES.append(tempdir)
     atexit.register(tempdir.cleanup)
+    warnings.simplefilter("default", ResourceWarning)
     return tempdir.name
 
 
@@ -271,34 +275,36 @@ def handle_remove_readonly(func, path, exc):
     """
     # Check for read-only attribute
     from .compat import ResourceWarning
-    from .misc import locale_encoding, to_bytes, to_text
+    from .misc import to_bytes
+    PERM_ERRORS = (errno.EACCES, errno.EPERM)
     default_warning_message = (
         "Unable to remove file due to permissions restriction: {!r}"
     )
     # split the initial exception out into its type, exception, and traceback
     exc_type, exc_exception, exc_tb = exc
-    path = to_bytes(path)
+    path = to_bytes(path, encoding="utf-8")
     if is_readonly_path(path):
         # Apply write permission and call original function
         set_write_bit(path)
         try:
             func(path)
         except (OSError, IOError) as e:
-            if e.errno in [errno.EACCES, errno.EPERM]:
-                warnings.warn(
-                    default_warning_message.format(
-                        to_text(path, encoding=locale_encoding)
-                    ), ResourceWarning
-                )
+            if e.errno in PERM_ERRORS:
+                warnings.warn(default_warning_message.format(path), ResourceWarning)
                 return
 
-    if exc_exception.errno in [errno.EACCES, errno.EPERM]:
-        warnings.warn(
-            default_warning_message.format(to_text(path, encoding=locale_encoding)),
-            ResourceWarning
-        )
+    if exc_exception.errno in PERM_ERRORS:
+        set_write_bit(path)
+        try:
+            func(path)
+        except (OSError, IOError) as e:
+            if e.errno in PERM_ERRORS:
+                warnings.warn(default_warning_message.format(path), ResourceWarning)
+            elif e.errno == errno.ENOENT:  # File already gone
+                return
+            else:
+                raise
         return
-
     raise
 
 

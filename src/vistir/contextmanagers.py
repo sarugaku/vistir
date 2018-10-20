@@ -1,6 +1,7 @@
 # -*- coding=utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 
+import io
 import os
 import stat
 import sys
@@ -254,8 +255,11 @@ def open_file(link, session=None):
         if os.path.isdir(local_path):
             raise ValueError("Cannot open directory for read: {}".format(link))
         else:
-            with open(local_path, "rb") as local_file:
+            try:
+                local_file = io.open(local_path, "rb")
                 yield local_file
+            finally:
+                local_file.close()
     else:
         # Remote URL
         headers = {"Accept-Encoding": "identity"}

@@ -78,5 +78,5 @@ def test_open_file(tmpdir):
     local_contents = b""
     with vistir.contextmanagers.open_file(local_file.strpath) as fp:
         for chunk in iter(lambda: fp.read(16384), b""):
-            local_contents.append(chunk)
+            local_contents += chunk
     assert local_contents == filecontents.read()
