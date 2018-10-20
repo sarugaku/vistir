@@ -126,11 +126,10 @@
         },
         "hypothesis": {
             "hashes": [
-                "sha256:a5290a76d6ecbcd621566fde9677c86ad6881b02af973a401310dd2e3b0f345c",
-                "sha256:eb0ea8265c3bf9c4552b2b6de805056104f4b01c2af59c1b3febe41dddabfcdb",
-                "sha256:f9f1515858d904fe1d473fb5099747dd7c5f25392f2d3593c6b4b68e595b1953"
+                "sha256:200d47d54cefe3831ba5ea5ade10471a16df55009e20528526a76c53a73792e5",
+                "sha256:713b3d8f8cbd74d4ce95f003b3b559b4e01bd60025f5b43601b530023bc41d5a"
             ],
-            "version": "==3.77.0"
+            "version": "==3.79.0"
         },
         "hypothesis-fspaths": {
             "hashes": [
@@ -212,10 +211,10 @@
         },
         "requests": {
             "hashes": [
-                "sha256:63b52e3c866428a224f97cab011de738c36aec0185aa91cfacd418b5d58911d1",
-                "sha256:ec22d826a36ed72a7358ff3fe56cbd4ba69dd7a6718ffd450ff0e9df7a47ce6a"
+                "sha256:99dcfdaaeb17caf6e526f32b6a7b780461512ab3f1d992187801694cba42770c",
+                "sha256:a84b8c9ab6239b578f22d1c21d51b696dcfe004032bb80ea832398d6909d7279"
             ],
-            "version": "==2.19.1"
+            "version": "==2.20.0"
         },
         "scandir": {
             "hashes": [
@@ -243,10 +242,10 @@
         },
         "urllib3": {
             "hashes": [
-                "sha256:a68ac5e15e76e7e5dd2b8f94007233e01effe3e50e8daddf69acfd81cb686baf",
-                "sha256:b5725a0bd4ba422ab0e66e89e030c806576753ea3ee08554382c14e685d117b5"
+                "sha256:41c3db2fc01e5b907288010dec72f9d0a74e37d6994e6eb56849f59fea2265ae",
+                "sha256:8819bba37a02d143296a4d032373c4dd4aca11f6d4c9973335ca75f9c8475f59"
             ],
-            "version": "==1.23"
+            "version": "==1.24"
         },
         "vistir": {
             "editable": true,
@@ -429,11 +428,10 @@
         },
         "hypothesis": {
             "hashes": [
-                "sha256:a5290a76d6ecbcd621566fde9677c86ad6881b02af973a401310dd2e3b0f345c",
-                "sha256:eb0ea8265c3bf9c4552b2b6de805056104f4b01c2af59c1b3febe41dddabfcdb",
-                "sha256:f9f1515858d904fe1d473fb5099747dd7c5f25392f2d3593c6b4b68e595b1953"
+                "sha256:200d47d54cefe3831ba5ea5ade10471a16df55009e20528526a76c53a73792e5",
+                "sha256:713b3d8f8cbd74d4ce95f003b3b559b4e01bd60025f5b43601b530023bc41d5a"
             ],
-            "version": "==3.77.0"
+            "version": "==3.79.0"
         },
         "hypothesis-fspaths": {
             "hashes": [
@@ -608,10 +606,10 @@
         },
         "requests": {
             "hashes": [
-                "sha256:63b52e3c866428a224f97cab011de738c36aec0185aa91cfacd418b5d58911d1",
-                "sha256:ec22d826a36ed72a7358ff3fe56cbd4ba69dd7a6718ffd450ff0e9df7a47ce6a"
+                "sha256:99dcfdaaeb17caf6e526f32b6a7b780461512ab3f1d992187801694cba42770c",
+                "sha256:a84b8c9ab6239b578f22d1c21d51b696dcfe004032bb80ea832398d6909d7279"
             ],
-            "version": "==2.19.1"
+            "version": "==2.20.0"
         },
         "rope": {
             "hashes": [
@@ -700,10 +698,10 @@
         },
         "urllib3": {
             "hashes": [
-                "sha256:a68ac5e15e76e7e5dd2b8f94007233e01effe3e50e8daddf69acfd81cb686baf",
-                "sha256:b5725a0bd4ba422ab0e66e89e030c806576753ea3ee08554382c14e685d117b5"
+                "sha256:41c3db2fc01e5b907288010dec72f9d0a74e37d6994e6eb56849f59fea2265ae",
+                "sha256:8819bba37a02d143296a4d032373c4dd4aca11f6d4c9973335ca75f9c8475f59"
             ],
-            "version": "==1.23"
+            "version": "==1.24"
         },
         "wheel": {
             "hashes": [
