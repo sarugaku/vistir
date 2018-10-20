@@ -254,9 +254,15 @@ def rmtree(directory, ignore_errors=False):
 
     from .misc import locale_encoding, to_bytes
     directory = to_bytes(directory, encoding=locale_encoding)
-    shutil.rmtree(
-        directory, ignore_errors=ignore_errors, onerror=handle_remove_readonly
-    )
+    try:
+        shutil.rmtree(
+            directory, ignore_errors=ignore_errors, onerror=handle_remove_readonly
+        )
+    except (IOError, OSError) as exc:
+        # Ignore removal failures where the file doesn't exist
+        if exc.errno == errno.ENOENT:
+            pass
+        raise
 
 
 def handle_remove_readonly(func, path, exc):
