@@ -172,7 +172,6 @@ def mkdir_p(newdir, mode=0o777):
                     newdir
                 )
             )
-        pass
     else:
         head, tail = os.path.split(to_bytes(newdir, encoding="utf-8"))
         # Make sure the tail doesn't point to the asame place as the head
@@ -274,7 +273,8 @@ def handle_remove_readonly(func, path, exc):
     :func:`set_write_bit` on the target path and try again.
     """
     # Check for read-only attribute
-    from .compat import ResourceWarning
+    if six.PY2:
+        from .compat import ResourceWarning
     from .misc import to_bytes
     PERM_ERRORS = (errno.EACCES, errno.EPERM)
     default_warning_message = (
@@ -304,8 +304,10 @@ def handle_remove_readonly(func, path, exc):
                 return
             else:
                 raise
-        return
-    raise
+            return
+        else:
+            raise
+    raise exc
 
 
 def walk_up(bottom):

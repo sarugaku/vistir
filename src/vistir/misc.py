@@ -96,9 +96,11 @@ def dedup(iterable):
     return iter(OrderedDict.fromkeys(iterable))
 
 
-def _spawn_subprocess(script, env={}, block=True, cwd=None, combine_stderr=True):
+def _spawn_subprocess(script, env=None, block=True, cwd=None, combine_stderr=True):
     from distutils.spawn import find_executable
 
+    if not env:
+        env = {}
     command = find_executable(script.command)
     options = {
         "env": env,
@@ -132,7 +134,7 @@ def _spawn_subprocess(script, env={}, block=True, cwd=None, combine_stderr=True)
 
 def _create_subprocess(
     cmd,
-    env={},
+    env=None,
     block=True,
     return_object=False,
     cwd=os.curdir,
@@ -141,6 +143,8 @@ def _create_subprocess(
     combine_stderr=False,
     display_limit=200
 ):
+    if not env:
+        env = {}
     try:
         c = _spawn_subprocess(cmd, env=env, block=block, cwd=cwd,
                                                     combine_stderr=combine_stderr)
