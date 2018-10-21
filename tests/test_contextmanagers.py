@@ -67,7 +67,7 @@ def test_atomic_open(tmpdir):
 
 def test_open_file(tmpdir):
     target_file = (
-        "https://www2.census.gov/geo/tiger/GENZ2017/shp/cb_2017_02_tract_500k.zip"
+        "http://www2.census.gov/geo/tiger/GENZ2017/shp/cb_2017_02_tract_500k.zip"
     )
     filecontents = io.BytesIO(b"")
     with vistir.contextmanagers.open_file(target_file) as fp:
