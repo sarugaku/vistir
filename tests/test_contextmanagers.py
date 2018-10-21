@@ -7,6 +7,7 @@ import shutil
 import sys
 
 import vistir
+import warnings
 
 from .utils import read_file
 
@@ -66,14 +67,16 @@ def test_atomic_open(tmpdir):
 
 
 def test_open_file(tmpdir):
+    warnings.filterwarnings("ignore", category=ResourceWarning, message="unclosed.*<ssl.SSLSocket.*>")
     target_file = (
-        "http://www2.census.gov/geo/tiger/GENZ2017/shp/cb_2017_02_tract_500k.zip"
+        "https://www2.census.gov/geo/tiger/GENZ2017/shp/cb_2017_02_tract_500k.zip"
     )
     filecontents = io.BytesIO(b"")
-    with vistir.contextmanagers.open_file(target_file) as fp:
+    with vistir.contextmanagers.open_file(target_file, stream=True) as fp:
         shutil.copyfileobj(fp, filecontents)
     local_file = tmpdir.join("local_copy.txt")
-    local_file.write_text(filecontents.read().decode(), encoding="utf-8")
+    with io.open(local_file.strpath, "w", encoding="utf-8") as fp:
+        fp.write(filecontents.read().decode())
 
     local_contents = b""
     with vistir.contextmanagers.open_file(local_file.strpath) as fp:
