@@ -4,6 +4,7 @@ from __future__ import absolute_import, unicode_literals
 import io
 import os
 import shutil
+import six
 import sys
 
 import vistir
@@ -67,7 +68,8 @@ def test_atomic_open(tmpdir):
 
 
 def test_open_file(tmpdir):
-    warnings.filterwarnings("ignore", category=ResourceWarning, message="unclosed.*<ssl.SSLSocket.*>")
+    if six.PY3:
+        warnings.filterwarnings("ignore", category=ResourceWarning, message="unclosed.*<ssl.SSLSocket.*>")
     target_file = (
         "https://www2.census.gov/geo/tiger/GENZ2017/shp/cb_2017_02_tract_500k.zip"
     )
