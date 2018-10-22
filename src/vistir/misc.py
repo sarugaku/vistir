@@ -90,23 +90,14 @@ def _spawn_subprocess(script, env={}, block=True, cwd=None, combine_stderr=True)
         options["stdin"] = subprocess.PIPE
     if cwd:
         options["cwd"] = cwd
-    # Command not found, maybe this is a shell built-in?
+
     cmd = [command] + script.args
-    if not command:  # Try to use CreateProcess directly if possible.
+    if not command:
+        # Unable to execute the command directly, try shell mode.
         cmd = script.cmdify()
         options["shell"] = True
 
-    # Try to use CreateProcess directly if possible. Specifically catch
-    # Windows error 193 "Command is not a valid Win32 application" to handle
-    # a "command" that is non-executable. See pypa/pipenv#2727.
-    try:
-        return subprocess.Popen(cmd, **options)
-    except WindowsError as e:
-        if e.winerror != 193:
-            raise
-    options["shell"] = True
-    # Try shell mode to use Windows's file association for file launch.
-    return subprocess.Popen(script.cmdify(), **options)
+    return subprocess.Popen(cmd, **options)
 
 
 def _create_subprocess(
