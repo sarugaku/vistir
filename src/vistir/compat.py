@@ -13,6 +13,7 @@ import six
 __all__ = [
     "Path",
     "get_terminal_size",
+    "which",
     "finalize",
     "partialmethod",
     "JSONDecodeError",
@@ -31,10 +32,11 @@ else:
 
 if sys.version_info < (3, 3):
     from backports.shutil_get_terminal_size import get_terminal_size
+    from backports.shutil_which import which
     from .backports.tempfile import NamedTemporaryFile
 else:
     from tempfile import NamedTemporaryFile
-    from shutil import get_terminal_size
+    from shutil import get_terminal_size, which
 
 try:
     from weakref import finalize

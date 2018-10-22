@@ -14,7 +14,7 @@ from functools import partial
 import six
 
 from .cmdparse import Script
-from .compat import Path, fs_str, partialmethod
+from .compat import Path, fs_str, partialmethod, which
 
 
 __all__ = [
@@ -76,9 +76,7 @@ def dedup(iterable):
 
 
 def _spawn_subprocess(script, env={}, block=True, cwd=None, combine_stderr=True):
-    from distutils.spawn import find_executable
-
-    command = find_executable(script.command)
+    command = which(script.command)
     options = {
         "env": env,
         "universal_newlines": True,
