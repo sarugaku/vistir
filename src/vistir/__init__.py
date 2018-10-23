@@ -11,7 +11,7 @@ from .contextmanagers import (
     spinner,
 )
 from .misc import load_path, partialclass, run, shell_escape
-from .path import mkdir_p, rmtree, create_tracked_tempdir
+from .path import mkdir_p, rmtree, create_tracked_tempdir, create_tracked_tempfile
 from .spin import VistirSpinner, create_spinner
 
 
@@ -36,5 +36,6 @@ __all__ = [
     "spinner",
     "VistirSpinner",
     "create_spinner",
-    "create_tracked_tempdir"
+    "create_tracked_tempdir",
+    "create_tracked_tempfile"
 ]

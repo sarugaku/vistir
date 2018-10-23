@@ -15,7 +15,15 @@ import six
 from six.moves import urllib_parse
 from six.moves.urllib import request as urllib_request
 
-from .compat import Path, _fs_encoding, TemporaryDirectory, ResourceWarning
+from .backports.tempfile import _TemporaryFileWrapper
+from .compat import (
+    NamedTemporaryFile,
+    Path,
+    ResourceWarning,
+    TemporaryDirectory,
+    _fs_encoding,
+    finalize,
+)
 
 
 __all__ = [
@@ -28,6 +36,7 @@ __all__ = [
     "mkdir_p",
     "ensure_mkdir_p",
     "create_tracked_tempdir",
+    "create_tracked_tempfile",
     "path_to_url",
     "rmtree",
     "safe_expandvars",
@@ -52,9 +61,10 @@ def native_path(path):
 
 # once again thank you django...
 # https://github.com/django/django/blob/fc6b90b/django/utils/_os.py
-if six.PY3 or os.name == 'nt':
+if six.PY3 or os.name == "nt":
     abspathu = os.path.abspath
 else:
+
     def abspathu(path):
         """
         Version of os.path.abspath that uses the unicode representation
@@ -74,6 +84,7 @@ def normalize_drive(path):
     always converted to uppercase because it seems to be preferred.
     """
     from .misc import to_text
+
     if os.name != "nt" or not isinstance(path, six.string_types):
         return path
 
@@ -110,6 +121,7 @@ def url_to_path(url):
     Follows logic taken from pip's equivalent function
     """
     from .misc import to_bytes
+
     assert is_file_url(url), "Only file: urls can be converted to local paths"
     _, netloc, path, _, _ = urllib_parse.urlsplit(url)
     # Netlocs are UNC paths
@@ -123,6 +135,7 @@ def url_to_path(url):
 def is_valid_url(url):
     """Checks if a given string is an url"""
     from .misc import to_text
+
     if not url:
         return url
     pieces = urllib_parse.urlparse(to_text(url))
@@ -132,6 +145,7 @@ def is_valid_url(url):
 def is_file_url(url):
     """Returns true if the given url is a file url"""
     from .misc import to_text
+
     if not url:
         return False
     if not isinstance(url, six.string_types):
@@ -149,6 +163,7 @@ def is_readonly_path(fn):
     Permissions check is `bool(path.stat & stat.S_IREAD)` or `not os.access(path, os.W_OK)`
     """
     from .misc import to_bytes
+
     fn = to_bytes(fn, encoding="utf-8")
     if os.path.exists(fn):
         return bool(os.stat(fn).st_mode & stat.S_IREAD) and not os.access(fn, os.W_OK)
@@ -164,6 +179,7 @@ def mkdir_p(newdir, mode=0o777):
     """
     # http://code.activestate.com/recipes/82465-a-friendly-mkdir/
     from .misc import to_bytes, to_text
+
     newdir = to_bytes(newdir, "utf-8")
     if os.path.exists(newdir):
         if not os.path.isdir(newdir):
@@ -176,7 +192,9 @@ def mkdir_p(newdir, mode=0o777):
         head, tail = os.path.split(to_bytes(newdir, encoding="utf-8"))
         # Make sure the tail doesn't point to the asame place as the head
         curdir = to_bytes(".", encoding="utf-8")
-        tail_and_head_match = os.path.relpath(tail, start=os.path.basename(head)) == curdir
+        tail_and_head_match = (
+            os.path.relpath(tail, start=os.path.basename(head)) == curdir
+        )
         if tail and not tail_and_head_match and not os.path.isdir(newdir):
             target = os.path.join(head, tail)
             if os.path.exists(target) and os.path.isfile(target):
@@ -191,8 +209,8 @@ def mkdir_p(newdir, mode=0o777):
 def ensure_mkdir_p(mode=0o777):
     """Decorator to ensure `mkdir_p` is called to the function's return value.
     """
-    def decorator(f):
 
+    def decorator(f):
         @functools.wraps(f)
         def decorated(*args, **kwargs):
             path = f(*args, **kwargs)
@@ -224,6 +242,19 @@ def create_tracked_tempdir(*args, **kwargs):
     return tempdir.name
 
 
+def create_tracked_tempfile(*args, **kwargs):
+    """Create a tracked temporary file.
+
+    This uses the `NamedTemporaryFile` construct, but does not remove the file
+    until the interpreter exits.
+
+    The return value is the file object.
+    """
+
+    kwargs["wrapper_class_override"] = _TrackedTempfileWrapper
+    return NamedTemporaryFile(*args, **kwargs)
+
+
 def set_write_bit(fn):
     """Set read-write permissions for the current user on the target path.  Fail silently
     if the path doesn't exist.
@@ -232,6 +263,7 @@ def set_write_bit(fn):
     """
 
     from .misc import to_bytes, locale_encoding
+
     fn = to_bytes(fn, encoding=locale_encoding)
     if not os.path.exists(fn):
         return
@@ -253,6 +285,7 @@ def rmtree(directory, ignore_errors=False):
     """
 
     from .misc import locale_encoding, to_bytes
+
     directory = to_bytes(directory, encoding=locale_encoding)
     try:
         shutil.rmtree(
@@ -282,6 +315,7 @@ def handle_remove_readonly(func, path, exc):
     if six.PY2:
         from .compat import ResourceWarning
     from .misc import to_bytes
+
     PERM_ERRORS = (errno.EACCES, errno.EPERM)
     default_warning_message = (
         "Unable to remove file due to permissions restriction: {!r}"
@@ -418,3 +452,28 @@ def safe_expandvars(value):
     if isinstance(value, six.string_types):
         return os.path.expandvars(value)
     return value
+
+
+class _TrackedTempfileWrapper(_TemporaryFileWrapper):
+    def __init__(self, *args, **kwargs):
+        super(_TrackedTempfileWrapper, self).__init__(*args, **kwargs)
+        self._finalizer = finalize(self, self.cleanup)
+
+    @classmethod
+    def _cleanup(cls, fileobj):
+        try:
+            fileobj.close()
+        finally:
+            os.unlink(fileobj.name)
+
+    def cleanup(self, name):
+        if self._finalizer.detach():
+            try:
+                self.close()
+            finally:
+                os.unlink(self.name)
+        else:
+            try:
+                self.close()
+            except OSError:
+                pass

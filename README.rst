@@ -410,6 +410,7 @@ Converts arbitrary byte-convertable input to bytes while handling errors.
     * ``vistir.path.mkdir_p``
     * ``vistir.path.ensure_mkdir_p``
     * ``vistir.path.create_tracked_tempdir``
+    * ``vistir.path.create_tracked_tempfile``
     * ``vistir.path.path_to_url``
     * ``vistir.path.rmtree``
     * ``vistir.path.safe_expandvars``
@@ -554,6 +555,23 @@ handler to cleanup on program exit.
         with io.open(os.path.join(temp_dir, "test_file.txt"), "w") as fh:
             fh.write("this is a test")
     >>> os.listdir(temp_dir)
+
+
+.. _`create_tracked_tempfile`:
+
+**create_tracked_tempfile**
+////////////////////////////
+
+Creates a tracked temporary file using ``vistir.compat.NamedTemporaryFile``, but creates
+a ``weakref.finalize`` call which will detach on garbage collection to close and delete
+the file.
+
+.. code:: python
+
+    >>> temp_file = vistir.path.create_tracked_tempfile(prefix="requirements", suffix="txt")
+    >>> temp_file.write("some\nstuff")
+    >>> exit()
+
 
 .. _`path_to_url`:
 
