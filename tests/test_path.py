@@ -59,10 +59,6 @@ def test_ensure_mkdir_p(base_dir, subdir):
         def join_with_dir(_base_dir, _subdir, base=temp_dirname):
             return os.path.join(base, _base_dir, _subdir)
 
-        @vistir.path.ensure_mkdir_p(mode=0o777)
-        def join_with_dir(_base_dir, _subdir, base=temp_dirname):
-            return os.path.join(base, _base_dir, _subdir)
-
         target = join_with_dir(base_dir, subdir)
         assume(vistir.path.abspathu(target) != vistir.path.abspathu(os.path.join(temp_dir.name, base_dir)))
         target = vistir.misc.to_bytes(target, encoding="utf-8")

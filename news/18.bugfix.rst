@@ -1,0 +1,1 @@
+Add compatibility shim for ``WindowsError`` issues.

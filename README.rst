@@ -128,6 +128,7 @@ defualt encoding:
     * ``vistir.contextmanagers.atomic_open_for_write``
     * ``vistir.contextmanagers.cd``
     * ``vistir.contextmanagers.open_file``
+    * ``vistir.contextmanagers.spinner``
     * ``vistir.contextmanagers.temp_environ``
     * ``vistir.contextmanagers.temp_path``
 
@@ -198,6 +199,31 @@ to pair this with an iterator which employs a sensible chunk size.
     >>> with vistir.contextmanagers.open_file("https://norvig.com/big.txt") as fp:
             shutil.copyfileobj(fp, filecontents)
 
+
+.. _`spinner`:
+
+**spinner**
+////////////
+
+A context manager for wrapping some actions with a threaded, interrupt-safe spinner. The
+spinner is fully compatible with all terminals (you can use ``bouncingBar`` on non-utf8
+terminals) and will allow you to update the text of the spinner itself by simply setting
+``spinner.text`` or write lines to the screen above the spinner by using
+``spinner.write(line)``. Success text can be indicated using ``spinner.ok("Text")`` and
+failure text can be indicated with ``spinner.fail("Fail text")``.
+
+.. code:: python
+
+    >>> lines = ["a", "b"]
+    >>> with vistir.contextmanagers.spinner(spinner_name="dots", text="Running...", handler_map={}, nospin=False) as sp:
+            for line in lines:
+            sp.write(line + "\n")
+            while some_variable = some_queue.pop():
+                sp.text = "Consuming item: %s" % some_variable
+            if success_condition:
+                sp.ok("Succeeded!")
+            else:
+                sp.fail("Failed!")
 
 
 .. _`temp_environ`:
@@ -384,6 +410,7 @@ Converts arbitrary byte-convertable input to bytes while handling errors.
     * ``vistir.path.mkdir_p``
     * ``vistir.path.ensure_mkdir_p``
     * ``vistir.path.create_tracked_tempdir``
+    * ``vistir.path.create_tracked_tempfile``
     * ``vistir.path.path_to_url``
     * ``vistir.path.rmtree``
     * ``vistir.path.safe_expandvars``
@@ -528,6 +555,23 @@ handler to cleanup on program exit.
         with io.open(os.path.join(temp_dir, "test_file.txt"), "w") as fh:
             fh.write("this is a test")
     >>> os.listdir(temp_dir)
+
+
+.. _`create_tracked_tempfile`:
+
+**create_tracked_tempfile**
+////////////////////////////
+
+Creates a tracked temporary file using ``vistir.compat.NamedTemporaryFile``, but creates
+a ``weakref.finalize`` call which will detach on garbage collection to close and delete
+the file.
+
+.. code:: python
+
+    >>> temp_file = vistir.path.create_tracked_tempfile(prefix="requirements", suffix="txt")
+    >>> temp_file.write("some\nstuff")
+    >>> exit()
+
 
 .. _`path_to_url`:
 
