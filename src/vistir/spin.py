@@ -149,7 +149,7 @@ class VistirSpinner(base_obj):
         except AttributeError:
             pass
 
-        for sig, sig_handler in iteritems(self._sigmap):
+        for sig, sig_handler in self._sigmap.items():
             # A handler for a particular signal, once set, remains
             # installed until it is explicitly reset. Store default
             # signal handlers for subsequent reset at cleanup phase.
@@ -169,7 +169,7 @@ class VistirSpinner(base_obj):
             signal.signal(sig, sig_handler)
 
     def _reset_signal_handlers(self):
-        for sig, sig_handler in iteritems(self._dfl_sigmap):
+        for sig, sig_handler in self._dfl_sigmap.items():
             signal.signal(sig, sig_handler)
 
     @staticmethod
