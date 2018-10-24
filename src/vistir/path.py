@@ -17,7 +17,7 @@ from six.moves.urllib import request as urllib_request
 
 from .backports.tempfile import _TemporaryFileWrapper
 from .compat import (
-    NamedTemporaryFile,
+    _NamedTemporaryFile,
     Path,
     ResourceWarning,
     TemporaryDirectory,
@@ -252,7 +252,7 @@ def create_tracked_tempfile(*args, **kwargs):
     """
 
     kwargs["wrapper_class_override"] = _TrackedTempfileWrapper
-    return NamedTemporaryFile(*args, **kwargs)
+    return _NamedTemporaryFile(*args, **kwargs)
 
 
 def set_write_bit(fn):
@@ -466,7 +466,7 @@ class _TrackedTempfileWrapper(_TemporaryFileWrapper):
         finally:
             os.unlink(fileobj.name)
 
-    def cleanup(self, name):
+    def cleanup(self):
         if self._finalizer.detach():
             try:
                 self.close()
