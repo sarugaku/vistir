@@ -46,6 +46,10 @@ __all__ = [
 ]
 
 
+if os.name == "nt" and six.PY34:
+    warnings.filterwarnings("ignore", category=DeprecationWarning, message="The Windows bytes API has been deprecated.*")
+
+
 def unicode_path(path):
     # Paths are supposed to be represented as unicode here
     if six.PY2 and not isinstance(path, six.text_type):
