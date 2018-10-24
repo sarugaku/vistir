@@ -1,1 +1,0 @@
-Added ``vistir.path.create_tracked_tempfile`` to the API for weakref-tracked temporary files.

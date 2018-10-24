@@ -1,3 +1,28 @@
+0.2.0 (2018-10-24)
+==================
+
+Features
+--------
+
+- Add windows compatible term colors and cursor toggles via custom spinner wrapper.  `#19 <https://github.com/sarugaku/vistir/issues/19>`_
+  
+- Added new and improved functionality with fully integrated support for windows async non-unicode spinner.  `#20 <https://github.com/sarugaku/vistir/issues/20>`_
+  
+- ``vistir.contextmanager.spinner`` and ``vistir.spin.VistirSpinner`` now provide ``write_err`` to write to standard error from the spinner.  `#22 <https://github.com/sarugaku/vistir/issues/22>`_
+  
+- Added ``vistir.path.create_tracked_tempfile`` to the API for weakref-tracked temporary files.  `#26 <https://github.com/sarugaku/vistir/issues/26>`_
+  
+
+Bug Fixes
+---------
+
+- Add compatibility shim for ``WindowsError`` issues.  `#18 <https://github.com/sarugaku/vistir/issues/18>`_
+  
+- ``vistir.contextmanager.spinner`` and ``vistir.spin.VistirSpinner`` now provide ``write_err`` to write to standard error from the spinner.  `#23 <https://github.com/sarugaku/vistir/issues/23>`_
+  
+- Suppress ``ResourceWarning`` at runtime if warnings are suppressed in general.  `#24 <https://github.com/sarugaku/vistir/issues/24>`_
+
+
 0.1.7 (2018-10-11)
 ==================
 

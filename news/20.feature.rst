@@ -1,1 +1,0 @@
-Added new and improved functionality with fully integrated support for windows async non-unicode spinner.

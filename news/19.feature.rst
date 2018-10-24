@@ -1,1 +1,0 @@
-Add windows compatible term colors and cursor toggles via custom spinner wrapper.
