@@ -1,4 +1,5 @@
 import pathlib
+import re
 import shutil
 import subprocess
 
@@ -157,3 +158,12 @@ def build_docs(ctx):
     args.extend(["-e", "-M", "-F", f"src/{PACKAGE_NAME}"])
     print("Building docs...")
     ctx.run("sphinx-apidoc {0}".format(" ".join(args)))
+
+
+@invoke.task
+def clean_mdchangelog(ctx):
+    root = _get_git_root(ctx)
+    changelog = root / "CHANGELOG.md"
+    content = changelog.read_text()
+    content = re.sub(r"([^\n]+)\n?\s+\[[\\]+(#\d+)\]\(https://github\.com/sarugaku/[\w\-]+/issues/\d+\)", r"\1 \2", content, flags=re.MULTILINE)
+    changelog.write_text(content)
