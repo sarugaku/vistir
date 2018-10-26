@@ -457,7 +457,7 @@ def safe_expandvars(value):
     return value
 
 
-class _TrackedTempfileWrapper(_TemporaryFileWrapper):
+class _TrackedTempfileWrapper(_TemporaryFileWrapper, object):
     def __init__(self, *args, **kwargs):
         super(_TrackedTempfileWrapper, self).__init__(*args, **kwargs)
         self._finalizer = finalize(self, self.cleanup)

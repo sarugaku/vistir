@@ -10,7 +10,7 @@ import six
 
 from .compat import to_native_string
 from .termcolors import COLOR_MAP, COLORS, colored
-
+from io import StringIO
 
 try:
     import yaspin
@@ -34,6 +34,7 @@ class DummySpinner(object):
         self.text = to_native_string(text)
         self.stdout = kwargs.get("stdout", sys.stdout)
         self.stderr = kwargs.get("stderr", sys.stderr)
+        self.out_buff = StringIO()
 
     def __enter__(self):
         if self.text and self.text != "None":
@@ -42,7 +43,7 @@ class DummySpinner(object):
 
     def __exit__(self, exc_type, exc_val, traceback):
         if not exc_type:
-            self.ok()
+            self.ok(text=None)
         else:
             self.write_err(traceback)
         return False
@@ -60,11 +61,15 @@ class DummySpinner(object):
     def fail(self, exitcode=1, text="FAIL"):
         if text and text != "None":
             self.write_err(text)
+        if self.out_buff:
+            self.out_buff.close()
         raise SystemExit(exitcode, text)
 
     def ok(self, text="OK"):
         if text and text != "None":
             self.stderr.write(self.text)
+        if self.out_buff:
+            self.out_buff.close()
         return 0
 
     def write(self, text=None):
@@ -126,6 +131,9 @@ class VistirSpinner(base_obj):
         kwargs["text"] = start_text if start_text is not None else _text
         kwargs["sigmap"] = sigmap
         kwargs["spinner"] = getattr(Spinners, spinner_name, "")
+        self.stdout = kwargs.pop("stdout", sys.stdout)
+        self.stderr = kwargs.pop("stderr", sys.stderr)
+        self.out_buff = StringIO()
         super(VistirSpinner, self).__init__(*args, **kwargs)
         self.is_dummy = bool(yaspin is None)
 
@@ -140,22 +148,26 @@ class VistirSpinner(base_obj):
         self._freeze(_text)
 
     def write(self, text):
+        from .misc import to_text
         sys.stdout.write("\r")
-        self._clear_line()
+        self.stdout.write(CLEAR_LINE)
         if text is None:
             text = ""
         text = to_native_string("{0}\n".format(text))
         sys.stdout.write(text)
+        self.out_buff.write(to_text(text))
 
     def write_err(self, text):
         """Write error text in the terminal without breaking the spinner."""
+        from .misc import to_text
 
-        sys.stderr.write("\r")
-        self._clear_err()
+        self.stderr.write("\r")
+        self.stderr.write(CLEAR_LINE)
         if text is None:
             text = ""
         text = to_native_string("{0}\n".format(text))
-        sys.stderr.write(text)
+        self.stderr.write(text)
+        self.out_buff.write(to_text(text))
 
     def _freeze(self, final_text):
         """Stop spinner, compose last frame and 'freeze' it."""
@@ -167,7 +179,15 @@ class VistirSpinner(base_obj):
         # Should be stopped here, otherwise prints after
         # self._freeze call will mess up the spinner
         self.stop()
-        sys.stdout.write(self._last_frame)
+        self.stdout.write(self._last_frame)
+
+    def stop(self, *args, **kwargs):
+        if self.stderr and self.stderr != sys.stderr:
+            self.stderr.close()
+        if self.stdout and self.stdout != sys.stdout:
+            self.stdout.close()
+        self.out_buff.close()
+        super(VistirSpinner, self).stop(*args, **kwargs)
 
     def _compose_color_func(self):
         fn = functools.partial(
