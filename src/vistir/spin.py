@@ -112,6 +112,8 @@ class VistirSpinner(base_obj):
         """
 
         self.handler = handler
+        import colorama
+        colorama.init()
         sigmap = {}
         if handler:
             sigmap.update({
