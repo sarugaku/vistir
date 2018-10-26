@@ -1,13 +1,17 @@
 # -*- coding=utf-8 -*-
+
+import functools
 import os
 import signal
 import sys
 
-from .termcolors import colored, COLORS
-from .compat import fs_str
-
 import cursor
-import functools
+import six
+
+from .compat import to_native_string
+from .termcolors import COLOR_MAP, COLORS, colored
+
+
 try:
     import yaspin
 except ImportError:
@@ -15,7 +19,6 @@ except ImportError:
     Spinners = None
 else:
     from yaspin.spinners import Spinners
-    from yaspin.constants import COLOR_MAP
 
 handler = None
 if yaspin and os.name == "nt":
@@ -28,11 +31,13 @@ CLEAR_LINE = chr(27) + "[K"
 
 class DummySpinner(object):
     def __init__(self, text="", **kwargs):
-        self.text = text
+        self.text = to_native_string(text)
+        self.stdout = kwargs.get("stdout", sys.stdout)
+        self.stderr = kwargs.get("stderr", sys.stderr)
 
     def __enter__(self):
         if self.text:
-            self.write(self.text)
+            self.write_err(self.text)
         return self
 
     def __exit__(self, exc_type, exc_val, traceback):
@@ -52,25 +57,39 @@ class DummySpinner(object):
         else:
             return retval
 
-    def fail(self, exitcode=1, text=None):
+    def fail(self, exitcode=1, text="FAIL"):
         if text:
             self.write_err(text)
         raise SystemExit(exitcode, text)
 
-    def ok(self, text=None):
+    def ok(self, text="OK"):
         if text:
-            self.write(self.text)
+            self.stderr.write(self.text)
         return 0
 
     def write(self, text=None):
-        if text:
-            line = fs_str("{0}\n".format(text))
-            sys.stdout.write(line)
+        if text is None or isinstance(text, six.string_types) and text == "None":
+            pass
+        self.stdout.write(to_native_string("\r"))
+        line = to_native_string("{0}\n".format(text))
+        self.stdout.write(line)
+        self.stdout.write(CLEAR_LINE)
 
     def write_err(self, text=None):
-        if text:
-            line = fs_str("{0}\n".format(text))
-            sys.stderr.write(line)
+        if text is None or isinstance(text, six.string_types) and text == "None":
+            pass
+        self.stderr.write(to_native_string("\r"))
+        line = to_native_string("{0}\n".format(text))
+        self.stderr.write(line)
+        self.stderr.write(CLEAR_LINE)
+
+    @staticmethod
+    def _hide_cursor():
+        pass
+
+    @staticmethod
+    def _show_cursor():
+        pass
 
 
 base_obj = yaspin.core.Yaspin if yaspin is not None else DummySpinner
@@ -102,30 +121,53 @@ class VistirSpinner(base_obj):
         if handler_map:
             sigmap.update(handler_map)
         spinner_name = kwargs.pop("spinner_name", "bouncingBar")
-        text = kwargs.pop("start_text", "") + " " + kwargs.pop("text", "")
-        if not text:
-            text = "Running..."
+        start_text = kwargs.pop("start_text", None)
+        _text = kwargs.pop("text", "Running...")
+        kwargs["text"] = start_text if start_text is not None else _text
         kwargs["sigmap"] = sigmap
-        kwargs["spinner"] = getattr(Spinners, spinner_name, Spinners.bouncingBar)
+        kwargs["spinner"] = getattr(Spinners, spinner_name, "")
         super(VistirSpinner, self).__init__(*args, **kwargs)
         self.is_dummy = bool(yaspin is None)
 
-    def fail(self, exitcode=1, *args, **kwargs):
-        super(VistirSpinner, self).fail(**kwargs)
+    def ok(self, text="OK"):
+        """Set Ok (success) finalizer to a spinner."""
+        _text = text if text else "OK"
+        self._freeze(_text)
 
-    def ok(self, *args, **kwargs):
-        super(VistirSpinner, self).ok(*args, **kwargs)
+    def fail(self, text="FAIL"):
+        """Set fail finalizer to a spinner."""
+        _text = text if text else "FAIL"
+        self._freeze(_text)
 
-    def write(self, *args, **kwargs):
-        super(VistirSpinner, self).write(*args, **kwargs)
+    def write(self, text):
+        sys.stdout.write("\r")
+        self._clear_line()
+        if text is None:
+            text = ""
+        text = to_native_string("{0}\n".format(text))
+        sys.stdout.write(text)
 
     def write_err(self, text):
         """Write error text in the terminal without breaking the spinner."""
 
         sys.stderr.write("\r")
         self._clear_err()
-        text = fs_str("{0}\n".format(text))
+        if text is None:
+            text = ""
+        text = to_native_string("{0}\n".format(text))
         sys.stderr.write(text)
+
+    def _freeze(self, final_text):
+        """Stop spinner, compose last frame and 'freeze' it."""
+        if not final_text:
+            final_text = ""
+        text = to_native_string(final_text)
+        self._last_frame = self._compose_out(text, mode="last")
+
+        # Should be stopped here, otherwise prints after
+        # self._freeze call will mess up the spinner
+        self.stop()
+        sys.stdout.write(self._last_frame)
 
     def _compose_color_func(self):
         fn = functools.partial(
@@ -135,6 +177,24 @@ class VistirSpinner(base_obj):
             attrs=list(self._attrs),
         )
         return fn
+
+    def _compose_out(self, frame, mode=None):
+        # Ensure Unicode input
+
+        frame = to_native_string(frame)
+        if self._text is None:
+            self._text = ""
+        text = to_native_string(self._text)
+        if self._color_func is not None:
+            frame = self._color_func(frame)
+        if self._side == "right":
+            frame, text = text, frame
+        # Mode
+        if not mode:
+            out = to_native_string("\r{0} {1}".format(frame, text))
+        else:
+            out = to_native_string("{0} {1}\n".format(frame, text))
+        return out
 
     def _register_signal_handlers(self):
         # SIGKILL cannot be caught or ignored, and the receiving
