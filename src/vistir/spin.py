@@ -36,7 +36,7 @@ class DummySpinner(object):
         self.stderr = kwargs.get("stderr", sys.stderr)
 
     def __enter__(self):
-        if self.text:
+        if self.text and self.text != "None":
             self.write_err(self.text)
         return self
 
@@ -58,12 +58,12 @@ class DummySpinner(object):
             return retval
 
     def fail(self, exitcode=1, text="FAIL"):
-        if text:
+        if text and text != "None":
             self.write_err(text)
         raise SystemExit(exitcode, text)
 
     def ok(self, text="OK"):
-        if text:
+        if text and text != "None":
             self.stderr.write(self.text)
         return 0
 
@@ -251,6 +251,7 @@ class VistirSpinner(base_obj):
 
 def create_spinner(*args, **kwargs):
     nospin = kwargs.pop("nospin", False)
+    use_yaspin = kwargs.pop("use_yaspin", nospin)
     if nospin:
         return DummySpinner(*args, **kwargs)
     return VistirSpinner(*args, **kwargs)

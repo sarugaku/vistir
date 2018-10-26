@@ -1,0 +1,1 @@
+Implemented ``vistir.misc.create_tracked_tempdir``, which allows for automatically cleaning up resources using weakreferences at interpreter exit.

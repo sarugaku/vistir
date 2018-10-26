@@ -294,8 +294,8 @@ def run(
     if block or not return_object:
         combine_stderr = False
     start_text = "Running..."
-    if nospin:
-        start_text = None
+    if nospin and not start_text:
+        start_text = ""
     with spinner(spinner_name=spinner_name, start_text=start_text, nospin=nospin) as sp:
         return _create_subprocess(
             cmd,
