@@ -1,0 +1,1 @@
+Modified spinners to prefer to write to ``sys.stderr`` by default and to avoid writing ``None``, fixed an issue with signal registration on Windows.

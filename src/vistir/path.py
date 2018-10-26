@@ -46,7 +46,7 @@ __all__ = [
 ]
 
 
-if os.name == "nt" and six.PY34:
+if os.name == "nt":
     warnings.filterwarnings("ignore", category=DeprecationWarning, message="The Windows bytes API has been deprecated.*")
 
 
@@ -316,8 +316,7 @@ def handle_remove_readonly(func, path, exc):
     :func:`set_write_bit` on the target path and try again.
     """
     # Check for read-only attribute
-    if six.PY2:
-        from .compat import ResourceWarning
+    from .compat import ResourceWarning
     from .misc import to_bytes
 
     PERM_ERRORS = (errno.EACCES, errno.EPERM)
@@ -458,7 +457,7 @@ def safe_expandvars(value):
     return value
 
 
-class _TrackedTempfileWrapper(_TemporaryFileWrapper):
+class _TrackedTempfileWrapper(_TemporaryFileWrapper, object):
     def __init__(self, *args, **kwargs):
         super(_TrackedTempfileWrapper, self).__init__(*args, **kwargs)
         self._finalizer = finalize(self, self.cleanup)
