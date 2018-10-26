@@ -1,3 +1,20 @@
+0.2.1 (2018-10-26)
+==================
+
+Features
+--------
+
+- Implemented ``vistir.misc.create_tracked_tempdir``, which allows for automatically cleaning up resources using weakreferences at interpreter exit.  `#26 <https://github.com/sarugaku/vistir/issues/26>`_
+  
+
+Bug Fixes
+---------
+
+- Fixed a bug with string encodings for terminal colors when using spinners.  `#27 <https://github.com/sarugaku/vistir/issues/27>`_
+  
+- Modified spinners to prefer to write to ``sys.stderr`` by default and to avoid writing ``None``, fixed an issue with signal registration on Windows.  `#28 <https://github.com/sarugaku/vistir/issues/28>`_
+
+
 0.2.0 (2018-10-24)
 ==================
 

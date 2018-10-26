@@ -15,7 +15,7 @@ from .path import mkdir_p, rmtree, create_tracked_tempdir, create_tracked_tempfi
 from .spin import VistirSpinner, create_spinner
 
 
-__version__ = '0.2.1.dev0'
+__version__ = '0.2.1'
 
 
 __all__ = [
