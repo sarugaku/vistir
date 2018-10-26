@@ -1,1 +1,0 @@
-Fixed a bug in the spinner implementation resulting in a failure to initialize colorama which could print control characters to the terminal on windows.

@@ -1,3 +1,12 @@
+0.2.2 (2018-10-26)
+==================
+
+Bug Fixes
+---------
+
+- Fixed a bug in the spinner implementation resulting in a failure to initialize colorama which could print control characters to the terminal on windows.  `#30 <https://github.com/sarugaku/vistir/issues/30>`_
+
+
 0.2.1 (2018-10-26)
 ==================
 
