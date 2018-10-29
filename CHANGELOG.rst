@@ -1,3 +1,14 @@
+0.2.3 (2018-10-29)
+==================
+
+Bug Fixes
+---------
+
+- Improved handling of readonly path write-bit-setting.  `#32 <https://github.com/sarugaku/vistir/issues/32>`_
+  
+- Fixed a bug with encoding of output streams for dummy spinner and formatting exceptions.  `#33 <https://github.com/sarugaku/vistir/issues/33>`_
+
+
 0.2.2 (2018-10-26)
 ==================
 
