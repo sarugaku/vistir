@@ -172,7 +172,7 @@ def test_handle_remove_readonly(tmpdir):
     test_file = tmpdir.join("test_file.txt")
     test_file.write_text("a bunch of text", encoding="utf-8")
     os.chmod(test_file.strpath, NON_WRITE_OR_EXEC)
-    fake_oserror = OSError("Fake os error")
-    fake_oserror.errno = 13  # EACCES error
-    vistir.path.handle_remove_readonly(os.unlink, test_file.strpath, (OSError, fake_oserror, "Fake Traceback"))
+    fake_oserror = OSError(13, "Permission denied")
+    fake_oserror.filename = test_file.strpath
+    vistir.path.handle_remove_readonly(os.unlink, test_file.strpath, (fake_oserror.__class__, fake_oserror, "Fake traceback"))
     assert not os.path.exists(test_file.strpath)

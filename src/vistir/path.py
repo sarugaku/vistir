@@ -8,6 +8,7 @@ import os
 import posixpath
 import shutil
 import stat
+import sys
 import warnings
 
 import six
@@ -170,7 +171,12 @@ def is_readonly_path(fn):
 
     fn = to_native_string(fn)
     if os.path.exists(fn):
-        return bool(os.stat(fn).st_mode & stat.S_IREAD) and not os.access(fn, os.W_OK)
+        file_stat = os.stat(fn).st_mode
+        is_readonly = not bool(file_stat & stat.S_IWRITE) or not os.access(fn, os.W_OK)
+        if sys.platform == "win32" and sys.version_info >= (3, 5):
+            is_readonly = bool(file_stat & stat.S_FILE_ATTRIBUTE_READONLY)
+        if is_readonly:
+            return True
     return False
 
 
@@ -272,7 +278,15 @@ def set_write_bit(fn):
     fn = to_native_string(fn)
     if not os.path.exists(fn):
         return
-    os.chmod(fn, stat.S_IWRITE | stat.S_IWUSR | stat.S_IRUSR)
+    file_stat = os.stat(fn).st_mode
+    os.chmod(fn, file_stat | stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
+    if not os.path.isdir(fn):
+        return
+    for root, dirs, files in os.walk(fn, topdown=False):
+        for dir_ in [os.path.join(root,d) for d in dirs]:
+            set_write_bit(dir_)
+        for file_ in [os.path.join(root, f) for f in files]:
+            set_write_bit(file_)
 
 
 def rmtree(directory, ignore_errors=False):
@@ -332,7 +346,9 @@ def handle_remove_readonly(func, path, exc):
         try:
             func(path)
         except (OSError, IOError, FileNotFoundError) as e:
-            if e.errno in PERM_ERRORS:
+            if e.errno == errno.ENOENT:
+                return
+            elif e.errno in PERM_ERRORS:
                 warnings.warn(default_warning_message.format(path), ResourceWarning)
                 return
 
@@ -343,14 +359,17 @@ def handle_remove_readonly(func, path, exc):
         except (OSError, IOError, FileNotFoundError) as e:
             if e.errno in PERM_ERRORS:
                 warnings.warn(default_warning_message.format(path), ResourceWarning)
+                pass
             elif e.errno == errno.ENOENT:  # File already gone
-                return
+                pass
             else:
                 raise
-            return
         else:
-            raise
-    raise exc
+            return
+    elif exc_exception.errno == errno.ENOENT:
+        pass
+    else:
+        raise exc_exception
 
 
 def walk_up(bottom):

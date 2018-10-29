@@ -1,0 +1,1 @@
+Fixed a bug with encoding of output streams for dummy spinner and formatting exceptions.
