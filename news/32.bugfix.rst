@@ -1,0 +1,1 @@
+Improved handling of readonly path write-bit-setting.

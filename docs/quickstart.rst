@@ -283,6 +283,7 @@ The following Miscellaneous utilities are available as helper methods:
     * :func:`~vistir.misc.partialclass`
     * :func:`~vistir.misc.to_text`
     * :func:`~vistir.misc.to_bytes`
+    * :func:`~vistir.misc.decode_for_output`
 
 
 .. _`shell_escape`:
@@ -395,6 +396,21 @@ Converts arbitrary byte-convertable input to bytes while handling errors.
     b'this is some text'
     >>> vistir.misc.to_bytes(u"this is some text")
     b'this is some text'
+
+
+.. _`decode_for_output`:
+
+**decode_for_output**
+//////////////////////
+
+Converts an arbitrary text input to output which is encoded for printing to terminal
+outputs using the system preferred locale using ``locale.getpreferredencoding(False)``
+with some additional hackery on linux systems.
+
+.. code:: python
+
+    >>> vistir.misc.decode_for_output(u"Some text")
+    "some default locale encoded text"
 
 
 🐉 Path Utilities
