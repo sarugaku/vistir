@@ -184,10 +184,9 @@ def mkdir_p(newdir, mode=0o777):
     :raises: OSError if a file is encountered along the way
     """
     # http://code.activestate.com/recipes/82465-a-friendly-mkdir/
-    from .misc import to_text
-    from .compat import to_native_string
+    from .misc import to_bytes, to_text
 
-    newdir = to_native_string(newdir)
+    newdir = to_bytes(newdir, "utf-8")
     if os.path.exists(newdir):
         if not os.path.isdir(newdir):
             raise OSError(
@@ -196,9 +195,9 @@ def mkdir_p(newdir, mode=0o777):
                 )
             )
     else:
-        head, tail = os.path.split(newdir)
+        head, tail = os.path.split(to_bytes(newdir, encoding="utf-8"))
         # Make sure the tail doesn't point to the asame place as the head
-        curdir = to_native_string(".")
+        curdir = to_bytes(".", encoding="utf-8")
         tail_and_head_match = (
             os.path.relpath(tail, start=os.path.basename(head)) == curdir
         )
