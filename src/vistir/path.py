@@ -172,11 +172,7 @@ def is_readonly_path(fn):
     fn = to_native_string(fn)
     if os.path.exists(fn):
         file_stat = os.stat(fn).st_mode
-        is_readonly = not bool(file_stat & stat.S_IWRITE) or not os.access(fn, os.W_OK)
-        if sys.platform == "win32" and sys.version_info >= (3, 5):
-            is_readonly = bool(file_stat & stat.S_FILE_ATTRIBUTE_READONLY)
-        if is_readonly:
-            return True
+        return not bool(file_stat & stat.S_IWRITE) or not os.access(fn, os.W_OK)
     return False
 
 
