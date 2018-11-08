@@ -76,7 +76,7 @@ You can import utilities directly from **vistir**:
 .. code:: python
 
     from vistir import cd
-    cd('/path/to/somedir'):
+    with cd('/path/to/somedir'):
         do_stuff_in('somedir')
 
 
