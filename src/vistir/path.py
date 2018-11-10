@@ -8,7 +8,6 @@ import os
 import posixpath
 import shutil
 import stat
-import sys
 import warnings
 
 import six
@@ -276,7 +275,10 @@ def set_write_bit(fn):
     file_stat = os.stat(fn).st_mode
     os.chmod(fn, file_stat | stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
     if not os.path.isdir(fn):
-        return
+        try:
+            os.chflags(fn, 0)
+        except AttributeError:
+            pass
     for root, dirs, files in os.walk(fn, topdown=False):
         for dir_ in [os.path.join(root,d) for d in dirs]:
             set_write_bit(dir_)
@@ -284,7 +286,7 @@ def set_write_bit(fn):
             set_write_bit(file_)
 
 
-def rmtree(directory, ignore_errors=False):
+def rmtree(directory, ignore_errors=False, onerror=None):
     """Stand-in for :func:`~shutil.rmtree` with additional error-handling.
 
     This version of `rmtree` handles read-only paths, especially in the case of index
@@ -292,6 +294,7 @@ def rmtree(directory, ignore_errors=False):
 
     :param str directory: The target directory to remove
     :param bool ignore_errors: Whether to ignore errors, defaults to False
+    :param func onerror: An error handling function, defaults to :func:`handle_remove_readonly`
 
     .. note::
 
@@ -301,9 +304,11 @@ def rmtree(directory, ignore_errors=False):
     from .compat import to_native_string
 
     directory = to_native_string(directory)
+    if onerror is None:
+        onerror = handle_remove_readonly
     try:
         shutil.rmtree(
-            directory, ignore_errors=ignore_errors, onerror=handle_remove_readonly
+            directory, ignore_errors=ignore_errors, onerror=onerror
         )
     except (IOError, OSError, FileNotFoundError) as exc:
         # Ignore removal failures where the file doesn't exist
@@ -326,7 +331,9 @@ def handle_remove_readonly(func, path, exc):
     :func:`set_write_bit` on the target path and try again.
     """
     # Check for read-only attribute
-    from .compat import ResourceWarning, FileNotFoundError, to_native_string
+    from .compat import (
+        ResourceWarning, FileNotFoundError, PermissionError, to_native_string
+    )
 
     PERM_ERRORS = (errno.EACCES, errno.EPERM, errno.ENOENT)
     default_warning_message = (
@@ -340,7 +347,7 @@ def handle_remove_readonly(func, path, exc):
         set_write_bit(path)
         try:
             func(path)
-        except (OSError, IOError, FileNotFoundError) as e:
+        except (OSError, IOError, FileNotFoundError, PermissionError) as e:
             if e.errno == errno.ENOENT:
                 return
             elif e.errno in PERM_ERRORS:
@@ -351,7 +358,7 @@ def handle_remove_readonly(func, path, exc):
         set_write_bit(path)
         try:
             func(path)
-        except (OSError, IOError, FileNotFoundError) as e:
+        except (OSError, IOError, FileNotFoundError, PermissionError) as e:
             if e.errno in PERM_ERRORS:
                 warnings.warn(default_warning_message.format(path), ResourceWarning)
                 pass

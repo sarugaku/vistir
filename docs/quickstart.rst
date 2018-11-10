@@ -29,7 +29,7 @@ Install from `PyPI`_:
 
   ::
 
-    $ pipenv install --pre vistir
+    $ pipenv install vistir
 
 Install from `Github`_:
 
@@ -113,11 +113,14 @@ Shims are provided for full API compatibility from python 2.7 through 3.7 for th
     * :class:`~vistir.compat.JSONDecodeError`
     * :exc:`~vistir.compat.ResourceWarning`
     * :exc:`~vistir.compat.FileNotFoundError`
+    * :exc:`~vistir.compat.PermissionError`
+    * :exc:`~vistir.compat.IsADirectoryError`
 
 The following additional function is provided for encoding strings to the filesystem
 defualt encoding:
 
     * :func:`~vistir.compat.fs_str`
+    * :func:`~vistir.compat.to_native_string`
 
 
 🐉 Context Managers
