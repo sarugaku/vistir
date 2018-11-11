@@ -494,7 +494,6 @@ except Exception:
 def getpreferredencoding():
     """Determine the proper output encoding for terminal rendering"""
 
-    import locale
     # Borrowed from Invoke
     # (see https://github.com/pyinvoke/invoke/blob/93af29d/invoke/runners.py#L881)
     _encoding = locale.getpreferredencoding(False)

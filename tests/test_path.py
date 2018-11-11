@@ -3,7 +3,6 @@ from __future__ import absolute_import, unicode_literals
 
 import io
 import os
-import six
 import stat
 
 from hypothesis import assume, given, HealthCheck, settings

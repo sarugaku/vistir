@@ -14,7 +14,9 @@
 #
 import os
 import sys
-sys.path.insert(0, '/home/hawk/git/vistir/src/vistir')
+docs_dir = os.path.abspath(os.path.dirname(__file__))
+src_dir = os.path.join(os.path.dirname(docs_dir), "src", "vistir")
+sys.path.insert(0, src_dir)
 
 
 # -- Project information -----------------------------------------------------

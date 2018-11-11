@@ -113,11 +113,14 @@ Shims are provided for full API compatibility from python 2.7 through 3.7 for th
     * ``vistir.compat.JSONDecodeError``
     * ``vistir.compat.ResourceWarning``
     * ``vistir.compat.FileNotFoundError``
+    * ``vistir.compat.PermissionError``
+    * ``vistir.compat.IsADirectoryError``
 
-The following additional function is provided for encoding strings to the filesystem
-defualt encoding:
+The following additional functions are provided for encoding strings to the filesystem
+default encoding:
 
     * ``vistir.compat.fs_str``
+    * ``vistir.compat.to_native_string``
 
 
 🐉 Context Managers
