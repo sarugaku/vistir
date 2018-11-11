@@ -74,7 +74,7 @@ def test_nonblocking_run():
     assert c.returncode == 0
     c.wait()
     assert "PYTHONDONTWRITEBYTECODE" in c.out, c.out
-    out, err = vistir.misc.run(["python", "--help"], block=False, nospin=True)
+    out, _ = vistir.misc.run(["python", "--help"], block=False, nospin=True)
     assert "PYTHONDONTWRITEBYTECODE" in out, out
     # historical = []
     # while out:
