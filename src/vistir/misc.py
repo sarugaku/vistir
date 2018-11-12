@@ -35,7 +35,9 @@ __all__ = [
     "locale_encoding",
     "chunked",
     "take",
-    "divide"
+    "divide",
+    "getpreferredencoding",
+    "decode_for_output",
 ]
 
 
