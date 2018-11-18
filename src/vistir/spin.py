@@ -4,6 +4,7 @@ import functools
 import os
 import signal
 import sys
+import threading
 import time
 
 import colorama
@@ -35,7 +36,7 @@ class DummySpinner(object):
     def __init__(self, text="", **kwargs):
         colorama.init()
         from .misc import decode_for_output
-        self.text = to_native_string(decode_for_output(text))
+        self.text = to_native_string(decode_for_output(text)) if text else ""
         self.stdout = kwargs.get("stdout", sys.stdout)
         self.stderr = kwargs.get("stderr", sys.stderr)
         self.out_buff = StringIO()
@@ -44,7 +45,7 @@ class DummySpinner(object):
     def __enter__(self):
         if self.text and self.text != "None":
             if self.write_to_stdout:
-                self.write_out(self.text)
+                self.write(self.text)
             else:
                 self.write_err(self.text)
         return self
@@ -78,7 +79,7 @@ class DummySpinner(object):
         from .misc import decode_for_output
         if text and text != "None":
             if self.write_to_stdout:
-                self.write_out(decode_for_output(text))
+                self.write(decode_for_output(text))
             else:
                 self.write_err(decode_for_output(text))
         self._close_output_buffer()
@@ -93,6 +94,8 @@ class DummySpinner(object):
         return 0
 
     def write(self, text=None):
+        if not self.write_to_stdout:
+            return self.write_err(text)
         from .misc import decode_for_output
         if text is None or isinstance(text, six.string_types) and text == "None":
             pass
@@ -113,11 +116,11 @@ class DummySpinner(object):
         self.stderr.write(CLEAR_LINE)
 
     @staticmethod
-    def _hide_cursor():
+    def _hide_cursor(target=None):
         pass
 
     @staticmethod
-    def _show_cursor():
+    def _show_cursor(target=None):
         pass
 
 
@@ -164,9 +167,9 @@ class VistirSpinner(base_obj):
         self.stdout = kwargs.pop("stdout", sys.stdout)
         self.stderr = kwargs.pop("stderr", sys.stderr)
         self.out_buff = StringIO()
-        super(VistirSpinner, self).__init__(*args, **kwargs)
-        self.is_dummy = bool(yaspin is None)
         self.write_to_stdout = write_to_stdout
+        self.is_dummy = bool(yaspin is None)
+        super(VistirSpinner, self).__init__(*args, **kwargs)
 
     def ok(self, text="OK", err=False):
         """Set Ok (success) finalizer to a spinner."""
@@ -187,6 +190,8 @@ class VistirSpinner(base_obj):
         self._freeze(_text, err=err)
 
     def write(self, text):
+        if not self.write_to_stdout:
+            return self.write_err(text)
         from .misc import to_text
         sys.stdout.write("\r")
         self.stdout.write(CLEAR_LINE)
@@ -208,6 +213,45 @@ class VistirSpinner(base_obj):
         self.stderr.write(text)
         self.out_buff.write(to_text(text))
 
+    def start(self):
+        if self._sigmap:
+            self._register_signal_handlers()
+
+        target = self.stdout if self.write_to_stdout else self.stderr
+        if target.isatty():
+            self._hide_cursor(target=target)
+
+        self._stop_spin = threading.Event()
+        self._hide_spin = threading.Event()
+        self._spin_thread = threading.Thread(target=self._spin)
+        self._spin_thread.start()
+
+    def stop(self):
+        if self._dfl_sigmap:
+            # Reset registered signal handlers to default ones
+            self._reset_signal_handlers()
+
+        if self._spin_thread:
+            self._stop_spin.set()
+            self._spin_thread.join()
+
+        target = self.stdout if self.write_to_stdout else self.stderr
+        if target.isatty():
+            target.write("\r")
+
+        if self.write_to_stdout:
+            self._clear_line()
+        else:
+            self._clear_err()
+
+        if target.isatty():
+            self._show_cursor(target=target)
+        if self.stderr and self.stderr != sys.stderr:
+            self.stderr.close()
+        if self.stdout and self.stdout != sys.stdout:
+            self.stdout.close()
+        self.out_buff.close()
+
     def _freeze(self, final_text, err=False):
         """Stop spinner, compose last frame and 'freeze' it."""
         if not final_text:
@@ -218,18 +262,10 @@ class VistirSpinner(base_obj):
         # Should be stopped here, otherwise prints after
         # self._freeze call will mess up the spinner
         self.stop()
-        if err:
+        if err or not self.write_to_stdout:
             self.stderr.write(self._last_frame)
         else:
             self.stdout.write(self._last_frame)
-
-    def stop(self, *args, **kwargs):
-        if self.stderr and self.stderr != sys.stderr:
-            self.stderr.close()
-        if self.stdout and self.stdout != sys.stdout:
-            self.stdout.close()
-        self.out_buff.close()
-        super(VistirSpinner, self).stop(*args, **kwargs)
 
     def _compose_color_func(self):
         fn = functools.partial(
@@ -318,12 +354,16 @@ class VistirSpinner(base_obj):
             signal.signal(sig, sig_handler)
 
     @staticmethod
-    def _hide_cursor():
-        cursor.hide()
+    def _hide_cursor(target=None):
+        if not target:
+            target = sys.stdout
+        cursor.hide(stream=target)
 
     @staticmethod
-    def _show_cursor():
-        cursor.show()
+    def _show_cursor(target=None):
+        if not target:
+            target = sys.stdout
+        cursor.show(stream=target)
 
     @staticmethod
     def _clear_err():
