@@ -148,15 +148,16 @@ def _create_subprocess(
     spinner=None,
     combine_stderr=False,
     display_limit=200,
-    start_text=""
+    start_text="",
+    write_to_stdout=True
 ):
     if not env:
         env = {}
     try:
         c = _spawn_subprocess(cmd, env=env, block=block, cwd=cwd,
-                                                    combine_stderr=combine_stderr)
+                              combine_stderr=combine_stderr)
     except Exception as exc:
-        print("Error %s while executing command %s", exc, " ".join(cmd._parts))
+        sys.stderr.write("Error %s while executing command %s", exc, " ".join(cmd._parts))
         raise
     if not block:
         c.stdin.close()
@@ -193,9 +194,7 @@ def _create_subprocess(
                 err_line = fs_str("{0}".format(stderr_line))
                 if verbose and err_line is not None:
                     if spinner:
-                        spinner._hide_cursor()
-                        spinner.write_err(err_line)
-                        spinner._show_cursor()
+                        spinner.hide_and_write(err_line, target=spinner.stderr)
                     else:
                         sys.stderr.write(err_line)
                         sys.stderr.flush()
@@ -206,12 +205,12 @@ def _create_subprocess(
                     display_line = "{0}...".format(stdout_line[:display_limit])
                 if verbose and display_line is not None:
                     if spinner:
-                        spinner._hide_cursor()
-                        spinner.write_err(display_line)
-                        spinner._show_cursor()
+                        target = spinner.stdout if write_to_stdout else spinner.stderr
+                        spinner.hide_and_write(display_line, target=target)
                     else:
-                        sys.stderr.write(display_line)
-                        sys.stderr.flush()
+                        target = sys.stdout if write_to_stdout else sys.stderr
+                        target.write(display_line)
+                        target.flush()
                 if spinner:
                     spinner.text = to_native_string("{0} {1}".format(spinner_orig_text, display_line))
                 continue
@@ -309,7 +308,8 @@ def run(
             verbose=verbose,
             spinner=sp,
             combine_stderr=combine_stderr,
-            start_text=start_text
+            start_text=start_text,
+            write_to_stdout=True
         )
 
 
@@ -326,7 +326,7 @@ def load_path(python):
 
     python = Path(python).as_posix()
     out, err = run([python, "-c", "import json, sys; print(json.dumps(sys.path))"],
-                        nospin=True)
+                   nospin=True)
     if out:
         return json.loads(out)
     else:
