@@ -33,8 +33,7 @@ jobs:
     - stage: coverage
       python: "3.6"
       install:
-        - "pip install --upgrade pip pipenv"
+        - "pip install --upgrade pip pipenv pytest-cov pytest-xdist pytest-timeout pytest"
         - "pipenv install --dev"
-        - "pipenv run pip install --upgrade -e .[spinner,tests]"
       script:
         - "pipenv run pytest -n auto --timeout 300 --cov=vistir --cov-report=term-missing --cov-report=xml --cov-report=html tests"
