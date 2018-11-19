@@ -10,7 +10,7 @@ import sys
 
 from collections import OrderedDict
 from functools import partial
-from itertools import islice
+from itertools import islice, tee
 
 import six
 
@@ -79,12 +79,12 @@ def unnest(elem):
     """
 
     if isinstance(elem, Iterable) and not isinstance(elem, six.string_types):
-        elem, target = itertools.tee(elem, 2)
+        elem, target = tee(elem, 2)
     else:
         target = elem
     for el in target:
         if isinstance(el, Iterable) and not isinstance(el, six.string_types):
-            el, el_copy = itertools.tee(el, 2)
+            el, el_copy = tee(el, 2)
             for sub in unnest(el_copy):
                 yield sub
         else:
