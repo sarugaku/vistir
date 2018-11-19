@@ -1,12 +1,13 @@
 [packages]
-vistir = { path = '.', editable = true, extras = ["tests"] }
+vistir = {editable = true,extras = ["spinner", "tests"], path = "."}
+coverage = "<5.0"
 
 [dev-packages]
 invoke = '*'
 flake8 = '*'
 parver = '*'
 rope = '*'
-black = {version = "*", markers = "python_version>='3.6'"}
+black = {version = "*",markers = "python_version>='3.6'"}
 towncrier = '*'
 wheel = '*'
 pytest = '*'
