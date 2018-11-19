@@ -161,7 +161,7 @@ middle under normal circumstances, your original file is already gone.
             ...
         RuntimeError: But did it get overwritten now?
     >>> read_test_file()
-        writing some new text
+    this is some test text
 
 
 .. _`cd`:
