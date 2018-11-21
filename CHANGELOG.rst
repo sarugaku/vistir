@@ -1,3 +1,14 @@
+0.2.5 (2018-11-21)
+==================
+
+Features
+--------
+
+- Added the ability to always write spinner output to stderr using ``write_to_stdout=False``.  `#40 <https://github.com/sarugaku/vistir/issues/40>`_
+  
+- Added extra path normalization and comparison utilities.  `#42 <https://github.com/sarugaku/vistir/issues/42>`_
+
+
 0.2.4 (2018-11-12)
 ==================
 

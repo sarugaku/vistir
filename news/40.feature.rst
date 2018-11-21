@@ -1,1 +1,0 @@
-Added the ability to always write spinner output to stderr using ``write_to_stdout=False``.
