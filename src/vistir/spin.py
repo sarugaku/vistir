@@ -12,7 +12,7 @@ import cursor
 import six
 
 from .compat import to_native_string
-from .termcolors import COLOR_MAP, COLORS, colored
+from .termcolors import COLOR_MAP, COLORS, colored, DISABLE_COLORS
 from io import StringIO
 
 try:
@@ -34,7 +34,9 @@ CLEAR_LINE = chr(27) + "[K"
 
 class DummySpinner(object):
     def __init__(self, text="", **kwargs):
-        colorama.init()
+        super(DummySpinner, self).__init__()
+        if DISABLE_COLORS:
+            colorama.init()
         from .misc import decode_for_output
         self.text = to_native_string(decode_for_output(text)) if text else ""
         self.stdout = kwargs.get("stdout", sys.stdout)
@@ -179,6 +181,8 @@ class VistirSpinner(base_obj):
         self.out_buff = StringIO()
         self.write_to_stdout = write_to_stdout
         self.is_dummy = bool(yaspin is None)
+        if os.environ.get("ANSI_COLORS_DISABLED", False):
+            colorama.deinit()
         super(VistirSpinner, self).__init__(*args, **kwargs)
 
     def ok(self, text="OK", err=False):
