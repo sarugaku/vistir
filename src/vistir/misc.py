@@ -537,11 +537,12 @@ def get_output_encoding(source_encoding):
     return get_canonical_encoding_name(PREFERRED_ENCODING)
 
 
-def decode_for_output(output, target_stream=None):
+def decode_for_output(output, target_stream=None, translation_map=None):
     """Given a string, decode it for output to a terminal
 
     :param str output: A string to print to a terminal
     :param target_stream: A stream to write to, we will encode to target this stream if possible.
+    :param dict translation_map: A mapping of unicode character ordinals to replacement strings.
     :return: A re-encoded string using the preferred encoding
     :rtype: str
     """
@@ -554,10 +555,18 @@ def decode_for_output(output, target_stream=None):
     encoding = get_output_encoding(encoding)
     try:
         output = output.encode(encoding)
+    except (UnicodeDecodeError, UnicodeEncodeError):
+        if translation_map is not None:
+            if six.PY2:
+                output = unicode.translate(
+                    to_text(output, encoding=encoding), translation_map
+                )
+            else:
+                output = output.translate(translation_map)
+        output = output.encode(encoding, errors="replace")
     except AttributeError:
         pass
-    output = output.decode(encoding)
-    return output
+    return to_text(output, encoding=encoding, errors="replace")
 
 
 def get_canonical_encoding_name(name):
