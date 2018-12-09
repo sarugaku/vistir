@@ -60,6 +60,8 @@ except ImportError:  # Old Pythons.
 
 if six.PY2:
 
+    from io import BytesIO as StringIO
+
     class ResourceWarning(Warning):
         pass
 
@@ -81,7 +83,7 @@ if six.PY2:
 
 else:
     from builtins import ResourceWarning, FileNotFoundError, PermissionError, IsADirectoryError
-
+    from io import StringIO
 
 six.add_move(six.MovedAttribute("Iterable", "collections", "collections.abc"))
 from six.moves import Iterable

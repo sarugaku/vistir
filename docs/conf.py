@@ -12,11 +12,30 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
+import codecs
 import os
+import re
 import sys
 docs_dir = os.path.abspath(os.path.dirname(__file__))
 src_dir = os.path.join(os.path.dirname(docs_dir), "src", "vistir")
 sys.path.insert(0, src_dir)
+version_file = os.path.join(src_dir, "__init__.py")
+
+
+def read_file(path):
+    # intentionally *not* adding an encoding option to open, See:
+    #   https://github.com/pypa/virtualenv/issues/201#issuecomment-3145690
+    with codecs.open(path, 'r') as fp:
+        return fp.read()
+
+
+def find_version(file_path):
+    version_file = read_file(file_path)
+    version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]",
+                              version_file, re.M)
+    if version_match:
+        return version_match.group(1)
+    return '0.0.0'
 
 
 # -- Project information -----------------------------------------------------
@@ -25,10 +44,12 @@ project = 'vistir'
 copyright = '2018, Dan Ryan <dan@danryan.co>'
 author = 'Dan Ryan <dan@danryan.co>'
 
+release = find_version(version_file)
+version = '.'.join(release.split('.')[:2])
 # The short X.Y version
-version = '0.0'
+# version = '0.0'
 # The full version, including alpha/beta/rc tags
-release = '0.0.0.dev0'
+# release = '0.0.0.dev0'
 
 
 # -- General configuration ---------------------------------------------------
@@ -132,11 +153,11 @@ html_theme_options = {
 latex_elements = {
     # The paper size ('letterpaper' or 'a4paper').
     #
-    # 'papersize': 'letterpaper',
+    'papersize': 'letterpaper',
 
     # The font size ('10pt', '11pt' or '12pt').
     #
-    # 'pointsize': '10pt',
+    'pointsize': '10pt',
 
     # Additional stuff for the LaTeX preamble.
     #
@@ -173,7 +194,7 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
     (master_doc, 'vistir', 'vistir Documentation',
-     author, 'vistir', 'One line description of project.',
+     author, 'vistir', 'Miscellaneous utilities for dealing with filesystems, paths, projects, subprocesses, and more.',
      'Miscellaneous'),
 ]
 

@@ -10,13 +10,8 @@ from contextlib import contextmanager
 
 import six
 
-from .compat import NamedTemporaryFile, Path
+from .compat import NamedTemporaryFile, Path, StringIO
 from .path import is_file_url, is_valid_url, path_to_url, url_to_path
-
-if six.PY2:
-    from io import BytesIO as StringIO
-else:
-    from io import StringIO
 
 
 __all__ = [
@@ -306,20 +301,14 @@ def replaced_stream(stream_name):
     >>> with replaced_stream("stdout") as stdout:
     ...     sys.stdout.write("hello")
     ...     assert stdout.getvalue() == "hello"
-    ...     assert orig_stdout.getvalue() != "hello"
 
     >>> sys.stdout.write("hello")
     'hello'
     """
-    from .misc import StreamWrapper, get_canonical_encoding_name, PREFERRED_ENCODING
     orig_stream = getattr(sys, stream_name)
-    encoding = get_canonical_encoding_name(
-        getattr(orig_stream, encoding, PREFERRED_ENCODING)
-    )
     new_stream = StringIO()
-    wrapped_stream = StreamWrapper(new_stream, encoding, "replace", line_buffering=True)
     try:
-        setattr(sys, stream_name, wrapped_stream)
+        setattr(sys, stream_name, new_stream)
         yield getattr(sys, stream_name)
     finally:
         setattr(sys, stream_name, orig_stream)

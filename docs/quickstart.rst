@@ -215,7 +215,6 @@ capture the stream output and prevent it from being written as normal.
     >>> with replaced_stream("stdout") as stdout:
     ...     sys.stdout.write("hello")
     ...     assert stdout.getvalue() == "hello"
-    ...     assert orig_stdout.getvalue() != "hello"
 
     >>> sys.stdout.write("hello")
     'hello'

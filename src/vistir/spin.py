@@ -1,4 +1,5 @@
 # -*- coding=utf-8 -*-
+from __future__ import absolute_import, print_function
 
 import functools
 import os
@@ -23,11 +24,29 @@ except ImportError:
 else:
     from yaspin.spinners import Spinners
 
-handler = None
-if yaspin and os.name == "nt":
-    handler = yaspin.signal_handlers.default_handler
-elif yaspin and os.name != "nt":
-    handler = yaspin.signal_handlers.fancy_handler
+if os.name == "nt":
+    def handler(signum, frame, spinner):
+        """Signal handler, used to gracefully shut down the ``spinner`` instance
+        when specified signal is received by the process running the ``spinner``.
+
+        ``signum`` and ``frame`` are mandatory arguments. Check ``signal.signal``
+        function for more details.
+        """
+        spinner.fail()
+        spinner.stop()
+        sys.exit(0)
+
+else:
+    def handler(signum, frame, spinner):
+        """Signal handler, used to gracefully shut down the ``spinner`` instance
+        when specified signal is received by the process running the ``spinner``.
+
+        ``signum`` and ``frame`` are mandatory arguments. Check ``signal.signal``
+        function for more details.
+        """
+        spinner.red.fail("✘")
+        spinner.stop()
+        sys.exit(0)
 
 CLEAR_LINE = chr(27) + "[K"
 

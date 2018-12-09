@@ -167,6 +167,7 @@ def test_walk_up(tmpdir):
         assert results == expected[i]
 
 
+@settings(deadline=500)
 def test_handle_remove_readonly(tmpdir):
     test_file = tmpdir.join("test_file.txt")
     test_file.write_text("a bunch of text", encoding="utf-8")

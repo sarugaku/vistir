@@ -16,7 +16,7 @@ from itertools import islice, tee
 import six
 
 from .cmdparse import Script
-from .compat import Path, fs_str, partialmethod, to_native_string, Iterable
+from .compat import Path, fs_str, partialmethod, to_native_string, Iterable, StringIO
 from .contextmanagers import spinner as spinner
 
 if os.name != "nt":
@@ -521,21 +521,42 @@ def getpreferredencoding():
 PREFERRED_ENCODING = getpreferredencoding()
 
 
-def decode_for_output(output):
+def get_output_encoding(source_encoding):
+    """
+    Given a source encoding, determine the preferred output encoding.
+
+    :param str source_encoding: The encoding of the source material.
+    :returns: The output encoding to decode to.
+    :rtype: str
+    """
+
+    if source_encoding is not None:
+        if get_canonical_encoding_name(source_encoding) == 'ascii':
+            return 'utf-8'
+        return get_canonical_encoding_name(source_encoding)
+    return get_canonical_encoding_name(PREFERRED_ENCODING)
+
+
+def decode_for_output(output, target_stream=None):
     """Given a string, decode it for output to a terminal
 
     :param str output: A string to print to a terminal
+    :param target_stream: A stream to write to, we will encode to target this stream if possible.
     :return: A re-encoded string using the preferred encoding
     :rtype: str
     """
 
     if not isinstance(output, six.string_types):
         return output
+    encoding = None
+    if target_stream is not None:
+        encoding = getattr(target_stream, "encoding", None)
+    encoding = get_output_encoding(encoding)
     try:
-        output = output.encode(PREFERRED_ENCODING)
+        output = output.encode(encoding)
     except AttributeError:
         pass
-    output = output.decode(PREFERRED_ENCODING)
+    output = output.decode(encoding)
     return output
 
 
@@ -569,8 +590,8 @@ def get_wrapped_stream(stream):
 
     if stream is None:
         raise TypeError("must provide a stream to wrap")
-    encoding = getattr(stream, encoding, PREFERRED_ENCODING)
-    encoding = get_canonical_encoding_name(encoding)
+    encoding = getattr(stream, "encoding", None)
+    encoding = get_output_encoding(encoding)
     return StreamWrapper(stream, encoding, "replace", line_buffering=True)
 
 
@@ -582,9 +603,7 @@ class StreamWrapper(io.TextIOWrapper):
     """
 
     def __init__(self, stream, encoding, errors, line_buffering=True, **kwargs):
-        self._stream = stream
-        self.errors = errors
-        self.line_buffering = line_buffering
+        self._stream = stream = _StreamProvider(stream)
         io.TextIOWrapper.__init__(
             self, stream, encoding, errors, line_buffering=line_buffering, **kwargs
         )
@@ -613,3 +632,51 @@ class StreamWrapper(io.TextIOWrapper):
 
     def isatty(self):
         return self._stream.isatty()
+
+
+# More things borrowed from click, this is because we are using `TextIOWrapper` instead of
+# just a normal StringIO
+class _StreamProvider(object):
+    def __init__(self, stream):
+        self._stream = stream
+
+    def __getattr__(self, name):
+        return getattr(self._stream, name)
+
+    def read1(self, size):
+        fn = getattr(self._stream, "read1", None)
+        if fn is not None:
+            return fn(size)
+        if six.PY2:
+            return self._stream.readline(size)
+        return self._stream.read(size)
+
+    def readable(self):
+        fn = getattr(self._stream, "readable", None)
+        if fn is not None:
+            return fn()
+        try:
+            self._stream.read(0)
+        except Exception:
+            return False
+        return True
+
+    def writeable(self):
+        fn = getattr(self._stream, "writeable", None)
+        if fn is not None:
+            return fn()
+        try:
+            self._stream.write(b"")
+        except Exception:
+            return False
+        return True
+
+    def seekable(self):
+        fn = getattr(self._stream, "seekable", None)
+        if fn is not None:
+            return fn()
+        try:
+            self._stream.seek(self._stream.tell())
+        except Exception:
+            return False
+        return True
