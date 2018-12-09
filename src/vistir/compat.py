@@ -26,6 +26,11 @@ __all__ = [
     "TemporaryDirectory",
     "NamedTemporaryFile",
     "to_native_string",
+    "Iterable",
+    "Mapping",
+    "Sequence",
+    "Set",
+    "ItemsView"
 ]
 
 if sys.version_info >= (3, 5):
@@ -46,17 +51,17 @@ else:
 try:
     from weakref import finalize
 except ImportError:
-    from backports.weakref import finalize
+    from backports.weakref import finalize  # type: ignore
 
 try:
     from functools import partialmethod
 except Exception:
-    from .backports.functools import partialmethod
+    from .backports.functools import partialmethod  # type: ignore
 
 try:
     from json import JSONDecodeError
 except ImportError:  # Old Pythons.
-    JSONDecodeError = ValueError
+    JSONDecodeError = ValueError  # type: ignore
 
 if six.PY2:
 
@@ -85,9 +90,12 @@ else:
     from builtins import ResourceWarning, FileNotFoundError, PermissionError, IsADirectoryError
     from io import StringIO
 
-six.add_move(six.MovedAttribute("Iterable", "collections", "collections.abc"))
-from six.moves import Iterable
-
+six.add_move(six.MovedAttribute("Iterable", "collections", "collections.abc"))  # type: ignore
+six.add_move(six.MovedAttribute("Mapping", "collections", "collections.abc"))  # type: ignore
+six.add_move(six.MovedAttribute("Sequence", "collections", "collections.abc"))  # type: ignore
+six.add_move(six.MovedAttribute("Set", "collections", "collections.abc"))  # type: ignore
+six.add_move(six.MovedAttribute("ItemsView", "collections", "collections.abc"))  # type: ignore
+from six.moves import Iterable, Mapping, Sequence, Set, ItemsView  # type: ignore  # noqa
 
 if not sys.warnoptions:
     warnings.simplefilter("default", ResourceWarning)

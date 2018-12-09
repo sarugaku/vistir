@@ -21,8 +21,12 @@ try:
 except ImportError:
     yaspin = None
     Spinners = None
+    SpinBase = None
 else:
-    from yaspin.spinners import Spinners
+    import yaspin.spinners
+    import yaspin.core
+    Spinners = yaspin.spinners.Spinners
+    SpinBase = yaspin.core.Yaspin
 
 if os.name == "nt":
     def handler(signum, frame, spinner):
@@ -53,7 +57,6 @@ CLEAR_LINE = chr(27) + "[K"
 
 class DummySpinner(object):
     def __init__(self, text="", **kwargs):
-        super(DummySpinner, self).__init__()
         if DISABLE_COLORS:
             colorama.init()
         from .misc import decode_for_output
@@ -62,6 +65,7 @@ class DummySpinner(object):
         self.stderr = kwargs.get("stderr", sys.stderr)
         self.out_buff = StringIO()
         self.write_to_stdout = kwargs.get("write_to_stdout", False)
+        super(DummySpinner, self).__init__()
 
     def __enter__(self):
         if self.text and self.text != "None":
@@ -69,10 +73,10 @@ class DummySpinner(object):
                 self.write(self.text)
         return self
 
-    def __exit__(self, exc_type, exc_val, traceback):
+    def __exit__(self, exc_type, exc_val, tb):
         if exc_type:
             import traceback
-            formatted_tb = traceback.format_exception(exc_type, exc_val, traceback)
+            formatted_tb = traceback.format_exception(exc_type, exc_val, tb)
             self.write_err("".join(formatted_tb))
         self._close_output_buffer()
         return False
@@ -96,7 +100,7 @@ class DummySpinner(object):
 
     def fail(self, exitcode=1, text="FAIL"):
         from .misc import decode_for_output
-        if text and text != "None":
+        if text is not None and text != "None":
             if self.write_to_stdout:
                 self.write(text)
             else:
@@ -104,11 +108,11 @@ class DummySpinner(object):
         self._close_output_buffer()
 
     def ok(self, text="OK"):
-        if text and text != "None":
+        if text is not None and text != "None":
             if self.write_to_stdout:
-                self.stdout.write(self.text)
+                self.write(text)
             else:
-                self.stderr.write(self.text)
+                self.write_err(text)
         self._close_output_buffer()
         return 0
 
@@ -166,10 +170,11 @@ class DummySpinner(object):
         pass
 
 
-base_obj = yaspin.core.Yaspin if yaspin is not None else DummySpinner
+if SpinBase is None:
+    SpinBase = DummySpinner
 
 
-class VistirSpinner(base_obj):
+class VistirSpinner(SpinBase):
     "A spinner class for handling spinners on windows and posix."
 
     def __init__(self, *args, **kwargs):
