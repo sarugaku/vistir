@@ -1,0 +1,2 @@
+Improved ``decode_for_output`` to handle decoding failures gracefully by moving to an ``replace`` strategy.
+Now also allows a translation map to be provided to translate specific non-ascii characters when writing to outputs.
