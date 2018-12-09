@@ -1,5 +1,5 @@
 # -*- coding=utf-8 -*-
-from __future__ import absolute_import, unicode_literals
+from __future__ import absolute_import, print_function, unicode_literals
 
 import errno
 import os
@@ -86,8 +86,16 @@ if six.PY2:
         """The command does not work on directories"""
         pass
 
+    class FileExistsError(OSError):
+        def __init__(self, *args, **kwargs):
+            self.errno = errno.EEXIST
+            super(FileExistsError, self).__init__(*args, **kwargs)
+
 else:
-    from builtins import ResourceWarning, FileNotFoundError, PermissionError, IsADirectoryError
+    from builtins import (
+        ResourceWarning, FileNotFoundError, PermissionError, IsADirectoryError,
+        FileExistsError
+    )
     from io import StringIO
 
 six.add_move(six.MovedAttribute("Iterable", "collections", "collections.abc"))  # type: ignore

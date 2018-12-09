@@ -61,4 +61,8 @@ __all__ = [
     "take",
     "chunked",
     "divide",
+    "StringIO",
+    "get_wrapped_stream",
+    "StreamWrapper",
+    "replaced_stream"
 ]

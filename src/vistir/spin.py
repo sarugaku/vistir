@@ -9,7 +9,6 @@ import threading
 import time
 
 import colorama
-import cursor
 import six
 
 from .compat import to_native_string
@@ -19,10 +18,12 @@ from io import StringIO
 
 try:
     import yaspin
+    import cursor
 except ImportError:
     yaspin = None
     Spinners = None
     SpinBase = None
+    cursor = None
 else:
     import yaspin.spinners
     import yaspin.core
