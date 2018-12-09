@@ -20,7 +20,8 @@ else:
 
 
 __all__ = [
-    "temp_environ", "temp_path", "cd", "atomic_open_for_write", "open_file", "spinner", "dummy_spinner",
+    "temp_environ", "temp_path", "cd", "atomic_open_for_write", "open_file", "spinner",
+    "dummy_spinner", "replaced_stream"
 ]
 
 
