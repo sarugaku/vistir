@@ -9,7 +9,7 @@ import time
     (True, True), (True, False),
     (False, True), (False, False)
 ))
-def test_spinner(capture_streams, monkeypatch, nospin, write_to_stdout):
+def test_spinner(monkeypatch, nospin, write_to_stdout):
     with replaced_stream("stdout") as stdout:
         with replaced_stream("stderr") as stderr:
             with monkeypatch.context() as m:
