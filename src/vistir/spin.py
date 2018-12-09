@@ -72,9 +72,8 @@ class DummySpinner(object):
     def __exit__(self, exc_type, exc_val, traceback):
         if exc_type:
             import traceback
-            from .misc import decode_for_output
-            formatted_tb = "".join(traceback.format_exception(*sys.exc_info()))
-            self.write_err(decode_for_output(formatted_tb))
+            formatted_tb = traceback.format_exception(exc_type, exc_val, traceback)
+            self.write_err("".join(formatted_tb))
         self._close_output_buffer()
         return False
 
@@ -99,9 +98,9 @@ class DummySpinner(object):
         from .misc import decode_for_output
         if text and text != "None":
             if self.write_to_stdout:
-                self.write(decode_for_output(text))
+                self.write(text)
             else:
-                self.write_err(decode_for_output(text))
+                self.write_err(text)
         self._close_output_buffer()
 
     def ok(self, text="OK"):
@@ -119,9 +118,9 @@ class DummySpinner(object):
         from .misc import decode_for_output
         if text is None or isinstance(text, six.string_types) and text == "None":
             pass
-        target.write(decode_for_output("\r"))
+        target.write(decode_for_output("\r", target_stream=target))
         self._hide_cursor(target=target)
-        target.write(decode_for_output("{0}\n".format(text)))
+        target.write(decode_for_output("{0}\n".format(text), target_stream=target))
         target.write(CLEAR_LINE)
         self._show_cursor(target=target)
 
@@ -131,21 +130,32 @@ class DummySpinner(object):
         from .misc import decode_for_output
         if text is None or isinstance(text, six.string_types) and text == "None":
             pass
-        text = decode_for_output(text)
-        self.stdout.write(decode_for_output("\r"))
-        line = decode_for_output("{0}\n".format(text))
-        self.stdout.write(line)
-        self.stdout.write(CLEAR_LINE)
+        if not self.stdout.closed:
+            stdout = self.stdout
+        else:
+            stdout = sys.stdout
+        text = decode_for_output(text, target_stream=stdout)
+        stdout.write(decode_for_output("\r", target_stream=stdout))
+        line = decode_for_output("{0}\n".format(text), target_stream=stdout)
+        stdout.write(line)
+        stdout.write(CLEAR_LINE)
 
     def write_err(self, text=None):
         from .misc import decode_for_output
         if text is None or isinstance(text, six.string_types) and text == "None":
             pass
-        text = decode_for_output(text)
-        self.stderr.write(decode_for_output("\r"))
-        line = decode_for_output("{0}\n".format(text))
-        self.stderr.write(line)
-        self.stderr.write(CLEAR_LINE)
+        if not self.stderr.closed:
+            stderr = self.stderr
+        else:
+            if sys.stderr.closed:
+                print(text)
+                return
+            stderr = sys.stderr
+        text = decode_for_output(text, target_stream=stderr)
+        stderr.write(decode_for_output("\r", target_stream=stderr))
+        line = decode_for_output("{0}\n".format(text), target_stream=stderr)
+        stderr.write(line)
+        stderr.write(CLEAR_LINE)
 
     @staticmethod
     def _hide_cursor(target=None):
@@ -201,9 +211,9 @@ class VistirSpinner(base_obj):
         self.out_buff = StringIO()
         self.write_to_stdout = write_to_stdout
         self.is_dummy = bool(yaspin is None)
+        super(VistirSpinner, self).__init__(*args, **kwargs)
         if DISABLE_COLORS:
             colorama.deinit()
-        super(VistirSpinner, self).__init__(*args, **kwargs)
 
     def ok(self, text="OK", err=False):
         """Set Ok (success) finalizer to a spinner."""
