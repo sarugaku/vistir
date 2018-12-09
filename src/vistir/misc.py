@@ -1,6 +1,7 @@
 # -*- coding=utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 
+import io
 import json
 import logging
 import locale
@@ -38,6 +39,9 @@ __all__ = [
     "divide",
     "getpreferredencoding",
     "decode_for_output",
+    "get_canonical_encoding_name",
+    "get_wrapped_stream",
+    "StreamWrapper",
 ]
 
 
@@ -159,7 +163,7 @@ def _create_subprocess(
         c = _spawn_subprocess(cmd, env=env, block=block, cwd=cwd,
                               combine_stderr=combine_stderr)
     except Exception as exc:
-        sys.stderr.write("Error %s while executing command %s", exc, " ".join(cmd._parts))
+        sys.stderr.write("Error %s while executing command %s", % (exc, " ".join(cmd._parts)))
         raise
     if not block:
         c.stdin.close()
@@ -530,3 +534,79 @@ def decode_for_output(output):
         pass
     output = output.decode(PREFERRED_ENCODING)
     return output
+
+
+def get_canonical_encoding_name(name):
+    # type: (str) -> str
+    """
+    Given an encoding name, get the canonical name from a codec lookup.
+
+    :param str name: The name of the codec to lookup
+    :return: The canonical version of the codec name
+    :rtype: str
+    """
+
+    import codecs
+    try:
+        codec = codecs.lookup(name)
+    except LookupError:
+        return name
+    else:
+        return codec.name
+
+
+def get_wrapped_stream(stream):
+    """
+    Given a stream, wrap it in a `StreamWrapper` instance and return the wrapped stream.
+
+    :param stream: A stream instance to wrap
+    :returns: A new, wrapped stream
+    :rtype: :class:`StreamWrapper`
+    """
+
+    if stream is None:
+        raise TypeError("must provide a stream to wrap")
+    encoding = getattr(stream, encoding, PREFERRED_ENCODING)
+    encoding = get_canonical_encoding_name(encoding)
+    return StreamWrapper(stream, encoding, "replace", line_buffering=True)
+
+
+class StreamWrapper(io.TextIOWrapper):
+
+    """
+    This wrapper class will wrap a provided stream and supply an interface
+    for compatibility.
+    """
+
+    def __init__(self, stream, encoding, errors, line_buffering=True, **kwargs):
+        self._stream = stream
+        self.errors = errors
+        self.line_buffering = line_buffering
+        io.TextIOWrapper.__init__(
+            self, stream, encoding, errors, line_buffering=line_buffering, **kwargs
+        )
+
+    # borrowed from click's implementation of stream wrappers, see
+    # https://github.com/pallets/click/blob/6cafd32/click/_compat.py#L64
+    if six.PY2:
+        def write(self, x):
+            if isinstance(x, (str, buffer, bytearray)):
+                try:
+                    self.flush()
+                except Exception:
+                    pass
+                return self.buffer.write(str(x))
+            return io.TextIOWrapper.write(self, x)
+
+        def writelines(self, lines):
+            for line in lines:
+                self.write(line)
+
+    def __del__(self):
+        try:
+            self.detach()
+        except Exception:
+            pass
+
+    def isatty(self):
+        return self._stream.isatty()

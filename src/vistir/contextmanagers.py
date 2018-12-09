@@ -1,5 +1,5 @@
 # -*- coding=utf-8 -*-
-from __future__ import absolute_import, unicode_literals
+from __future__ import absolute_import, unicode_literals, print_function
 
 import io
 import os
@@ -13,9 +13,14 @@ import six
 from .compat import NamedTemporaryFile, Path
 from .path import is_file_url, is_valid_url, path_to_url, url_to_path
 
+if six.PY2:
+    from io import BytesIO as StringIO
+else:
+    from io import StringIO
+
 
 __all__ = [
-    "temp_environ", "temp_path", "cd", "atomic_open_for_write", "open_file", "spinner"
+    "temp_environ", "temp_path", "cd", "atomic_open_for_write", "open_file", "spinner", "dummy_spinner",
 ]
 
 
@@ -286,3 +291,34 @@ def open_file(link, session=None, stream=True):
                     if conn is not None:
                         conn.close()
                 result.close()
+
+
+@contextmanager
+def replaced_stream(stream_name):
+    """
+    Context manager to temporarily swap out *stream_name* with a stream wrapper.
+
+    :param str stream_name: The name of a sys stream to wrap
+    :returns: A ``StreamWrapper`` replacement, temporarily
+
+    >>> orig_stdout = sys.stdout
+    >>> with replaced_stream("stdout") as stdout:
+    ...     sys.stdout.write("hello")
+    ...     assert stdout.getvalue() == "hello"
+    ...     assert orig_stdout.getvalue() != "hello"
+
+    >>> sys.stdout.write("hello")
+    'hello'
+    """
+    from .misc import StreamWrapper, get_canonical_encoding_name, PREFERRED_ENCODING
+    orig_stream = getattr(sys, stream_name)
+    encoding = get_canonical_encoding_name(
+        getattr(orig_stream, encoding, PREFERRED_ENCODING)
+    )
+    new_stream = StringIO()
+    wrapped_stream = StreamWrapper(new_stream, encoding, "replace", line_buffering=True)
+    try:
+        setattr(sys, stream_name, wrapped_stream)
+        yield getattr(sys, stream_name)
+    finally:
+        setattr(sys, stream_name, orig_stream)

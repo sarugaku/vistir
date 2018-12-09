@@ -1,0 +1,1 @@
+Fixed a bug with exception handling during ``_create_process`` calls.

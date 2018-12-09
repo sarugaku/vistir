@@ -31,6 +31,7 @@ __all__ = [
     "get_converted_relative_path",
     "handle_remove_readonly",
     "normalize_path",
+    "is_in_path",
     "is_file_url",
     "is_readonly_path",
     "is_valid_url",
