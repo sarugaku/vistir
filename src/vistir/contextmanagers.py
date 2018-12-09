@@ -306,7 +306,7 @@ def replaced_stream(stream_name):
     'hello'
     """
     orig_stream = getattr(sys, stream_name)
-    new_stream = StringIO()
+    new_stream = six.StringIO()
     try:
         setattr(sys, stream_name, new_stream)
         yield getattr(sys, stream_name)

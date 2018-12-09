@@ -32,7 +32,7 @@ def test_safe_expandvars():
 
 
 @given(legal_path_chars(), legal_path_chars())
-@settings(suppress_health_check=(HealthCheck.filter_too_much,))
+@settings(suppress_health_check=(HealthCheck.filter_too_much,), deadline=500)
 def test_mkdir_p(base_dir, subdir):
     assume(not any((dir_name in ["", ".", "./", ".."] for dir_name in [base_dir, subdir])))
     assume(not (os.path.relpath(subdir, start=base_dir) == "."))
@@ -167,7 +167,6 @@ def test_walk_up(tmpdir):
         assert results == expected[i]
 
 
-@settings(deadline=500)
 def test_handle_remove_readonly(tmpdir):
     test_file = tmpdir.join("test_file.txt")
     test_file.write_text("a bunch of text", encoding="utf-8")
