@@ -537,6 +537,26 @@ def get_output_encoding(source_encoding):
     return get_canonical_encoding_name(PREFERRED_ENCODING)
 
 
+def _encode(output, encoding=None, errors=None, translation_map=None):
+    if encoding is None:
+        encoding = PREFERRED_ENCODING
+    try:
+        output = output.encode(encoding)
+    except (UnicodeDecodeError, UnicodeEncodeError):
+        if translation_map is not None:
+            if six.PY2:
+                output = unicode.translate(
+                    to_text(output, encoding=encoding, errors=errors), translation_map
+                )
+            else:
+                output = output.translate(translation_map)
+        else:
+            output = to_text(output, encoding=encoding, errors=errors)
+    except AttributeError:
+        pass
+    return output
+
+
 def decode_for_output(output, target_stream=None, translation_map=None):
     """Given a string, decode it for output to a terminal
 
@@ -554,18 +574,10 @@ def decode_for_output(output, target_stream=None, translation_map=None):
         encoding = getattr(target_stream, "encoding", None)
     encoding = get_output_encoding(encoding)
     try:
-        output = output.encode(encoding)
+        output = _encode(output, encoding=encoding, translation_map=translation_map)
     except (UnicodeDecodeError, UnicodeEncodeError):
-        if translation_map is not None:
-            if six.PY2:
-                output = unicode.translate(
-                    to_text(output, encoding=encoding), translation_map
-                )
-            else:
-                output = output.translate(translation_map)
-        output = output.encode(encoding, errors="replace")
-    except AttributeError:
-        pass
+        output = _encode(output, encoding=encoding, errors="replace",
+                         translation_map=translation_map)
     return to_text(output, encoding=encoding, errors="replace")
 
 
@@ -648,6 +660,7 @@ class StreamWrapper(io.TextIOWrapper):
 class _StreamProvider(object):
     def __init__(self, stream):
         self._stream = stream
+        super(_StreamProvider, self).__init__()
 
     def __getattr__(self, name):
         return getattr(self._stream, name)
@@ -670,8 +683,8 @@ class _StreamProvider(object):
             return False
         return True
 
-    def writeable(self):
-        fn = getattr(self._stream, "writeable", None)
+    def writable(self):
+        fn = getattr(self._stream, "writable", None)
         if fn is not None:
             return fn()
         try:
