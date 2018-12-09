@@ -253,26 +253,31 @@ class VistirSpinner(SpinBase):
     def write(self, text):
         if not self.write_to_stdout:
             return self.write_err(text)
-        from .misc import to_text
-        sys.stdout.write("\r")
-        self.stdout.write(CLEAR_LINE)
+        from .misc import decode_for_output
+        stdout = self.stdout
+        if self.stdout.closed:
+            stdout = sys.stdout
+        stdout.write(decode_for_output("\r", target_stream=stdout))
+        stdout.write(decode_for_output(CLEAR_LINE, target_stream=stdout))
         if text is None:
             text = ""
-        text = to_native_string("{0}\n".format(text))
-        self.stdout.write(text)
-        self.out_buff.write(to_text(text))
+        text = decode_for_output("{0}\n".format(text), target_stream=stdout)
+        stdout.write(text)
+        self.out_buff.write(decode_for_output(text, target_stream=self.out_buff))
 
     def write_err(self, text):
         """Write error text in the terminal without breaking the spinner."""
-        from .misc import to_text
-
-        self.stderr.write("\r")
-        self.stderr.write(CLEAR_LINE)
+        from .misc import decode_for_output
+        stderr = self.stderr
+        if self.stderr.closed:
+            stderr = sys.stderr
+        stderr.write(decode_for_output("\r", target_stream=stderr))
+        stderr.write(decode_for_output(CLEAR_LINE, target_stream=stderr))
         if text is None:
             text = ""
-        text = to_native_string("{0}\n".format(text))
+        text = decode_for_output("{0}\n".format(text), target_stream=stderr)
         self.stderr.write(text)
-        self.out_buff.write(to_text(text))
+        self.out_buff.write(decode_for_output(text, target_stream=self.out_buff))
 
     def start(self):
         if self._sigmap:
@@ -307,26 +312,23 @@ class VistirSpinner(SpinBase):
 
         if target.isatty():
             self._show_cursor(target=target)
-        if self.stderr and self.stderr != sys.stderr:
-            self.stderr.close()
-        if self.stdout and self.stdout != sys.stdout:
-            self.stdout.close()
         self.out_buff.close()
 
     def _freeze(self, final_text, err=False):
         """Stop spinner, compose last frame and 'freeze' it."""
+        from .misc import decode_for_output
         if not final_text:
             final_text = ""
-        text = to_native_string(final_text)
+        target = self.stderr if err else self.stdout
+        if target.closed:
+            target = sys.stderr if err else sys.stdout
+        text = decode_for_output(final_text, target_stream=target)
         self._last_frame = self._compose_out(text, mode="last")
 
         # Should be stopped here, otherwise prints after
         # self._freeze call will mess up the spinner
         self.stop()
-        if err or not self.write_to_stdout:
-            self.stderr.write(self._last_frame)
-        else:
-            self.stdout.write(self._last_frame)
+        target.write(self._last_frame)
 
     def _compose_color_func(self):
         fn = functools.partial(
@@ -339,20 +341,21 @@ class VistirSpinner(SpinBase):
 
     def _compose_out(self, frame, mode=None):
         # Ensure Unicode input
+        from .misc import decode_for_output
 
-        frame = to_native_string(frame)
+        frame = decode_for_output(frame)
         if self._text is None:
             self._text = ""
-        text = to_native_string(self._text)
+        text = decode_for_output(self._text)
         if self._color_func is not None:
             frame = self._color_func(frame)
         if self._side == "right":
             frame, text = text, frame
         # Mode
         if not mode:
-            out = to_native_string("\r{0} {1}".format(frame, text))
+            out = decode_for_output("\r{0} {1}".format(frame, text))
         else:
-            out = to_native_string("{0} {1}\n".format(frame, text))
+            out = decode_for_output("{0} {1}\n".format(frame, text))
         return out
 
     def _spin(self):
