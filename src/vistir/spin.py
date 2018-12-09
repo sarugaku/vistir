@@ -54,7 +54,8 @@ class DummySpinner(object):
         if exc_type:
             import traceback
             from .misc import decode_for_output
-            self.write_err(decode_for_output(traceback.format_exception(*sys.exc_info())))
+            formatted_tb = "".join(traceback.format_exception(*sys.exc_info()))
+            self.write_err(decode_for_output(formatted_tb))
         self._close_output_buffer()
         return False
 
@@ -181,7 +182,7 @@ class VistirSpinner(base_obj):
         self.out_buff = StringIO()
         self.write_to_stdout = write_to_stdout
         self.is_dummy = bool(yaspin is None)
-        if os.environ.get("ANSI_COLORS_DISABLED", False):
+        if DISABLE_COLORS:
             colorama.deinit()
         super(VistirSpinner, self).__init__(*args, **kwargs)
 

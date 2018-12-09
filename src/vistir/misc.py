@@ -163,7 +163,10 @@ def _create_subprocess(
         c = _spawn_subprocess(cmd, env=env, block=block, cwd=cwd,
                               combine_stderr=combine_stderr)
     except Exception as exc:
-        sys.stderr.write("Error %s while executing command %s", % (exc, " ".join(cmd._parts)))
+        import traceback
+        formatted_tb = "".join(traceback.format_exception(*sys.exc_info()))
+        sys.stderr.write("Error while executing command %s:" % " ".join(cmd._parts))
+        sys.stderr.write(formatted_tb)
         raise
     if not block:
         c.stdin.close()
