@@ -211,7 +211,7 @@ def _get_path(path):
     Returns **None** if there is no string value.
     """
 
-    if isinstance(path, six.string_types):
+    if isinstance(path, (str, bytes)):
         return path
     path_type = type(path)
     try:
