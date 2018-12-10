@@ -211,14 +211,14 @@ def _get_path(path):
     Returns **None** if there is no string value.
     """
 
-    if isinstance(path, (str, bytes)):
+    if isinstance(path, (six.string_types, bytes)):
         return path
     path_type = type(path)
     try:
         path_repr = path_type.__fspath__(path)
     except AttributeError:
         return
-    if isinstance(path_repr, (str, bytes)):
+    if isinstance(path_repr, (six.string_types, bytes)):
         return path_repr
     return
 
