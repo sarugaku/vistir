@@ -10,7 +10,7 @@ from contextlib import contextmanager
 
 import six
 
-from .compat import NamedTemporaryFile, Path, StringIO
+from .compat import NamedTemporaryFile, Path
 from .path import is_file_url, is_valid_url, path_to_url, url_to_path
 
 
