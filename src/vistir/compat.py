@@ -255,7 +255,10 @@ def fs_decode(path):
         path = path.decode(_fs_encoding, _fs_decode_errors)
     return path
 
-_fs_encoding = sys.getfilesystemencoding() or sys.getdefaultencoding()
+if sys.version_info >= (3, 5) or os.name != "nt":
+    _fs_encoding = sys.getfilesystemencoding() or sys.getdefaultencoding()
+else:
+    _fs_encoding = "utf-8"
 
 if six.PY3:
     if os.name == "nt":
@@ -266,12 +269,8 @@ if six.PY3:
     _fs_encode_errors = _fs_error_fn() if _fs_error_fn is not None else alt_strategy
     _fs_decode_errors = _fs_error_fn() if _fs_error_fn is not None else alt_strategy
 else:
-    if os.name == "nt":
-        _fs_encode_errors = "replace"
-        _fs_decode_errors = "escape"
-    else:
-        _fs_encode_errors = "surrogateescape"
-        _fs_decode_errors = "surrogateescape"
+    _fs_encode_errors = "surrogateescape"
+    _fs_decode_errors = "surrogateescape"
 
 
 def to_native_string(string):
