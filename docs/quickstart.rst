@@ -131,6 +131,7 @@ defualt encoding:
     * :func:`~vistir.contextmanagers.atomic_open_for_write`
     * :func:`~vistir.contextmanagers.cd`
     * :func:`~vistir.contextmanagers.open_file`
+    * :func:`~vistir.contextmanagers.replaced_stream`
     * :func:`~vistir.contextmanagers.spinner`
     * :func:`~vistir.contextmanagers.temp_environ`
     * :func:`~vistir.contextmanagers.temp_path`
@@ -201,6 +202,22 @@ to pair this with an iterator which employs a sensible chunk size.
     >>> filecontents = io.BytesIO(b"")
     >>> with vistir.contextmanagers.open_file("https://norvig.com/big.txt") as fp:
             shutil.copyfileobj(fp, filecontents)
+
+
+.. _`replaced_stream`:
+
+A context manager to temporarily swap out *stream_name* with a stream wrapper.  This will
+capture the stream output and prevent it from being written as normal.
+
+.. code-block:: python
+
+    >>> orig_stdout = sys.stdout
+    >>> with replaced_stream("stdout") as stdout:
+    ...     sys.stdout.write("hello")
+    ...     assert stdout.getvalue() == "hello"
+
+    >>> sys.stdout.write("hello")
+    'hello'
 
 
 .. _`spinner`:
@@ -286,7 +303,13 @@ The following Miscellaneous utilities are available as helper methods:
     * :func:`~vistir.misc.partialclass`
     * :func:`~vistir.misc.to_text`
     * :func:`~vistir.misc.to_bytes`
+    * :func:`~vistir.misc.divide`
+    * :func:`~vistir.misc.take`
+    * :func:`~vistir.misc.chunked`
     * :func:`~vistir.misc.decode_for_output`
+    * :func:`~vistir.misc.get_canonical_encoding_name`
+    * :func:`~vistir.misc.get_wrapped_stream`
+    * :class:`~vistir.misc.StreamWrapper`
 
 
 .. _`shell_escape`:
@@ -401,6 +424,62 @@ Converts arbitrary byte-convertable input to bytes while handling errors.
     b'this is some text'
 
 
+.. _`chunked`:
+
+**chunked**
+////////////
+
+Splits an iterable up into groups *of the specified length*, per `more itertools`_.  Returns an iterable.
+
+This example will create groups of chunk size **5**, which means there will be *6 groups*.
+
+.. code-block:: python
+
+    >>> chunked_iterable = vistir.misc.chunked(5, range(30))
+    >>> for chunk in chunked_iterable:
+    ...     add_to_some_queue(chunk)
+
+.. _more itertools: https://more-itertools.readthedocs.io/en/latest/api.html#grouping
+
+
+.. _`take`:
+
+**take**
+/////////
+
+Take elements from the supplied iterable without consuming it.
+
+.. code-block:: python
+
+    >>> iterable = range(30)
+    >>> first_10 = take(10, iterable)
+    >>> [i for i in first_10]
+    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+
+    >>> [i for i in iterable]
+    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29]
+
+
+.. _`divide`:
+
+**divide**
+////////////
+
+Splits an iterable up into the *specified number of groups*, per `more itertools`_.  Returns an iterable.
+
+.. code-block:: python
+
+    >>> iterable = range(30)
+    >>> groups = []
+    >>> for grp in vistir.misc.divide(3, iterable):
+    ...     groups.append(grp)
+    >>> groups
+    [<tuple_iterator object at 0x7fb7966006a0>, <tuple_iterator object at 0x7fb796652780>, <tuple_iterator object at 0x7fb79650a2b0>]
+
+
+.. _more itertools: https://more-itertools.readthedocs.io/en/latest/api.html#grouping
+
+
 .. _`decode_for_output`:
 
 **decode_for_output**
@@ -414,6 +493,46 @@ with some additional hackery on linux systems.
 
     >>> vistir.misc.decode_for_output(u"Some text")
     "some default locale encoded text"
+
+
+.. _`get_canonical_encoding_name`:
+
+**get_canonical_encoding_name**
+////////////////////////////////
+
+Given an encoding name, get the canonical name from a codec lookup.
+
+.. code-block:: python
+
+    >>> vistir.misc.get_canonical_encoding_name("utf8")
+    "utf-8"
+
+
+.. _`get_wrapped_stream`:
+
+**get_wrapped_stream**
+//////////////////////
+
+Given a stream, wrap it in a `StreamWrapper` instance and return the wrapped stream.
+
+.. code-block:: python
+
+    >>> stream = sys.stdout
+    >>> wrapped_stream = vistir.misc.get_wrapped_stream(sys.stdout)
+
+
+.. _`StreamWrapper`:
+
+**StreamWrapper**
+//////////////////
+
+A stream wrapper and compatibility class for handling wrapping file-like stream objects
+which may be used in place of ``sys.stdout`` and other streams.
+
+.. code-block:: python
+
+    >>> wrapped_stream = vistir.misc.StreamWrapper(sys.stdout, encoding="utf-8", errors="replace", line_buffering=True)
+    >>> wrapped_stream = vistir.misc.StreamWrapper(io.StringIO(), encoding="utf-8", errors="replace", line_buffering=True)
 
 
 🐉 Path Utilities

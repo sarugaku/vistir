@@ -13,9 +13,9 @@ environment:
 install:
   - "SET PATH=%PYTHON%\\;%PYTHON%\\Scripts;%PATH%"
   - "python --version"
-  - "python -m pip install --upgrade pip pipenv"
+  - "python -m pip install --upgrade pip pipenv pytest pytest-timeout pytest-cov"
   - "python -m pipenv install --dev"
-  - "python -m pipenv run pip install -e .[tests,spinner]"
+  - "python -m pipenv run pip install --upgrade -e .[tests,spinner]"
 
 build: off
 
@@ -24,4 +24,4 @@ test_script:
   - "subst T: %TEMP%"
   - "set TEMP=T:\\"
   - "set TMP=T:\\"
-  - "python -m pipenv run pytest -n auto -v tests"
+  - "python -m pipenv run pytest -ra tests"

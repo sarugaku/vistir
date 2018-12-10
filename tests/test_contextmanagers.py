@@ -85,3 +85,11 @@ def test_open_file(tmpdir):
         for chunk in iter(lambda: fp.read(16384), b""):
             local_contents += chunk
     assert local_contents == filecontents.read()
+
+
+def test_replace_stream(capsys):
+    with vistir.contextmanagers.replaced_stream("stdout") as stdout:
+        sys.stdout.write("hello")
+        assert stdout.getvalue() == "hello"
+    out, err = capsys.readouterr()
+    assert out.strip() != "hello"

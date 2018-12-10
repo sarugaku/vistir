@@ -32,7 +32,7 @@ def test_safe_expandvars():
 
 
 @given(legal_path_chars(), legal_path_chars())
-@settings(suppress_health_check=(HealthCheck.filter_too_much,))
+@settings(suppress_health_check=(HealthCheck.filter_too_much,), deadline=500)
 def test_mkdir_p(base_dir, subdir):
     assume(not any((dir_name in ["", ".", "./", ".."] for dir_name in [base_dir, subdir])))
     assume(not (os.path.relpath(subdir, start=base_dir) == "."))
