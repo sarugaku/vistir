@@ -213,19 +213,20 @@ def mkdir_p(newdir, mode=0o777):
     :raises: OSError if a file is encountered along the way
     """
     # http://code.activestate.com/recipes/82465-a-friendly-mkdir/
+    from .compat import to_bytes, to_text
 
-    newdir = fs_encode(newdir)
+    newdir = fs_encode(to_bytes(newdir, encoding="utf-8"))
     if os.path.exists(newdir):
         if not os.path.isdir(newdir):
             raise OSError(
                 "a file with the same name as the desired dir, '{0}', already exists.".format(
-                    newdir
+                    to_text(fs_decode(newdir))
                 )
             )
     else:
         head, tail = os.path.split(newdir)
         # Make sure the tail doesn't point to the asame place as the head
-        curdir = fs_encode(".")
+        curdir = fs_encode(to_bytes(".", encoding="utf-8"))
         tail_and_head_match = (
             os.path.relpath(tail, start=os.path.basename(head)) == curdir
         )
@@ -234,7 +235,7 @@ def mkdir_p(newdir, mode=0o777):
             if os.path.exists(target) and os.path.isfile(target):
                 raise OSError(
                    "A file with the same name as the desired dir, '{0}', already exists.".format(
-                        fs_decode(newdir)
+                        to_text(fs_decode(newdir))
                     )
                 )
             os.makedirs(os.path.join(head, tail), mode)
