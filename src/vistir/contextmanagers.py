@@ -312,3 +312,31 @@ def replaced_stream(stream_name):
         yield getattr(sys, stream_name)
     finally:
         setattr(sys, stream_name, orig_stream)
+
+
+@contextmanager
+def replaced_streams():
+    """
+    Context manager to replace both ``sys.stdout`` and ``sys.stderr`` using
+    ``replaced_stream``
+
+    returns: *(stdout, stderr)*
+
+    >>> import sys
+    >>> with vistir.contextmanagers.replaced_streams() as streams:
+    >>>     stdout, stderr = streams
+    >>>     sys.stderr.write("test")
+    >>>     sys.stdout.write("hello")
+    >>>     assert stdout.getvalue() == "hello"
+    >>>     assert stderr.getvalue() == "test"
+
+    >>> stdout.getvalue()
+    'hello'
+
+    >>> stderr.getvalue()
+    'test'
+    """
+
+    with replaced_stream("stdout") as stdout:
+        with replaced_stream("stderr") as stderr:
+            yield (stdout, stderr)
