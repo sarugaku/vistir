@@ -204,7 +204,74 @@ def fs_str(string):
     return string.encode(_fs_encoding)
 
 
+def _get_path(path):
+    """
+    Fetch the string value from a path-like object
+
+    Returns **None** if there is no string value.
+    """
+
+    if isinstance(path, six.string_types):
+        return path
+    path_type = type(path)
+    try:
+        path_repr = path_type.__fspath__(path)
+    except AttributeError:
+        return
+    if isinstance(path_repr, (str, bytes)):
+        return path_repr
+    return
+
+
+def fs_encode(path):
+    """
+    Encode a filesystem path to the proper filesystem encoding
+
+    :param Union[str, bytes] path: A string-like path
+    :returns: A bytes-encoded filesystem path representation
+    """
+
+    path = _get_path(path)
+    if path is None:
+        raise TypeError("expected a valid path to encode")
+    if isinstance(path, six.text_type):
+        path = path.encode(_fs_encoding, _fs_encode_errors)
+    return path
+
+
+def fs_decode(path):
+    """
+    Decode a filesystem path using the proper filesystem encoding
+
+    :param path: The filesystem path to decode from bytes or string
+    :return: [description]
+    :rtype: [type]
+    """
+
+    path = _get_path(path)
+    if path is None:
+        raise TypeError("expected a valid path to decode")
+    if isinstance(path, six.binary_type):
+        path = path.decode(_fs_encoding, _fs_decode_errors)
+    return path
+
 _fs_encoding = sys.getfilesystemencoding() or sys.getdefaultencoding()
+
+if six.PY3:
+    if os.name == "nt":
+        alt_strategy = "surrogatepass"
+    else:
+        alt_strategy = "surrogateescape"
+    _fs_error_fn = getattr(sys, "getfilesystemencodeerrors", None)
+    _fs_encode_errors = _fs_error_fn() if _fs_error_fn is not None else alt_strategy
+    _fs_decode_errors = _fs_error_fn() if _fs_error_fn is not None else alt_strategy
+else:
+    if os.name == "nt":
+        _fs_encode_errors = "replace"
+        _fs_decode_errors = "escape"
+    else:
+        _fs_encode_errors = "surrogateescape"
+        _fs_decode_errors = "surrogateescape"
 
 
 def to_native_string(string):

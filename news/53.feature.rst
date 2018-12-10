@@ -1,0 +1,1 @@
+Added support for properly encoding and decoding filesystem paths at the boundaries across python versions and platforms.

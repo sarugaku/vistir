@@ -40,7 +40,6 @@ def test_mkdir_p(base_dir, subdir):
     with vistir.compat.TemporaryDirectory() as temp_dir:
         target = os.path.join(temp_dir.name, base_dir, subdir)
         assume(vistir.path.abspathu(target) != vistir.path.abspathu(os.path.join(temp_dir.name, base_dir)))
-        target = vistir.misc.to_bytes(target, encoding="utf-8")
         vistir.path.mkdir_p(target)
         assert os.path.exists(target)
 
