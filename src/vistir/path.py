@@ -337,9 +337,8 @@ def rmtree(directory, ignore_errors=False, onerror=None):
         )
     except (IOError, OSError, FileNotFoundError) as exc:
         # Ignore removal failures where the file doesn't exist
-        if exc.errno == errno.ENOENT:
-            pass
-        raise
+        if exc.errno != errno.ENOENT:
+            raise
 
 
 def handle_remove_readonly(func, path, exc):

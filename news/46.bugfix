@@ -1,0 +1,1 @@
+Fix bug where FileNotFoundError is not imported from compat for rmtree
