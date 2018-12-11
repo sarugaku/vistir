@@ -5,7 +5,7 @@ import io
 import os
 import stat
 
-from hypothesis import assume, given, HealthCheck, settings
+from hypothesis import assume, given, HealthCheck, settings, example
 from six.moves.urllib import parse as urllib_parse
 
 import vistir
@@ -45,6 +45,7 @@ def test_mkdir_p(base_dir, subdir):
 
 
 @given(legal_path_chars(), legal_path_chars())
+@example(base_dir=u'0', subdir=u'\x80')
 @settings(suppress_health_check=(HealthCheck.filter_too_much,))
 def test_ensure_mkdir_p(base_dir, subdir):
     assume(not any((dir_name in ["", ".", "./", ".."] for dir_name in [base_dir, subdir])))
