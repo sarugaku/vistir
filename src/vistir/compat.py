@@ -31,7 +31,11 @@ __all__ = [
     "Mapping",
     "Sequence",
     "Set",
-    "ItemsView"
+    "ItemsView",
+    "fs_encode",
+    "fs_decode",
+    "_fs_encode_errors",
+    "_fs_decode_errors"
 ]
 
 if sys.version_info >= (3, 5):
@@ -255,6 +259,7 @@ def fs_decode(path):
     if isinstance(path, six.binary_type):
         path = path.decode(_fs_encoding, _fs_decode_errors)
     return path
+
 
 if sys.version_info >= (3, 5) or os.name != "nt":
     _fs_encoding = sys.getfilesystemencoding() or sys.getdefaultencoding()

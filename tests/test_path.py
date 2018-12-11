@@ -32,6 +32,7 @@ def test_safe_expandvars():
 
 
 @given(legal_path_chars(), legal_path_chars())
+@example(base_dir=u'0', subdir=u'\x80')
 @settings(suppress_health_check=(HealthCheck.filter_too_much,), deadline=500)
 def test_mkdir_p(base_dir, subdir):
     assume(not any((dir_name in ["", ".", "./", ".."] for dir_name in [base_dir, subdir])))
@@ -41,7 +42,7 @@ def test_mkdir_p(base_dir, subdir):
         target = os.path.join(temp_dir.name, base_dir, subdir)
         assume(vistir.path.abspathu(target) != vistir.path.abspathu(os.path.join(temp_dir.name, base_dir)))
         vistir.path.mkdir_p(target)
-        assert os.path.exists(target)
+        assert os.path.exists(vistir.compat.fs_encode(target))
 
 
 @given(legal_path_chars(), legal_path_chars())
@@ -60,8 +61,7 @@ def test_ensure_mkdir_p(base_dir, subdir):
 
         target = join_with_dir(base_dir, subdir)
         assume(vistir.path.abspathu(target) != vistir.path.abspathu(os.path.join(temp_dir.name, base_dir)))
-        target = vistir.misc.to_bytes(target, encoding="utf-8")
-        assert os.path.exists(target)
+        assert os.path.exists(vistir.compat.fs_encode(target))
 
 
 def test_create_tracked_tempdir(tmpdir):

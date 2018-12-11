@@ -213,7 +213,6 @@ def mkdir_p(newdir, mode=0o777):
     :raises: OSError if a file is encountered along the way
     """
     # http://code.activestate.com/recipes/82465-a-friendly-mkdir/
-    from .misc import to_bytes, to_text
 
     newdir = fs_encode(newdir)
     if os.path.exists(newdir):
