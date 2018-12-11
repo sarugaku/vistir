@@ -261,7 +261,7 @@ def fs_decode(path):
     return path
 
 
-if sys.version_info >= (3, 5) or os.name != "nt":
+if sys.version_info > (3, 5) or os.name != "nt":
     _fs_encoding = sys.getfilesystemencoding() or sys.getdefaultencoding()
 else:
     _fs_encoding = "utf-8"
