@@ -1,6 +1,7 @@
 # -*- coding=utf-8 -*-
 from __future__ import absolute_import, print_function, unicode_literals
 
+import codecs
 import errno
 import os
 import sys
@@ -30,7 +31,11 @@ __all__ = [
     "Mapping",
     "Sequence",
     "Set",
-    "ItemsView"
+    "ItemsView",
+    "fs_encode",
+    "fs_decode",
+    "_fs_encode_errors",
+    "_fs_decode_errors"
 ]
 
 if sys.version_info >= (3, 5):
@@ -204,7 +209,75 @@ def fs_str(string):
     return string.encode(_fs_encoding)
 
 
-_fs_encoding = sys.getfilesystemencoding() or sys.getdefaultencoding()
+def _get_path(path):
+    """
+    Fetch the string value from a path-like object
+
+    Returns **None** if there is no string value.
+    """
+
+    if isinstance(path, (six.string_types, bytes)):
+        return path
+    path_type = type(path)
+    try:
+        path_repr = path_type.__fspath__(path)
+    except AttributeError:
+        return
+    if isinstance(path_repr, (six.string_types, bytes)):
+        return path_repr
+    return
+
+
+def fs_encode(path):
+    """
+    Encode a filesystem path to the proper filesystem encoding
+
+    :param Union[str, bytes] path: A string-like path
+    :returns: A bytes-encoded filesystem path representation
+    """
+
+    path = _get_path(path)
+    if path is None:
+        raise TypeError("expected a valid path to encode")
+    if isinstance(path, six.text_type):
+        path = path.encode(_fs_encoding, _fs_encode_errors)
+    return path
+
+
+def fs_decode(path):
+    """
+    Decode a filesystem path using the proper filesystem encoding
+
+    :param path: The filesystem path to decode from bytes or string
+    :return: [description]
+    :rtype: [type]
+    """
+
+    path = _get_path(path)
+    if path is None:
+        raise TypeError("expected a valid path to decode")
+    if isinstance(path, six.binary_type):
+        path = path.decode(_fs_encoding, _fs_decode_errors)
+    return path
+
+
+if sys.version_info >= (3, 3) and os.name != "nt":
+    _fs_encoding = sys.getfilesystemencoding() or sys.getdefaultencoding()
+else:
+    _fs_encoding = "utf-8"
+
+if six.PY3:
+    if os.name == "nt":
+        _fs_error_fn = None
+        alt_strategy = "surrogatepass"
+    else:
+        alt_strategy = "surrogateescape"
+        _fs_error_fn = getattr(sys, "getfilesystemencodeerrors", None)
+    _fs_encode_errors = _fs_error_fn() if _fs_error_fn is not None else alt_strategy
+    _fs_decode_errors = _fs_error_fn() if _fs_error_fn is not None else alt_strategy
+else:
+    _fs_encode_errors = "backslashreplace"
+    _fs_decode_errors = "replace"
 
 
 def to_native_string(string):
