@@ -269,7 +269,7 @@ else:
 if six.PY3:
     if os.name == "nt":
         _fs_error_fn = None
-        alt_strategy = _fs_error_fn
+        alt_strategy = "surrogatepass"
     else:
         alt_strategy = "surrogateescape"
         _fs_error_fn = getattr(sys, "getfilesystemencodeerrors", None)
