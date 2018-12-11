@@ -261,14 +261,15 @@ def fs_decode(path):
     return path
 
 
-if sys.version_info >= (3, 3):
+if sys.version_info >= (3, 3) and os.name != "nt":
     _fs_encoding = sys.getfilesystemencoding() or sys.getdefaultencoding()
 else:
     _fs_encoding = "utf-8"
 
 if six.PY3:
     if os.name == "nt":
-        alt_strategy = "surrogatepass"
+        _fs_error_fn = "surrogatepass"
+        alt_strategy = _fs_error_fn
     else:
         alt_strategy = "surrogateescape"
     _fs_error_fn = getattr(sys, "getfilesystemencodeerrors", None)
