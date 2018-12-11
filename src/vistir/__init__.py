@@ -32,7 +32,7 @@ from .misc import (
     StreamWrapper
 )
 from .path import mkdir_p, rmtree, create_tracked_tempdir, create_tracked_tempfile
-from .spin import VistirSpinner, create_spinner
+from .spin import create_spinner
 
 
 __version__ = '0.2.6.dev0'
@@ -54,7 +54,6 @@ __all__ = [
     "NamedTemporaryFile",
     "partialmethod",
     "spinner",
-    "VistirSpinner",
     "create_spinner",
     "create_tracked_tempdir",
     "create_tracked_tempfile",
