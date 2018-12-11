@@ -1,6 +1,7 @@
 # -*- coding=utf-8 -*-
 from __future__ import absolute_import, print_function, unicode_literals
 
+import codecs
 import errno
 import os
 import sys
@@ -269,8 +270,8 @@ if six.PY3:
     _fs_encode_errors = _fs_error_fn() if _fs_error_fn is not None else alt_strategy
     _fs_decode_errors = _fs_error_fn() if _fs_error_fn is not None else alt_strategy
 else:
-    _fs_encode_errors = "surrogateescape"
-    _fs_decode_errors = "surrogateescape"
+    _fs_encode_errors = "backslashreplace"
+    _fs_decode_errors = "replace"
 
 
 def to_native_string(string):

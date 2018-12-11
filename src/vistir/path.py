@@ -215,18 +215,18 @@ def mkdir_p(newdir, mode=0o777):
     # http://code.activestate.com/recipes/82465-a-friendly-mkdir/
     from .misc import to_bytes, to_text
 
-    newdir = fs_encode(to_bytes(newdir, encoding="utf-8"))
+    newdir = fs_encode(newdir)
     if os.path.exists(newdir):
         if not os.path.isdir(newdir):
             raise OSError(
                 "a file with the same name as the desired dir, '{0}', already exists.".format(
-                    to_text(fs_decode(newdir))
+                    fs_decode(newdir)
                 )
             )
     else:
         head, tail = os.path.split(newdir)
         # Make sure the tail doesn't point to the asame place as the head
-        curdir = fs_encode(to_bytes(".", encoding="utf-8"))
+        curdir = fs_encode(".")
         tail_and_head_match = (
             os.path.relpath(tail, start=os.path.basename(head)) == curdir
         )
@@ -235,7 +235,7 @@ def mkdir_p(newdir, mode=0o777):
             if os.path.exists(target) and os.path.isfile(target):
                 raise OSError(
                    "A file with the same name as the desired dir, '{0}', already exists.".format(
-                        to_text(fs_decode(newdir))
+                        fs_decode(newdir)
                     )
                 )
             os.makedirs(os.path.join(head, tail), mode)
