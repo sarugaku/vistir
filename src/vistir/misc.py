@@ -286,14 +286,11 @@ def run(
     _env = os.environ.copy()
     if env:
         _env.update(env)
-    env = _env
     if six.PY2:
         fs_encode = partial(to_bytes, encoding=locale_encoding)
-        _env = {fs_encode(k): fs_encode(v) for k, v in os.environ.items()}
-        for key, val in env.items():
-            _env[fs_encode(key)] = fs_encode(val)
+        _env = {fs_encode(k): fs_encode(v) for k, v in _env.items()}
     else:
-        _env = {k: fs_str(v) for k, v in os.environ.items()}
+        _env = {k: fs_str(v) for k, v in _env.items()}
     if not spinner_name:
         spinner_name = "bouncingBar"
     if six.PY2:
