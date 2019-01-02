@@ -1,1 +1,0 @@
-Added new entries in ``vistir.compat`` to support movements to ``collections.abc``: ``Mapping``, ``Sequence``, ``Set``, ``ItemsView``.

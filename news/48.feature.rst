@@ -1,3 +1,0 @@
-Added a new ``vistir.misc.StreamWrapper`` class with ``vistir.misc.get_wrapped_stream()`` to wrap existing streams
-and ``vistir.contextmanagers.replaced_stream()`` to temporarily replace a stream.
-

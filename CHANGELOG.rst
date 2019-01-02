@@ -1,3 +1,30 @@
+0.3.0 (2019-01-01)
+==================
+
+Features
+--------
+
+- Added a new ``vistir.misc.StreamWrapper`` class with ``vistir.misc.get_wrapped_stream()`` to wrap existing streams
+  and ``vistir.contextmanagers.replaced_stream()`` to temporarily replace a stream.  `#48 <https://github.com/sarugaku/vistir/issues/48>`_
+  
+- Added new entries in ``vistir.compat`` to support movements to ``collections.abc``: ``Mapping``, ``Sequence``, ``Set``, ``ItemsView``.  `#51 <https://github.com/sarugaku/vistir/issues/51>`_
+  
+- Improved ``decode_for_output`` to handle decoding failures gracefully by moving to an ``replace`` strategy.
+  Now also allows a translation map to be provided to translate specific non-ascii characters when writing to outputs.  `#52 <https://github.com/sarugaku/vistir/issues/52>`_
+  
+- Added support for properly encoding and decoding filesystem paths at the boundaries across python versions and platforms.  `#53 <https://github.com/sarugaku/vistir/issues/53>`_
+  
+
+Bug Fixes
+---------
+
+- Fix bug where FileNotFoundError is not imported from compat for rmtree  `#46 <https://github.com/sarugaku/vistir/issues/46>`_
+  
+- Fixed a bug with exception handling during ``_create_process`` calls.  `#49 <https://github.com/sarugaku/vistir/issues/49>`_
+  
+- Environment variables will now be properly passed through to ``run``.  `#55 <https://github.com/sarugaku/vistir/issues/55>`_
+
+
 0.2.5 (2018-11-21)
 ==================
 
