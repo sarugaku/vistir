@@ -121,6 +121,8 @@ defualt encoding:
 
     * :func:`~vistir.compat.fs_str`
     * :func:`~vistir.compat.to_native_string`
+    * :func:`~vistir.compat.fs_encode`
+    * :func:`vistir.compat.fs_decode`
 
 
 🐉 Context Managers
@@ -132,6 +134,7 @@ defualt encoding:
     * :func:`~vistir.contextmanagers.cd`
     * :func:`~vistir.contextmanagers.open_file`
     * :func:`~vistir.contextmanagers.replaced_stream`
+    * :func:`~vistir.contextmanagers.replaced_streams`
     * :func:`~vistir.contextmanagers.spinner`
     * :func:`~vistir.contextmanagers.temp_environ`
     * :func:`~vistir.contextmanagers.temp_path`
@@ -206,8 +209,12 @@ to pair this with an iterator which employs a sensible chunk size.
 
 .. _`replaced_stream`:
 
+**replaced_stream**
+////////////////////
+
 A context manager to temporarily swap out *stream_name* with a stream wrapper.  This will
 capture the stream output and prevent it from being written as normal.
+
 
 .. code-block:: python
 
@@ -218,6 +225,33 @@ capture the stream output and prevent it from being written as normal.
 
     >>> sys.stdout.write("hello")
     'hello'
+
+
+.. _`replaced_streams`:
+
+**replaced_streams**
+/////////////////////
+
+
+Temporarily replaces both *sys.stdout* and *sys.stderr* and captures anything written
+to these respective targets.
+
+
+.. code-block:: python
+
+    >>> import sys
+    >>> with vistir.contextmanagers.replaced_streams() as streams:
+    >>>     stdout, stderr = streams
+    >>>     sys.stderr.write("test")
+    >>>     sys.stdout.write("hello")
+    >>>     assert stdout.getvalue() == "hello"
+    >>>     assert stderr.getvalue() == "test"
+
+    >>> stdout.getvalue()
+    'hello'
+
+    >>> stderr.getvalue()
+    'test'
 
 
 .. _`spinner`:
