@@ -12,6 +12,7 @@ import colorama
 import six
 
 from .compat import to_native_string
+from .cursor import hide_cursor, show_cursor
 from .termcolors import COLOR_MAP, COLORS, colored, DISABLE_COLORS
 from .misc import decode_for_output
 from io import StringIO
@@ -421,13 +422,13 @@ class VistirSpinner(SpinBase):
     def _hide_cursor(target=None):
         if not target:
             target = sys.stdout
-        cursor.hide(stream=target)
+        hide_cursor(stream=target)
 
     @staticmethod
     def _show_cursor(target=None):
         if not target:
             target = sys.stdout
-        cursor.show(stream=target)
+        show_cursor(stream=target)
 
     @staticmethod
     def _clear_err():
