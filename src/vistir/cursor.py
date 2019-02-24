@@ -4,7 +4,6 @@ from __future__ import absolute_import, print_function
 import ctypes
 import os
 import sys
-from ctypes import windll
 
 
 __all__ = ["hide_cursor", "show_cursor"]
@@ -29,6 +28,7 @@ def get_stream_handle(stream=sys.stdout):
     """
     handle = stream
     if os.name == "nt":
+        from ctypes import windll
         handle_id = WIN_STDOUT_HANDLE_ID
         handle = windll.kernel32.GetStdHandle(handle_id)
     return handle
@@ -45,6 +45,7 @@ def hide_cursor(stream=sys.stdout):
 
     handle = get_stream_handle(stream=stream)
     if os.name == "nt":
+        from ctypes import windll
         cursor_info = CONSOLE_CURSOR_INFO()
         windll.kernel32.GetConsoleCursorInfo(handle, ctypes.byref(cursor_info))
         cursor_info.visible = False
@@ -65,6 +66,7 @@ def show_cursor(stream=sys.stdout):
 
     handle = get_stream_handle(stream=stream)
     if os.name == "nt":
+        from ctypes import windll
         cursor_info = CONSOLE_CURSOR_INFO()
         windll.kernel32.GetConsoleCursorInfo(handle, ctypes.byref(cursor_info))
         cursor_info.visible = True
