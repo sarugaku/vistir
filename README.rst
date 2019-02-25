@@ -121,6 +121,8 @@ default encoding:
 
     * ``vistir.compat.fs_str``
     * ``vistir.compat.to_native_string``
+    * ``vistir.compat.fs_encode``
+    * ``vistir.compat.fs_decode``
 
 
 🐉 Context Managers
@@ -289,6 +291,39 @@ be reset upon exiting the context.
             run(["pip", "install", "stuff"])
     >>> print(sys.path)
     ['/home/user/.pyenv/versions/3.7.0/bin', '/home/user/.pyenv/versions/3.7.0/lib/python37.zip', '/home/user/.pyenv/versions/3.7.0/lib/python3.7', '/home/user/.pyenv/versions/3.7.0/lib/python3.7/lib-dynload', '/home/user/.pyenv/versions/3.7.0/lib/python3.7/site-packages']
+
+
+🐉 Cursor Utilities
+--------------------------
+
+The following Cursor utilities are available to manipulate the console cursor:
+
+    * ``vistir.cursor.hide_cursor``
+    * ``vistir.cursor.show_cursor``
+
+
+.. _`hide_cursor`:
+
+**hide_cursor**
+/////////////////
+
+Hide the console cursor in the given stream.
+
+.. code:: python
+
+    >>> vistir.cursor.hide_cursor(stream=sys.stdout)
+
+
+.. _`show_cursor`:
+
+**show_cursor**
+/////////////////
+
+Show the console cursor in the given stream.
+
+.. code:: python
+
+    >>> vistir.cursor.show_cursor(stream=sys.stdout)
 
 
 🐉 Miscellaneous Utilities

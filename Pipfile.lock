@@ -107,12 +107,6 @@
             "index": "pypi",
             "version": "==4.5.2"
         },
-        "cursor": {
-            "hashes": [
-                "sha256:8ee9fe5b925e1001f6ae6c017e93682583d2b4d1ef7130a26cfcdf1651c0032c"
-            ],
-            "version": "==1.2.0"
-        },
         "enum34": {
             "hashes": [
                 "sha256:2d81cbbe0e73112bdfe6ef8576f2238f2ba27dd0d55752a776c41d38b7da2850",
@@ -408,12 +402,6 @@
             ],
             "index": "pypi",
             "version": "==4.5.2"
-        },
-        "cursor": {
-            "hashes": [
-                "sha256:8ee9fe5b925e1001f6ae6c017e93682583d2b4d1ef7130a26cfcdf1651c0032c"
-            ],
-            "version": "==1.2.0"
         },
         "docutils": {
             "hashes": [
