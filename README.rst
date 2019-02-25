@@ -121,6 +121,8 @@ default encoding:
 
     * ``vistir.compat.fs_str``
     * ``vistir.compat.to_native_string``
+    * ``vistir.compat.fs_encode``
+    * ``vistir.compat.fs_decode``
 
 
 🐉 Context Managers
@@ -132,6 +134,7 @@ default encoding:
     * ``vistir.contextmanagers.cd``
     * ``vistir.contextmanagers.open_file``
     * ``vistir.contextmanagers.replaced_stream``
+    * ``vistir.contextmanagers.replaced_streams``
     * ``vistir.contextmanagers.spinner``
     * ``vistir.contextmanagers.temp_environ``
     * ``vistir.contextmanagers.temp_path``
@@ -204,6 +207,9 @@ to pair this with an iterator which employs a sensible chunk size.
             shutil.copyfileobj(fp, filecontents)
 
 
+**replaced_stream**
+////////////////////
+
 .. _`replaced_stream`:
 
 A context manager to temporarily swap out *stream_name* with a stream wrapper.  This will
@@ -219,6 +225,33 @@ capture the stream output and prevent it from being written as normal.
 
     >>> sys.stdout.write("hello")
     'hello'
+
+
+.. _`replaced_streams`:
+
+**replaced_streams**
+/////////////////////
+
+
+Temporarily replaces both *sys.stdout* and *sys.stderr* and captures anything written
+to these respective targets.
+
+
+.. code-block:: python
+
+    >>> import sys
+    >>> with vistir.contextmanagers.replaced_streams() as streams:
+    >>>     stdout, stderr = streams
+    >>>     sys.stderr.write("test")
+    >>>     sys.stdout.write("hello")
+    >>>     assert stdout.getvalue() == "hello"
+    >>>     assert stderr.getvalue() == "test"
+
+    >>> stdout.getvalue()
+    'hello'
+
+    >>> stderr.getvalue()
+    'test'
 
 
 .. _`spinner`:
