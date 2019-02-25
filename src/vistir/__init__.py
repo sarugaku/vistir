@@ -17,6 +17,7 @@ from .contextmanagers import (
     spinner,
     replaced_stream
 )
+from .cursor import show_cursor, hide_cursor
 from .misc import (
     load_path,
     partialclass,
@@ -67,5 +68,7 @@ __all__ = [
     "StringIO",
     "get_wrapped_stream",
     "StreamWrapper",
-    "replaced_stream"
+    "replaced_stream",
+    "show_cursor",
+    "hide_cursor"
 ]

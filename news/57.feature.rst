@@ -1,0 +1,1 @@
+Added a custom cursor hiding implementation to avoid depending on the cursor library, which was re-released under the GPL.
