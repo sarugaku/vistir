@@ -1,5 +1,5 @@
 [packages]
-vistir = {editable = true,extras = ["spinner", "tests"], path = "."}
+vistir = {editable = true,extras = ["spinner", "tests"],path = "."}
 coverage = "<5.0"
 
 [dev-packages]
@@ -19,6 +19,7 @@ sphinx = '*'
 sphinx-rtd-theme = '*'
 hypothesis-fspaths = "*"
 six = "*"
+vistir = {editable = true,extras = ["spinner", "tests"],path = "."}
 
 [scripts]
 release = 'inv release'
