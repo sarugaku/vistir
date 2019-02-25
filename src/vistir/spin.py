@@ -19,12 +19,10 @@ from io import StringIO
 
 try:
     import yaspin
-    import cursor
 except ImportError:
     yaspin = None
     Spinners = None
     SpinBase = None
-    cursor = None
 else:
     import yaspin.spinners
     import yaspin.core
