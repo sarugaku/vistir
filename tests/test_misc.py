@@ -14,8 +14,8 @@ import vistir
 
 
 def test_shell_escape():
-    printfoo = "python -c \"print('foo')\""
-    assert vistir.misc.shell_escape(printfoo) == "python -c print('foo')"
+    printfoo = sys.executable + " -c \"print('foo')\""
+    assert vistir.misc.shell_escape(printfoo) == sys.executable + " -c print('foo')"
     appendscript = "cmd arg1"
     assert vistir.misc.shell_escape(appendscript) == "cmd arg1"
     multicommand = "bash -c \"cd docs && make html\""
@@ -57,24 +57,24 @@ def test_dedup():
 
 
 def test_run():
-    out, err = vistir.misc.run(["python", "-c", "print('hello')"], nospin=True)
+    out, err = vistir.misc.run([sys.executable, "-c", "print('hello')"], nospin=True)
     assert out == "hello"
-    out, err = vistir.misc.run(["python", "-c", "import ajwfoiejaoiwj"], nospin=True)
+    out, err = vistir.misc.run([sys.executable, "-c", "import ajwfoiejaoiwj"], nospin=True)
     assert any(error_text in err for error_text in ["ImportError", "ModuleNotFoundError"]), "{0} => {1}".format(out, err)
 
 
 def test_run_return_subprocess():
-    c = vistir.misc.run(["python", "-c", "print('test')"], return_object=True, nospin=True)
+    c = vistir.misc.run([sys.executable, "-c", "print('test')"], return_object=True, nospin=True)
     assert c.returncode == 0
     assert c.out.strip() == "test"
 
 
 def test_nonblocking_run():
-    c = vistir.misc.run(["python", "--help"], block=False, return_object=True, nospin=True)
+    c = vistir.misc.run([sys.executable, "--help"], block=False, return_object=True, nospin=True)
     assert c.returncode == 0
     c.wait()
     assert "PYTHONDONTWRITEBYTECODE" in c.out, c.out
-    out, _ = vistir.misc.run(["python", "--help"], block=False, nospin=True)
+    out, _ = vistir.misc.run([sys.executable, "--help"], block=False, nospin=True)
     assert "PYTHONDONTWRITEBYTECODE" in out, out
 
 
