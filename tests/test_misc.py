@@ -15,7 +15,7 @@ import vistir
 
 def test_shell_escape():
     printfoo = sys.executable + " -c \"print('foo')\""
-    assert vistir.misc.shell_escape(printfoo) == sys.executable + " -c print('foo')"
+    assert vistir.misc.shell_escape(printfoo) == r"{0} -c print('foo')".format(sys.executable)
     appendscript = "cmd arg1"
     assert vistir.misc.shell_escape(appendscript) == "cmd arg1"
     multicommand = "bash -c \"cd docs && make html\""
