@@ -57,7 +57,7 @@ def test_dedup():
 
 
 def test_run():
-    out, err = vistir.misc.run([sys.executable, "-c", "print('hello')"], nospin=True)
+    out, err = vistir.misc.run([r"{0}".format(sys.executable), "-c", "print('hello')"], nospin=True)
     assert out == "hello"
     out, err = vistir.misc.run([sys.executable, "-c", "import ajwfoiejaoiwj"], nospin=True)
     assert any(error_text in err for error_text in ["ImportError", "ModuleNotFoundError"]), "{0} => {1}".format(out, err)
