@@ -64,7 +64,7 @@ def test_run():
 
 
 def test_run_return_subprocess():
-    c = vistir.misc.run([sys.executable, "-c", "print('test')"], return_object=True, nospin=True)
+    c = vistir.misc.run([r"{0}".format(sys.executable), "-c", "print('test')"], return_object=True, nospin=True)
     assert c.returncode == 0
     assert c.out.strip() == "test"
 
