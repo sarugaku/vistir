@@ -70,7 +70,7 @@ def test_run_return_subprocess():
 
 
 def test_nonblocking_run():
-    c = vistir.misc.run([sys.executable, "--help"], block=False, return_object=True, nospin=True)
+    c = vistir.misc.run([r"{0}".format(sys.executable), "--help"], block=False, return_object=True, nospin=True)
     assert c.returncode == 0
     c.wait()
     assert "PYTHONDONTWRITEBYTECODE" in c.out, c.out
