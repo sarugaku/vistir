@@ -1,25 +1,16 @@
 [packages]
-vistir = {editable = true,extras = ["spinner", "tests"],path = "."}
+vistir = {editable = true, extras = ["spinner", "tests", "dev"], path = "."}
 coverage = "<5.0"
 
 [dev-packages]
 invoke = '*'
-flake8 = '*'
 parver = '*'
-rope = '*'
-black = {version = "*",markers = "python_version>='3.6'"}
 towncrier = '*'
 wheel = '*'
-pytest = '*'
-pytest-xdist = '*'
-pytest-cov = '*'
-pytest-timeout = '*'
 hypothesis = '*'
 sphinx = '*'
 sphinx-rtd-theme = '*'
-hypothesis-fspaths = "*"
 six = "*"
-vistir = {editable = true,extras = ["spinner", "tests"],path = "."}
 
 [scripts]
 release = 'inv release'
