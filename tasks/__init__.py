@@ -92,7 +92,7 @@ def _bump_release(version, type_):
 
 
 def _prebump(version, prebump):
-    next_version = version.bump_release(prebump).bump_dev()
+    next_version = version.bump_release(index=prebump).bump_dev()
     print(f"[bump] {version} -> {next_version}")
     return next_version
 
