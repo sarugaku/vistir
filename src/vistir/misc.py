@@ -221,14 +221,12 @@ def _create_subprocess(
         raise
     if not block:
         c.stdin.close()
-        output = []
-        err = []
         spinner_orig_text = ""
         if spinner and getattr(spinner, "text", None) is not None:
             spinner_orig_text = spinner.text
         if not spinner_orig_text and start_text is not None:
             spinner_orig_text = start_text
-        get_stream_results(
+        stream_results = get_stream_results(
             c,
             verbose=verbose,
             maxlen=display_limit,
@@ -249,6 +247,8 @@ def _create_subprocess(
                 spinner.ok(to_native_string("✔ Complete"))
             else:
                 spinner.ok(to_native_string("Complete"))
+        output = stream_results["stdout"]
+        err = stream_results["stderr"]
         c.out = "\n".join(output) if output else ""
         c.err = "\n".join(err) if err else ""
     else:
