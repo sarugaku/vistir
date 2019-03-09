@@ -20,7 +20,7 @@ from .compat import (
     ResourceWarning,
     TemporaryDirectory,
     _fs_encoding,
-    _NamedTemporaryFile,
+    NamedTemporaryFile as _NamedTemporaryFile,
     finalize,
     fs_decode,
     fs_encode,

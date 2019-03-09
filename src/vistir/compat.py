@@ -10,7 +10,6 @@ from tempfile import mkdtemp
 
 import six
 
-from .backports.tempfile import NamedTemporaryFile as _NamedTemporaryFile
 
 __all__ = [
     "Path",
@@ -40,19 +39,24 @@ __all__ = [
 
 if sys.version_info >= (3, 5):
     from pathlib import Path
-    from functools import lru_cache
 else:
     from pathlib2 import Path
+
+try:
+    from functools import lru_cache
+except ImportError:
     from backports.functools_lru_cache import lru_cache
 
-
-if sys.version_info < (3, 3):
+try:
+    from shutil import get_terminal_size
+except ImportError:
     from backports.shutil_get_terminal_size import get_terminal_size
 
-    NamedTemporaryFile = _NamedTemporaryFile
+# The Python 2 NamedTemporaryFile doesnt support encoding
+if sys.version_info[0] == 2:
+    from .backports.tempfile import NamedTemporaryFile
 else:
     from tempfile import NamedTemporaryFile
-    from shutil import get_terminal_size
 
 try:
     from weakref import finalize
