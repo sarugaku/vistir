@@ -331,7 +331,7 @@ def rmtree(directory, ignore_errors=False, onerror=None):
 
        Setting `ignore_errors=True` may cause this to silently fail to delete the path
     """
-
+    from .compat import FileNotFoundError
     directory = fs_encode(directory)
     if onerror is None:
         onerror = handle_remove_readonly
