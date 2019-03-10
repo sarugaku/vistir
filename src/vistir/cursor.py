@@ -1,19 +1,21 @@
 # -*- coding=utf-8 -*-
 from __future__ import absolute_import, print_function
 
-import ctypes
 import os
 import sys
 
 __all__ = ["hide_cursor", "show_cursor"]
 
 
-class CONSOLE_CURSOR_INFO(ctypes.Structure):
-    _fields_ = [("dwSize", ctypes.c_int), ("bVisible", ctypes.c_int)]
+if os.name == 'nt':
+    import ctypes
+
+    class CONSOLE_CURSOR_INFO(ctypes.Structure):
+        _fields_ = [("dwSize", ctypes.c_int), ("bVisible", ctypes.c_int)]
 
 
-WIN_STDERR_HANDLE_ID = ctypes.c_ulong(-12)
-WIN_STDOUT_HANDLE_ID = ctypes.c_ulong(-11)
+    WIN_STDERR_HANDLE_ID = ctypes.c_ulong(-12)
+    WIN_STDOUT_HANDLE_ID = ctypes.c_ulong(-11)
 
 
 def get_stream_handle(stream=sys.stdout):
