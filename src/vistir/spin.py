@@ -131,9 +131,9 @@ class DummySpinner(object):
             target = self.stdout
         if text is None or isinstance(text, six.string_types) and text == "None":
             pass
-        target.write(decode_output("\r", target_stream=target))
+        target.write(decode_output(u"\r", target_stream=target))
         self._hide_cursor(target=target)
-        target.write(decode_output("{0}\n".format(text), target_stream=target))
+        target.write(decode_output(u"{0}\n".format(text), target_stream=target))
         target.write(CLEAR_LINE)
         self._show_cursor(target=target)
 
@@ -146,8 +146,8 @@ class DummySpinner(object):
             stdout = self.stdout
         else:
             stdout = sys.stdout
-        stdout.write(decode_output("\r", target_stream=stdout))
-        line = decode_output("{0}\n".format(text), target_stream=stdout)
+        stdout.write(decode_output(u"\r", target_stream=stdout))
+        line = decode_output(u"{0}\n".format(text), target_stream=stdout)
         stdout.write(line)
         stdout.write(CLEAR_LINE)
 
@@ -161,8 +161,8 @@ class DummySpinner(object):
                 print(text)
                 return
             stderr = sys.stderr
-        stderr.write(decode_output("\r", target_stream=stderr))
-        line = decode_output("{0}\n".format(text), target_stream=stderr)
+        stderr.write(decode_output(u"\r", target_stream=stderr))
+        line = decode_output(u"{0}\n".format(text), target_stream=stderr)
         stderr.write(line)
         stderr.write(CLEAR_LINE)
 
@@ -222,32 +222,32 @@ class VistirSpinner(SpinBase):
         if DISABLE_COLORS:
             colorama.deinit()
 
-    def ok(self, text="OK", err=False):
+    def ok(self, text=u"OK", err=False):
         """Set Ok (success) finalizer to a spinner."""
         # Do not display spin text for ok state
         self._text = None
 
-        _text = text if text else "OK"
+        _text = text if text else u"OK"
         err = err or not self.write_to_stdout
         self._freeze(_text, err=err)
 
-    def fail(self, text="FAIL", err=False):
+    def fail(self, text=u"FAIL", err=False):
         """Set fail finalizer to a spinner."""
         # Do not display spin text for fail state
         self._text = None
 
-        _text = text if text else "FAIL"
+        _text = text if text else u"FAIL"
         err = err or not self.write_to_stdout
         self._freeze(_text, err=err)
 
     def hide_and_write(self, text, target=None):
         if not target:
             target = self.stdout
-        if text is None or isinstance(text, six.string_types) and text == "None":
+        if text is None or isinstance(text, six.string_types) and text == u"None":
             pass
-        target.write(decode_output("\r"))
+        target.write(decode_output(u"\r"))
         self._hide_cursor(target=target)
-        target.write(decode_output("{0}\n".format(text)))
+        target.write(decode_output(u"{0}\n".format(text)))
         target.write(CLEAR_LINE)
         self._show_cursor(target=target)
 
@@ -257,11 +257,11 @@ class VistirSpinner(SpinBase):
         stdout = self.stdout
         if self.stdout.closed:
             stdout = sys.stdout
-        stdout.write(decode_output("\r", target_stream=stdout))
+        stdout.write(decode_output(u"\r", target_stream=stdout))
         stdout.write(decode_output(CLEAR_LINE, target_stream=stdout))
         if text is None:
             text = ""
-        text = decode_output("{0}\n".format(text), target_stream=stdout)
+        text = decode_output(u"{0}\n".format(text), target_stream=stdout)
         stdout.write(text)
         self.out_buff.write(text)
 
@@ -270,11 +270,11 @@ class VistirSpinner(SpinBase):
         stderr = self.stderr
         if self.stderr.closed:
             stderr = sys.stderr
-        stderr.write(decode_output("\r", target_stream=stderr))
+        stderr.write(decode_output(u"\r", target_stream=stderr))
         stderr.write(decode_output(CLEAR_LINE, target_stream=stderr))
         if text is None:
             text = ""
-        text = decode_output("{0}\n".format(text), target_stream=stderr)
+        text = decode_output(u"{0}\n".format(text), target_stream=stderr)
         self.stderr.write(text)
         self.out_buff.write(decode_output(text, target_stream=self.out_buff))
 
@@ -349,9 +349,9 @@ class VistirSpinner(SpinBase):
             frame, text = text, frame
         # Mode
         if not mode:
-            out = "{0}{1} {2}".format(cr, frame, text)
+            out = u"{0}{1} {2}".format(cr, frame, text)
         else:
-            out = "{0} {1}{2}".format(frame, text, nl)
+            out = u"{0} {1}{2}".format(frame, text, nl)
         return out
 
     def _spin(self):
