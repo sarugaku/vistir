@@ -1,0 +1,1 @@
+Fixed a bug which caused test failures due to generated paths on *nix based operating systems which were too long.

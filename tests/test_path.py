@@ -38,6 +38,7 @@ def test_mkdir_p(base_dir, subdir):
     assume(not any((dir_name in ["", ".", "./", ".."] for dir_name in [base_dir, subdir])))
     assume(not (os.path.relpath(subdir, start=base_dir) == "."))
     assume(os.path.abspath(base_dir) != os.path.abspath(os.path.join(base_dir, subdir)))
+    assume(len(base_dir) < 255 and len(subdir) < 255)
     with vistir.compat.TemporaryDirectory() as temp_dir:
         target = os.path.join(temp_dir.name, base_dir, subdir)
         assume(vistir.path.abspathu(target) != vistir.path.abspathu(os.path.join(temp_dir.name, base_dir)))
