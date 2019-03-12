@@ -146,7 +146,6 @@ class DummySpinner(object):
             stdout = self.stdout
         else:
             stdout = sys.stdout
-        text = decode_output(text, target_stream=stdout)
         stdout.write(decode_output("\r", target_stream=stdout))
         line = decode_output("{0}\n".format(text), target_stream=stdout)
         stdout.write(line)
@@ -162,7 +161,6 @@ class DummySpinner(object):
                 print(text)
                 return
             stderr = sys.stderr
-        text = decode_output(text, target_stream=stderr)
         stderr.write(decode_output("\r", target_stream=stderr))
         line = decode_output("{0}\n".format(text), target_stream=stderr)
         stderr.write(line)
@@ -265,7 +263,7 @@ class VistirSpinner(SpinBase):
             text = ""
         text = decode_output("{0}\n".format(text), target_stream=stdout)
         stdout.write(text)
-        self.out_buff.write(decode_output(text, target_stream=self.out_buff))
+        self.out_buff.write(text)
 
     def write_err(self, text):
         """Write error text in the terminal without breaking the spinner."""
@@ -339,6 +337,8 @@ class VistirSpinner(SpinBase):
     def _compose_out(self, frame, mode=None):
         # Ensure Unicode input
 
+        cr = decode_output("\r")
+        nl = decode_output("\n")
         frame = decode_output(frame)
         if self._text is None:
             self._text = ""
@@ -349,9 +349,9 @@ class VistirSpinner(SpinBase):
             frame, text = text, frame
         # Mode
         if not mode:
-            out = decode_output("\r{0} {1}".format(frame, text))
+            out = "{0}{1} {2}".format(cr, frame, text)
         else:
-            out = decode_output("{0} {1}\n".format(frame, text))
+            out = "{0} {1}{2}".format(frame, text, nl)
         return out
 
     def _spin(self):
