@@ -14,7 +14,7 @@ import six
 
 from .compat import to_native_string
 from .cursor import hide_cursor, show_cursor
-from .misc import decode_for_output
+from .misc import decode_for_output, to_text
 from .termcolors import COLOR_MAP, COLORS, DISABLE_COLORS, colored
 
 try:
@@ -227,7 +227,7 @@ class VistirSpinner(SpinBase):
         # Do not display spin text for ok state
         self._text = None
 
-        _text = text if text else u"OK"
+        _text = to_text(text) if text else u"OK"
         err = err or not self.write_to_stdout
         self._freeze(_text, err=err)
 
@@ -320,8 +320,9 @@ class VistirSpinner(SpinBase):
         target = self.stderr if err else self.stdout
         if target.closed:
             target = sys.stderr if err else sys.stdout
-        text = decode_output(final_text, target_stream=target)
-        self._last_frame = self._compose_out(text, mode="last")
+        text = to_text(final_text)
+        last_frame = self._compose_out(text, mode="last")
+        self._last_frame = decode_output(last_frame, target_stream=target)
 
         # Should be stopped here, otherwise prints after
         # self._freeze call will mess up the spinner
@@ -337,21 +338,20 @@ class VistirSpinner(SpinBase):
     def _compose_out(self, frame, mode=None):
         # Ensure Unicode input
 
-        cr = decode_output("\r")
-        nl = decode_output("\n")
-        frame = decode_output(frame)
+        frame = to_text(frame)
         if self._text is None:
-            self._text = ""
-        text = decode_output(self._text)
+            self._text = u""
+        text = to_text(self._text)
         if self._color_func is not None:
             frame = self._color_func(frame)
         if self._side == "right":
             frame, text = text, frame
         # Mode
+        frame = to_text(frame)
         if not mode:
-            out = u"{0}{1} {2}".format(cr, frame, text)
+            out = u"\r{0} {1}".format(frame, text)
         else:
-            out = u"{0} {1}{2}".format(frame, text, nl)
+            out = u"{0} {1}\n".format(frame, text)
         return out
 
     def _spin(self):
@@ -367,6 +367,7 @@ class VistirSpinner(SpinBase):
             # Compose output
             spin_phase = next(self._cycle)
             out = self._compose_out(spin_phase)
+            out = decode_output(out, target)
 
             # Write
             target.write(out)
