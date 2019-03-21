@@ -1,0 +1,1 @@
+Fixed a bug with the ``rmtree`` error handler implementation in ``compat.TemporaryDirectory`` which caused cleanup to fail intermittently on windows.
