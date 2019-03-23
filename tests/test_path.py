@@ -5,12 +5,11 @@ import io
 import os
 import stat
 
-from hypothesis import assume, given, HealthCheck, settings, example
+from hypothesis import HealthCheck, assume, example, given, settings
+from hypothesis_fspaths import fspaths
 from six.moves.urllib import parse as urllib_parse
 
 import vistir
-
-from hypothesis_fspaths import fspaths
 
 from .strategies import legal_path_chars, relative_paths, url_alphabet, urls
 from .utils import NON_WRITE_OR_EXEC, NON_WRITEABLE, WRITEABLE, get_mode
@@ -20,7 +19,9 @@ def test_abspathu(tmpdir):
     tmpdir.mkdir("new_dir")
     new_dir = tmpdir.join("new_dir")
     with vistir.contextmanagers.cd(tmpdir.strpath):
-        assert vistir.path.abspathu(new_dir.purebasename) == vistir.misc.to_text(new_dir.strpath)
+        assert vistir.path.abspathu(new_dir.purebasename) == vistir.misc.to_text(
+            new_dir.strpath
+        )
 
 
 def test_safe_expandvars():
@@ -32,25 +33,32 @@ def test_safe_expandvars():
 
 
 @given(legal_path_chars(), legal_path_chars())
-@example(base_dir=u'0', subdir=u'\x80')
-@settings(suppress_health_check=(HealthCheck.filter_too_much,), deadline=500)
+@example(base_dir="0", subdir="\x80")
+@settings(suppress_health_check=(HealthCheck.filter_too_much,), deadline=None)
 def test_mkdir_p(base_dir, subdir):
-    assume(not any((dir_name in ["", ".", "./", ".."] for dir_name in [base_dir, subdir])))
+    assume(
+        not any((dir_name in ["", ".", "./", ".."] for dir_name in [base_dir, subdir]))
+    )
     assume(not (os.path.relpath(subdir, start=base_dir) == "."))
     assume(os.path.abspath(base_dir) != os.path.abspath(os.path.join(base_dir, subdir)))
     assume(len(base_dir) < 255 and len(subdir) < 255)
     with vistir.compat.TemporaryDirectory() as temp_dir:
         target = os.path.join(temp_dir.name, base_dir, subdir)
-        assume(vistir.path.abspathu(target) != vistir.path.abspathu(os.path.join(temp_dir.name, base_dir)))
+        assume(
+            vistir.path.abspathu(target)
+            != vistir.path.abspathu(os.path.join(temp_dir.name, base_dir))
+        )
         vistir.path.mkdir_p(target)
         assert os.path.exists(vistir.compat.fs_encode(target))
 
 
 @given(legal_path_chars(), legal_path_chars())
-@example(base_dir=u'0', subdir=u'\x80')
+@example(base_dir="0", subdir="\x80")
 @settings(suppress_health_check=(HealthCheck.filter_too_much,))
 def test_ensure_mkdir_p(base_dir, subdir):
-    assume(not any((dir_name in ["", ".", "./", ".."] for dir_name in [base_dir, subdir])))
+    assume(
+        not any((dir_name in ["", ".", "./", ".."] for dir_name in [base_dir, subdir]))
+    )
     assume(not (os.path.relpath(subdir, start=base_dir) == "."))
     assume(os.path.abspath(base_dir) != os.path.abspath(os.path.join(base_dir, subdir)))
     with vistir.compat.TemporaryDirectory() as temp_dir:
@@ -61,7 +69,10 @@ def test_ensure_mkdir_p(base_dir, subdir):
             return os.path.join(base, _base_dir, _subdir)
 
         target = join_with_dir(base_dir, subdir)
-        assume(vistir.path.abspathu(target) != vistir.path.abspathu(os.path.join(temp_dir.name, base_dir)))
+        assume(
+            vistir.path.abspathu(target)
+            != vistir.path.abspathu(os.path.join(temp_dir.name, base_dir))
+        )
         assert os.path.exists(vistir.compat.fs_encode(target))
 
 
@@ -79,7 +90,7 @@ def test_rmtree(tmpdir):
     """This will also test `handle_remove_readonly` and `set_write_bit`."""
     new_dir = tmpdir.join("test_dir").mkdir()
     new_file = new_dir.join("test_file.py")
-    new_file.write_text(u"some test text", encoding="utf-8")
+    new_file.write_text("some test text", encoding="utf-8")
     os.chmod(new_file.strpath, stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
     assert new_dir.exists()
     vistir.path.rmtree(new_dir.strpath)
@@ -89,7 +100,7 @@ def test_rmtree(tmpdir):
 def test_is_readonly_path(tmpdir):
     new_dir = tmpdir.join("some_dir").mkdir()
     new_file = new_dir.join("some_file.txt")
-    new_file.write_text(u"this is some text", encoding="utf-8")
+    new_file.write_text("this is some text", encoding="utf-8")
     assert not vistir.path.is_readonly_path(new_dir.strpath)
     assert not vistir.path.is_readonly_path(new_file.strpath)
     os.chmod(new_file.strpath, get_mode(new_file.strpath) & NON_WRITEABLE)
@@ -103,7 +114,7 @@ def test_get_converted_relative_path(path):
     assume(not vistir.path.abspathu("".join(path)) == vistir.path.abspathu(os.curdir))
     path = "".join(path)
     relpath = vistir.path.get_converted_relative_path(path)
-    assert relpath.startswith(u".")
+    assert relpath.startswith(".")
     assert vistir.path.abspathu(relpath) == os.path.abspath(vistir.misc.to_text(path))
 
 
@@ -136,7 +147,7 @@ def test_normalize_drive(filepath):
     filename = vistir.misc.to_text(filepath)
     if filepath and filename:
         assume(any(letter in filename for letter in url_alphabet))
-    if os.name == 'nt':
+    if os.name == "nt":
         upper_drive = "C:"
         lower_drive = upper_drive.lower()
         lower_path = os.path.join(lower_drive, filename)
@@ -157,9 +168,21 @@ def test_walk_up(tmpdir):
     two_down.join("test2_1.txt").write_text("some random text 2", encoding="utf-8")
     two_down.join("test2_2.txt").write_text("some random text 3", encoding="utf-8")
     expected = (
-        (os.path.abspath(two_down.strpath), [], sorted(["test2.txt", "test2_1.txt", "test2_2.txt"])),
-        (os.path.abspath(one_down.strpath), sorted([two_down.purebasename,]), sorted(["test.txt", "test1.txt", "test2.txt"])),
-        (os.path.abspath(tmpdir.strpath), sorted([one_down.purebasename,]), sorted(["test.txt",])),
+        (
+            os.path.abspath(two_down.strpath),
+            [],
+            sorted(["test2.txt", "test2_1.txt", "test2_2.txt"]),
+        ),
+        (
+            os.path.abspath(one_down.strpath),
+            sorted([two_down.purebasename]),
+            sorted(["test.txt", "test1.txt", "test2.txt"]),
+        ),
+        (
+            os.path.abspath(tmpdir.strpath),
+            sorted([one_down.purebasename]),
+            sorted(["test.txt"]),
+        ),
     )
     walk_up = vistir.path.walk_up(two_down.strpath)
     for i in range(3):
@@ -174,5 +197,9 @@ def test_handle_remove_readonly(tmpdir):
     os.chmod(test_file.strpath, NON_WRITE_OR_EXEC)
     fake_oserror = OSError(13, "Permission denied")
     fake_oserror.filename = test_file.strpath
-    vistir.path.handle_remove_readonly(os.unlink, test_file.strpath, (fake_oserror.__class__, fake_oserror, "Fake traceback"))
+    vistir.path.handle_remove_readonly(
+        os.unlink,
+        test_file.strpath,
+        (fake_oserror.__class__, fake_oserror, "Fake traceback"),
+    )
     assert not os.path.exists(test_file.strpath)
