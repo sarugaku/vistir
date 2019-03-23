@@ -54,7 +54,7 @@ def test_mkdir_p(base_dir, subdir):
 
 @given(legal_path_chars(), legal_path_chars())
 @example(base_dir="0", subdir="\x80")
-@settings(suppress_health_check=(HealthCheck.filter_too_much,))
+@settings(suppress_health_check=(HealthCheck.filter_too_much,), deadline=None)
 def test_ensure_mkdir_p(base_dir, subdir):
     assume(
         not any((dir_name in ["", ".", "./", ".."] for dir_name in [base_dir, subdir]))
