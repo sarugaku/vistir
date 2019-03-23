@@ -19,6 +19,8 @@ from .compat import (
     Path,
     ResourceWarning,
     TemporaryDirectory,
+    FileNotFoundError,
+    PermissionError,
     _fs_encoding,
     _NamedTemporaryFile,
     finalize,
@@ -332,7 +334,6 @@ def rmtree(directory, ignore_errors=False, onerror=None):
 
        Setting `ignore_errors=True` may cause this to silently fail to delete the path
     """
-    from .compat import FileNotFoundError
 
     directory = fs_encode(directory)
     if onerror is None:
