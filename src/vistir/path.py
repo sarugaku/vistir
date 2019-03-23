@@ -306,10 +306,11 @@ def set_write_bit(fn):
     file_stat = os.stat(fn).st_mode
     os.chmod(fn, file_stat | stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
     if not os.path.isdir(fn):
-        try:
-            os.chflags(fn, 0)
-        except AttributeError:
-            pass
+        for path in [fn, os.path.dirname(fn)]:
+            try:
+                os.chflags(path, 0)
+            except AttributeError:
+                pass
     for root, dirs, files in os.walk(fn, topdown=False):
         for dir_ in [os.path.join(root, d) for d in dirs]:
             set_write_bit(dir_)
@@ -332,12 +333,13 @@ def rmtree(directory, ignore_errors=False, onerror=None):
        Setting `ignore_errors=True` may cause this to silently fail to delete the path
     """
     from .compat import FileNotFoundError
+
     directory = fs_encode(directory)
     if onerror is None:
         onerror = handle_remove_readonly
     try:
         shutil.rmtree(directory, ignore_errors=ignore_errors, onerror=onerror)
-    except (IOError, OSError, FileNotFoundError) as exc:
+    except (IOError, OSError, FileNotFoundError, PermissionError) as exc:
         # Ignore removal failures where the file doesn't exist
         if exc.errno != errno.ENOENT:
             raise
