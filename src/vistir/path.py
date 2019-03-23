@@ -374,25 +374,25 @@ def _wait_for_files(path):
     timeout = 0.001
     remaining = []
     while timeout < 1.0:
-        L = os.listdir(path)
         remaining = []
-        for target in L:
-            if os.path.isdir(target):
+        if os.path.isdir(path):
+            L = os.listdir(path)
+            for target in L:
                 _remaining = _wait_for_files(target)
                 if _remaining:
                     remaining.extend(_remaining)
                 continue
-            try:
-                os.unlink(target)
-            except FileNotFoundError as e:
-                if e.errno == errno.ENOENT:
-                    return
-            except (OSError, IOError, PermissionError):
-                time.sleep(timeout)
-                timeout *= 2
-                remaining.append(path)
-            else:
+        try:
+            os.unlink(target)
+        except FileNotFoundError as e:
+            if e.errno == errno.ENOENT:
                 return
+        except (OSError, IOError, PermissionError):
+            time.sleep(timeout)
+            timeout *= 2
+            remaining.append(path)
+        else:
+            return
     return remaining
 
 
@@ -430,6 +430,8 @@ def handle_remove_readonly(func, path, exc):
                     remaining = _wait_for_files(path)
                 if remaining:
                     warnings.warn(default_warning_message.format(path), ResourceWarning)
+                else:
+                    func(path, ignore_errors=True)
                 return
 
     if exc_exception.errno in PERM_ERRORS:
