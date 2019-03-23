@@ -381,9 +381,9 @@ def _wait_for_files(path):
                 _remaining = _wait_for_files(target)
                 if _remaining:
                     remaining.extend(_remaining)
-                continue
+            continue
         try:
-            os.unlink(target)
+            os.unlink(path)
         except FileNotFoundError as e:
             if e.errno == errno.ENOENT:
                 return
