@@ -101,6 +101,11 @@ PREBUMP = "patch"
 
 
 @invoke.task(pre=[clean])
+def build(ctx):
+    ctx.run("python setup.py sdist bdist_wheel")
+
+
+@invoke.task(pre=[clean])
 def release(ctx, type_, repo, prebump=PREBUMP):
     """Make a new release.
     """
