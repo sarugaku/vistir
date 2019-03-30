@@ -11,6 +11,8 @@ hypothesis = '*'
 sphinx = '*'
 sphinx-rtd-theme = '*'
 six = "*"
+codacy-coverage = "*"
+codecov = "*"
 
 [scripts]
 release = 'inv release'
