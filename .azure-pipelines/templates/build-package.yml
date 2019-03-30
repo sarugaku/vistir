@@ -14,7 +14,7 @@ steps:
 
   - script: |
       pipenv run inv clean
-      pipenv run inv build -y
+      pipenv run inv build
     displayName: Build Package
   - task: CopyFiles@2
     inputs:
