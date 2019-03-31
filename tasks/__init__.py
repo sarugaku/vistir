@@ -106,7 +106,7 @@ def build(ctx):
 
 
 @invoke.task(pre=[clean])
-def release(ctx, type_, repo, prebump=PREBUMP):
+def release(ctx, type_, repo, prebump=PREBUMP, yes=False):
     """Make a new release.
     """
     if prebump not in REL_TYPES:
@@ -133,11 +133,12 @@ def release(ctx, type_, repo, prebump=PREBUMP):
     artifacts = list(ROOT.joinpath("dist").glob(dist_pattern))
     filename_display = "\n".join(f"  {a}" for a in artifacts)
     print(f"[release] Will upload:\n{filename_display}")
-    try:
-        input("[release] Release ready. ENTER to upload, CTRL-C to abort: ")
-    except KeyboardInterrupt:
-        print("\nAborted!")
-        return
+    if not yes:
+        try:
+            input("[release] Release ready. ENTER to upload, CTRL-C to abort: ")
+        except KeyboardInterrupt:
+            print("\nAborted!")
+            return
 
     arg_display = " ".join(f'"{n}"' for n in artifacts)
     ctx.run(f'twine upload --repository="{repo}" {arg_display}')
