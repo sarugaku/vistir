@@ -42,33 +42,27 @@ __all__ = [
 
 if sys.version_info >= (3, 5):
     from pathlib import Path
-    from functools import lru_cache
 else:
     from pathlib2 import Path
-    from backports.functools_lru_cache import lru_cache
 
-
-if sys.version_info < (3, 3):
-    from backports.shutil_get_terminal_size import get_terminal_size
-
-    NamedTemporaryFile = _NamedTemporaryFile
-else:
+if six.PY3:
+    # Only Python 3.4+ is supported
+    from functools import lru_cache, partialmethod
     from tempfile import NamedTemporaryFile
     from shutil import get_terminal_size
-
-try:
     from weakref import finalize
-except ImportError:
+else:
+    # Only Python 2.7 is supported
+    from backports.functools_lru_cache import lru_cache
+    from .backports.functools import partialmethod  # type: ignore
+    from backports.shutil_get_terminal_size import get_terminal_size
+    NamedTemporaryFile = _NamedTemporaryFile
     from backports.weakref import finalize  # type: ignore
 
 try:
-    from functools import partialmethod
-except Exception:
-    from .backports.functools import partialmethod  # type: ignore
-
-try:
+    # Introduced Python 3.5
     from json import JSONDecodeError
-except ImportError:  # Old Pythons.
+except ImportError:
     JSONDecodeError = ValueError  # type: ignore
 
 if six.PY2:
