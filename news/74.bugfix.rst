@@ -1,0 +1,1 @@
+Fixed an issue where paths could sometimes fail to be fs-encoded properly when using backported ``NamedTemporaryFile`` instances.
