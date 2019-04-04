@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from hypothesis import assume, given, strategies as st
+from hypothesis import assume, example, given, strategies as st
 
 import vistir
 

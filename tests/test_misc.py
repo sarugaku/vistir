@@ -5,6 +5,7 @@ import io
 import itertools
 import os
 import sys
+from io import BytesIO
 
 import pytest
 import six
@@ -89,29 +90,34 @@ def test_run_return_subprocess():
 
 def test_run_with_long_output():
     long_str = "this is a very long string which exceeds the maximum length per the settings we are passing in to vistir"
-    print_cmd = "print('{0}')".format(long_str)
+    print_cmd = "import time; print('{0}'); time.sleep(2)".format(long_str)
     run_args = [r"{0}".format(sys.executable), "-c", print_cmd]
-    with replaced_streams() as streams:
-        stdout, stderr = streams
-        c = vistir.misc.run(run_args, block=False, display_limit=100, nospin=True)
-        c.wait()
-        assert stdout.getvalue() == "{0}...".format(long_str[:100])
-    with replaced_streams() as streams:
-        stdout, stderr = streams
-        c = vistir.misc.run(
-            run_args, block=False, display_limit=100, nospin=True, verbose=True
-        )
-        c.wait()
-        assert stdout.getvalue() == long_str
+    c = vistir.misc.run(
+        run_args, block=False, display_limit=100, nospin=True, return_object=True
+    )
+    c.wait()
+    assert c.out == long_str
+    c = vistir.misc.run(
+        run_args,
+        block=False,
+        display_limit=100,
+        nospin=True,
+        verbose=True,
+        return_object=True,
+    )
+    c.wait()
+    assert c.out == long_str
 
-    with replaced_streams() as streams:
-        stdout, stderr = streams
-        c = vistir.misc.run(
-            run_args, block=False, write_to_stdout=False, nospin=True, verbose=True
-        )
-        c.wait()
-        assert not stdout.getvalue()
-        assert stderr.getvalue() == long_str
+    c = vistir.misc.run(
+        run_args,
+        block=False,
+        write_to_stdout=False,
+        nospin=True,
+        verbose=True,
+        return_object=True,
+    )
+    c.wait()
+    assert c.out == long_str
 
 
 def test_nonblocking_run():
@@ -145,12 +151,14 @@ DIVIDE_ITERABLE = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
 
 @pytest.mark.parametrize(
-    "n, expected",
-    (1, DIVIDE_ITERABLE, [[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]]),
-    (2, DIVIDE_ITERABLE, [[1, 2, 3, 4, 5], [6, 7, 8, 9, 10]]),
-    (3, DIVIDE_ITERABLE, [[1, 2, 3, 4], [5, 6, 7], [8, 9, 10]]),
-    (10, DIVIDE_ITERABLE, [[n] for n in range(1, 10 + 1)]),
-    (6, [1, 2, 3, 4], [[1], [2], [3], [4], [], []]),
+    "n, iterable, expected",
+    [
+        (1, DIVIDE_ITERABLE, [[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]]),
+        (2, DIVIDE_ITERABLE, [[1, 2, 3, 4, 5], [6, 7, 8, 9, 10]]),
+        (3, DIVIDE_ITERABLE, [[1, 2, 3, 4], [5, 6, 7], [8, 9, 10]]),
+        (10, DIVIDE_ITERABLE, [[n] for n in range(1, 10 + 1)]),
+        (6, [1, 2, 3, 4], [[1], [2], [3], [4], [], []]),
+    ],
 )
 def test_divide(n, iterable, expected):
     assert [list(x) for x in vistir.misc.divide(n, iterable)] == expected
@@ -159,3 +167,17 @@ def test_divide(n, iterable, expected):
 @given(legal_path_chars())
 def test_decode_encode(path):
     assert vistir.misc.to_text(vistir.misc.to_bytes(path)) == "{0}".format(path)
+
+
+@pytest.mark.parametrize(
+    "test_str", ["this is a test unicode string", "unicode\u0141", "latin\xe9"]
+)
+def test_wrapped_stream(test_str):
+    stream = BytesIO()
+    with pytest.raises(TypeError, match=r"a bytes-like.*"):
+        stream.write(test_str)
+    wrapped_stream = vistir.misc.get_wrapped_stream(stream)
+    decoded = vistir.misc.decode_for_output(test_str, wrapped_stream)
+    wrapped_stream.write(test_str)
+    wrapped_stream.seek(0)
+    assert wrapped_stream.read() == test_str
