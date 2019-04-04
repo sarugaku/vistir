@@ -5,7 +5,6 @@ import io
 import itertools
 import os
 import sys
-from io import BytesIO
 
 import pytest
 import six
@@ -173,8 +172,12 @@ def test_decode_encode(path):
     "test_str", ["this is a test unicode string", "unicode\u0141", "latin\xe9"]
 )
 def test_wrapped_stream(test_str):
-    stream = BytesIO()
-    with pytest.raises(TypeError, match=r"a bytes-like.*"):
+    stream = io.BytesIO()
+    if six.PY3:
+        err_text = r"a bytes-like object is required, not*"
+    else:
+        err_text = r".*does not have the buffer interface.*"
+    with pytest.raises(TypeError, match=err_text):
         stream.write(test_str)
     wrapped_stream = vistir.misc.get_wrapped_stream(stream)
     decoded = vistir.misc.decode_for_output(test_str, wrapped_stream)
