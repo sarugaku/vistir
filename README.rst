@@ -32,7 +32,7 @@ Install from `PyPI`_:
 
   ::
 
-    $ pipenv install --pre vistir
+    $ pipenv install vistir
 
 Install from `Github`_:
 

@@ -11,6 +11,9 @@ vistir: Setup / utilities which most projects eventually need
 .. image:: https://travis-ci.com/sarugaku/vistir.svg?branch=master
     :target: https://travis-ci.com/sarugaku/vistir
 
+.. image:: https://dev.azure.com/sarugaku/vistir/_apis/build/status/Vistir%20Build%20Pipeline?branchName=master
+    :target: https://dev.azure.com/sarugaku/vistir/_build/latest?definitionId=2&branchName=master
+
 .. image:: https://img.shields.io/pypi/pyversions/vistir.svg
     :target: https://pypi.python.org/pypi/vistir
 
