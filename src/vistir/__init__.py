@@ -12,6 +12,7 @@ from .contextmanagers import (
     atomic_open_for_write,
     cd,
     open_file,
+    repalced_streams,
     replaced_stream,
     spinner,
     temp_environ,
@@ -68,6 +69,7 @@ __all__ = [
     "get_wrapped_stream",
     "StreamWrapper",
     "replaced_stream",
+    "replaced_streams",
     "show_cursor",
     "hide_cursor",
 ]
