@@ -179,8 +179,18 @@ def test_wrapped_stream(test_str):
         err_text = r".*does not have the buffer interface.*"
     with pytest.raises(TypeError, match=err_text):
         stream.write(test_str)
-    wrapped_stream = vistir.misc.get_wrapped_stream(stream)
-    decoded = vistir.misc.decode_for_output(test_str, wrapped_stream)
+    wrapped_stream = vistir.misc.get_wrapped_stream(
+        stream, encoding="utf-8", errors="surrogateescape"
+    )
+    # decoded = vistir.misc.decode_for_output(test_str, wrapped_stream)
     wrapped_stream.write(test_str)
     wrapped_stream.seek(0)
     assert wrapped_stream.read() == test_str
+
+
+def test_stream_wrapper(capsys):
+    new_stream = vistir.misc.get_text_stream("stdout")
+    sys.stdout = new_stream
+    print("this is a new method\u0141asdf", file=sys.stdout)
+    out, err = capsys.readouterr()
+    assert out == "this is a new method\u0141asdf"
