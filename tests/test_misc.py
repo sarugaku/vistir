@@ -173,7 +173,9 @@ def test_decode_encode(path):
 )
 def test_wrapped_stream(test_str):
     stream = io.BytesIO()
-    if six.PY3:
+    if six.PY34:
+        err_text = r".*does not support the buffer interface.*"
+    elif six.PY3:
         err_text = r"a bytes-like object is required, not*"
     else:
         err_text = r".*does not have the buffer interface.*"
@@ -182,7 +184,6 @@ def test_wrapped_stream(test_str):
     wrapped_stream = vistir.misc.get_wrapped_stream(
         stream, encoding="utf-8", errors="surrogateescape"
     )
-    # decoded = vistir.misc.decode_for_output(test_str, wrapped_stream)
     wrapped_stream.write(test_str)
     wrapped_stream.seek(0)
     assert wrapped_stream.read() == test_str
