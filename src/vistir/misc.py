@@ -642,15 +642,13 @@ def get_wrapped_stream(stream, encoding=None, errors="replace"):
 
     if stream is None:
         raise TypeError("must provide a stream to wrap")
-    if six.PY3:
-        if _is_binary_buffer(stream):
-            return stream
+    if six.PY3 and not _is_binary_buffer(stream):
         buffer = getattr(stream, "buffer", None)
         if buffer is not None and _is_binary_buffer(buffer, True):
             stream = buffer
             encoding = "utf-8"
     if not encoding:
-        if isinstance(stream, io.BytesIO):
+        if _is_binary_buffer(stream):
             encoding = get_canonical_encoding_name("utf-8")
         else:
             encoding = getattr(stream, "encoding", None)
@@ -775,6 +773,8 @@ def get_text_stream(stream="stdout", encoding=None):
     :rtype: `vistir.misc.StreamWrapper`
     """
 
+    from .compat import _fs_encode_errors
+
     if os.name == "nt" or sys.platform.startswith("win"):
         from ._winconsole import _get_windows_console_stream, _wrap_std_stream
     else:
@@ -782,7 +782,7 @@ def get_text_stream(stream="stdout", encoding=None):
         _wrap_std_stream = lambda *args: None  # noqa
     _wrap_std_stream(stream)
     sys_stream = getattr(sys, stream, None)
-    windows_console = _get_windows_console_stream(sys_stream, encoding)
+    windows_console = _get_windows_console_stream(sys_stream, encoding, _fs_encode_errors)
     if windows_console is not None:
         return windows_console
     return get_wrapped_stream(sys_stream, encoding)
