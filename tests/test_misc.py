@@ -175,7 +175,7 @@ def test_decode_encode(path):
 def test_wrapped_stream(test_str):
     stream = io.BytesIO()
     if sys.version_info[0] > 2:
-        if sys.version_info <= (3, 4):
+        if sys.version_info < (3, 5):
             err_text = r".*does not support the buffer interface.*"
         else:
             err_text = r"a bytes-like object is required, not*"
