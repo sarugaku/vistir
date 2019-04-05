@@ -193,4 +193,4 @@ def test_stream_wrapper(capsys):
     sys.stdout = new_stream
     print("this is a new method\u0141asdf", file=sys.stdout)
     out, err = capsys.readouterr()
-    assert out == "this is a new method\u0141asdf"
+    assert out.strip() == "this is a new method\u0141asdf"

@@ -644,7 +644,7 @@ def get_wrapped_stream(stream, encoding=None, errors="replace"):
         raise TypeError("must provide a stream to wrap")
     if six.PY3 and not _is_binary_buffer(stream):
         buffer = getattr(stream, "buffer", None)
-        if buffer is not None and _is_binary_buffer(buffer, True):
+        if buffer is not None and _is_binary_buffer(buffer):
             stream = buffer
             encoding = "utf-8"
     if not encoding:
