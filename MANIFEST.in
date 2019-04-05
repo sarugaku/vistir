@@ -4,11 +4,14 @@ include pyproject.toml
 
 exclude .editorconfig
 exclude .coveragerc
+exclude .pre-commit-config.yaml
 exclude .travis.yml
+exclude azure-pipelines.yml
 exclude tox.ini
 exclude appveyor.yml
 exclude Pipfile*
 
+recursive-exclude .azure-pipelines *.yml
 recursive-include docs Makefile *.rst *.py *.bat
 recursive-exclude docs requirements*.txt
 

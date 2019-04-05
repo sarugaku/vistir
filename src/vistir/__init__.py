@@ -13,6 +13,7 @@ from .contextmanagers import (
     cd,
     open_file,
     replaced_stream,
+    replaced_streams,
     spinner,
     temp_environ,
     temp_path,
@@ -68,6 +69,7 @@ __all__ = [
     "get_wrapped_stream",
     "StreamWrapper",
     "replaced_stream",
+    "replaced_streams",
     "show_cursor",
     "hide_cursor",
 ]

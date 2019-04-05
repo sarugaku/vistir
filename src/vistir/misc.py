@@ -617,20 +617,45 @@ def get_canonical_encoding_name(name):
         return codec.name
 
 
-def get_wrapped_stream(stream):
+def _is_binary_buffer(stream):
+    try:
+        stream.write(b"")
+    except Exception:
+        try:
+            stream.write("")
+        except Exception:
+            pass
+        return False
+    return True
+
+
+def get_wrapped_stream(stream, encoding=None, errors="replace"):
     """
     Given a stream, wrap it in a `StreamWrapper` instance and return the wrapped stream.
 
     :param stream: A stream instance to wrap
+    :param str encoding: The encoding to use for the stream
+    :param str errors: The error handler to use, default "replace"
     :returns: A new, wrapped stream
     :rtype: :class:`StreamWrapper`
     """
 
     if stream is None:
         raise TypeError("must provide a stream to wrap")
-    encoding = getattr(stream, "encoding", None)
-    encoding = get_output_encoding(encoding)
-    return StreamWrapper(stream, encoding, "replace", line_buffering=True)
+    if six.PY3 and not _is_binary_buffer(stream):
+        buffer = getattr(stream, "buffer", None)
+        if buffer is not None and _is_binary_buffer(buffer):
+            stream = buffer
+            encoding = "utf-8"
+    if not encoding:
+        if _is_binary_buffer(stream):
+            encoding = get_canonical_encoding_name("utf-8")
+        else:
+            encoding = getattr(stream, "encoding", None)
+            encoding = get_output_encoding(encoding)
+    else:
+        encoding = get_canonical_encoding_name(encoding)
+    return StreamWrapper(stream, encoding, errors, line_buffering=True)
 
 
 class StreamWrapper(io.TextIOWrapper):
@@ -656,8 +681,25 @@ class StreamWrapper(io.TextIOWrapper):
                     self.flush()
                 except Exception:
                     pass
+                # This is modified from the initial implementation to rely on
+                # our own decoding functionality to preserve unicode strings where
+                # possible
                 return self.buffer.write(str(x))
             return io.TextIOWrapper.write(self, x)
+
+    else:
+
+        def write(self, x):
+            # try to use backslash and surrogate escape strategies before failing
+            old_errors = getattr(self, "_errors", self.errors)
+            self._errors = (
+                "backslashescape" if self.encoding != "mbcs" else "surrogateescape"
+            )
+            try:
+                return io.TextIOWrapper.write(self, to_text(x, errors=self._errors))
+            except UnicodeDecodeError:
+                self._errors = old_errors
+                return io.TextIOWrapper.write(self, to_text(x, errors=self._errors))
 
         def writelines(self, lines):
             for line in lines:
@@ -720,3 +762,27 @@ class _StreamProvider(object):
         except Exception:
             return False
         return True
+
+
+def get_text_stream(stream="stdout", encoding=None):
+    """Retrieve a unicode stream wrapper around **sys.stdout** or **sys.stderr**.
+
+    :param str stream: The name of the stream to wrap from the :mod:`sys` module.
+    :param str encoding: An optional encoding to use.
+    :return: A new :class:`~vistir.misc.StreamWrapper` instance around the stream
+    :rtype: `vistir.misc.StreamWrapper`
+    """
+
+    from .compat import _fs_encode_errors
+
+    if os.name == "nt" or sys.platform.startswith("win"):
+        from ._winconsole import _get_windows_console_stream, _wrap_std_stream
+    else:
+        _get_windows_console_stream = lambda *args: None  # noqa
+        _wrap_std_stream = lambda *args: None  # noqa
+    _wrap_std_stream(stream)
+    sys_stream = getattr(sys, stream, None)
+    windows_console = _get_windows_console_stream(sys_stream, encoding, _fs_encode_errors)
+    if windows_console is not None:
+        return windows_console
+    return get_wrapped_stream(sys_stream, encoding)
