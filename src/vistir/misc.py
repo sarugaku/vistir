@@ -781,8 +781,6 @@ class _StreamProvider(object):
 # XXX: techniques from click (loosely inspired for the most part, with many details)
 # XXX: heavily modified to suit our needs
 
-_color_stream_cache = WeakKeyDictionary()
-
 
 def _isatty(stream):
     try:
@@ -792,40 +790,46 @@ def _isatty(stream):
     return is_a_tty
 
 
-def _wrap_for_color(stream, allow_color=True):
-    try:
-        import colorama
-    except ImportError:
-        pass
-    else:
-        try:
-            cached = _color_stream_cache.get(stream)
-        except KeyError:
-            cached = None
-        if cached is not None:
-            return cached
-        is_a_tty = _isatty(stream)
-        if not is_a_tty:
-            allow_color = False
-        _color_wrapper = colorama.AnsiToWin32(stream, strip=not allow_color)
-        result = _color_wrapper.stream
-        _write = result.write
+_wrap_for_color = None
 
-        def _write_with_color(s):
+try:
+    import colorama
+except ImportError:
+    colorama = None
+
+_color_stream_cache = WeakKeyDictionary()
+
+if os.name == "nt" or sys.platform.startswith("win"):
+
+    def _wrap_for_color(stream, allow_color=True):
+        if colorama is not None:
             try:
-                return _write(s)
+                cached = _color_stream_cache.get(stream)
+            except KeyError:
+                cached = None
+            if cached is not None:
+                return cached
+            if not _isatty(stream):
+                allow_color = False
+            _color_wrapper = colorama.AnsiToWin32(stream, strip=not allow_color)
+            result = _color_wrapper.stream
+            _write = result.write
+
+            def _write_with_color(s):
+                try:
+                    return _write(s)
+                except Exception:
+                    _color_wrapper.reset_all()
+                    raise
+
+            result.write = _write_with_color
+            try:
+                _color_stream_cache[stream] = result
             except Exception:
-                _color_wrapper.reset_all()
-                raise
+                pass
+            return result
 
-        result.write = _write_with_color
-        try:
-            _color_stream_cache[stream] = result
-        except Exception:
-            pass
-        return result
-
-    return stream
+        return stream
 
 
 def _cached_stream_lookup(stream_lookup_func, stream_resolution_func):
@@ -858,32 +862,58 @@ def get_text_stream(stream="stdout", encoding=None, allow_color=True):
     :rtype: `vistir.misc.StreamWrapper`
     """
 
+    stream_map = {"stdin": sys.stdin, "stdout": sys.stdout, "stderr": sys.stderr}
     if os.name == "nt" or sys.platform.startswith("win"):
         from ._winconsole import _get_windows_console_stream, _wrap_std_stream
-
-        _colorize_stream_fn = _wrap_for_color
 
     else:
         _get_windows_console_stream = lambda *args: None  # noqa
         _wrap_std_stream = lambda *args: None  # noqa
-        _colorize_stream_fn = lambda x, *args: x  # noqa
 
     if six.PY2 and stream != "stdin":
         _wrap_std_stream(stream)
-    sys_stream = getattr(sys, stream, None)
+    sys_stream = stream_map[stream]
     windows_console = _get_windows_console_stream(sys_stream, encoding, None)
     if windows_console is not None:
         return windows_console
     return get_wrapped_stream(sys_stream, encoding)
 
 
-_text_stdin = _cached_stream_lookup(lambda: sys.stdin, partial(get_text_stream, "stdin"))
-_text_stdout = _cached_stream_lookup(
-    lambda: sys.stdout, partial(get_text_stream, "stdout")
-)
-_text_stderr = _cached_stream_lookup(
-    lambda: sys.stderr, partial(get_text_stream, "stderr")
-)
+def get_text_stdout():
+    return get_text_stream("stdout")
+
+
+def get_text_stderr():
+    return get_text_stream("stderr")
+
+
+def get_text_stdin():
+    return get_text_stream("stdin")
+
+
+TEXT_STREAMS = {
+    "stdin": get_text_stdin,
+    "stdout": get_text_stdout,
+    "stderr": get_text_stderr,
+}
+
+
+_text_stdin = _cached_stream_lookup(lambda: sys.stdin, get_text_stdin)
+_text_stdout = _cached_stream_lookup(lambda: sys.stdout, get_text_stdout)
+_text_stderr = _cached_stream_lookup(lambda: sys.stderr, get_text_stderr)
+
+
+def replace_with_text_stream(stream_name):
+    """Given a stream name, replace the target stream with a text-converted equivalent
+
+    :param str stream_name: The name of a target stream, such as **stdout** or **stderr**
+    :return: None
+    """
+    new_stream = TEXT_STREAMS.get(stream_name)
+    if new_stream is not None:
+        new_stream = new_stream()
+        setattr(sys, stream_name, new_stream)
+    return None
 
 
 def _can_use_color(stream=None, fg=None, bg=None, style=None):

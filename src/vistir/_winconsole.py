@@ -245,7 +245,10 @@ class ConsoleStream(object):
             self.write(line)
 
     def __getattr__(self, name):
-        return getattr(self._text_stream, name)
+        try:
+            return getattr(self._text_stream, name)
+        except io.UnsupportedOperation:
+            return getattr(self.buffer, name)
 
     def isatty(self):
         return self.buffer.isatty()
@@ -355,6 +358,8 @@ def _get_windows_console_stream(f, encoding, errors):
         and hasattr(f, "isatty")
         and f.isatty()
     ):
+        if isinstance(f, ConsoleStream):
+            return f
         func = _stream_factories.get(f.fileno())
         if func is not None:
             if not PY2:
