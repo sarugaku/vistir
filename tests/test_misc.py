@@ -194,3 +194,31 @@ def test_stream_wrapper(capsys):
     print("this is a new method\u0141asdf", file=sys.stdout)
     out, err = capsys.readouterr()
     assert out.strip() == "this is a new method\u0141asdf"
+
+
+def test_colorized_stream(capsys):
+    new_stream = vistir.misc.get_text_stream("stdout", allow_color=True)
+    sys.stdout = new_stream
+    green_string = "\x1b[32m\x1b[22mhello\x1b[39m\x1b[22m"
+    print(green_string, file=sys.stdout)
+    out, _ = capsys.readouterr()
+    assert r"\x1b[32m" not in out
+    assert "hello" in out
+    vistir.misc.echo("hello", fg="green")
+    out, _ = capsys.readouterr()
+    assert r"\x1b[32m" not in out
+    assert "hello" in out
+
+
+def test_strip_colors(capsys):
+    sys.stdout = vistir.misc.get_text_stream("stdout")
+    sys.stdin = vistir.misc.get_text_stream("stdin", allow_color=False)
+    vistir.misc.echo("hello", fg="green")
+    out, _ = capsys.readouterr()
+    assert "\x1b[32m" not in out
+    assert "hello" in out
+    green_string = "\x1b[32m\x1b[22mhello\x1b[39m\x1b[22m"
+    vistir.misc.echo(green_string)
+    out, _ = capsys.readouterr()
+    assert "hello" in out
+    assert "\x1b[32m" not in out
