@@ -4,7 +4,7 @@ steps:
 
   - script: |
         pipenv run coverage xml -o coverage/coverage.xml
-        pipenv run coverage html -o coverage/coverage.html
+        pipenv run coverage html -d coverage
     displayName: 'Build Coverage Report'
 
   - script: |
