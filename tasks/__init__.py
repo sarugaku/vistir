@@ -113,7 +113,8 @@ def build(ctx):
 def get_next_version(ctx, type_="patch", log=False):
     version = _read_version()
     if type_ in ("dev", "pre"):
-        new_version = _prebump(version, type_, log=log)
+        idx = REL_TYPES.index("patch")
+        new_version = _prebump(version, idx, log=log)
     else:
         new_version = _bump_release(version, type_, log=log)
     return new_version
