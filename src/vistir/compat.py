@@ -56,6 +56,7 @@ else:
     from backports.functools_lru_cache import lru_cache
     from .backports.functools import partialmethod  # type: ignore
     from backports.shutil_get_terminal_size import get_terminal_size
+
     NamedTemporaryFile = _NamedTemporaryFile
     from backports.weakref import finalize  # type: ignore
 
@@ -197,6 +198,20 @@ class TemporaryDirectory(object):
     def cleanup(self):
         if self._finalizer.detach():
             self._rmtree(self.name)
+
+
+def is_bytes(string):
+    """Check if a string is a bytes instance
+
+    :param Union[str, bytes] string: A string that may be string or bytes like
+    :return: Whether the provided string is a bytes type or not
+    :rtype: bool
+    """
+    if six.PY3 and isinstance(string, (bytes, memoryview, bytearray)):  # noqa
+        return True
+    elif six.PY2 and isinstance(string, (buffer, bytearray)):  # noqa
+        return True
+    return False
 
 
 def fs_str(string):

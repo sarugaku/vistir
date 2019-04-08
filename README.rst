@@ -11,9 +11,6 @@ vistir: Setup / utilities which most projects eventually need
 .. image:: https://travis-ci.com/sarugaku/vistir.svg?branch=master
     :target: https://travis-ci.com/sarugaku/vistir
 
-.. image:: https://dev.azure.com/sarugaku/vistir/_apis/build/status/Vistir%20Build%20Pipeline?branchName=master
-    :target: https://dev.azure.com/sarugaku/vistir/_build/latest?definitionId=2&branchName=master
-
 .. image:: https://img.shields.io/pypi/pyversions/vistir.svg
     :target: https://pypi.python.org/pypi/vistir
 
@@ -23,6 +20,9 @@ vistir: Setup / utilities which most projects eventually need
 .. image:: https://readthedocs.org/projects/vistir/badge/?version=latest
     :target: https://vistir.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status
+
+.. image:: https://dev.azure.com/sarugaku/vistir/_apis/build/status/Vistir%20Build%20Pipeline?branchName=master
+    :target: https://dev.azure.com/sarugaku/vistir/_build/latest?definitionId=2&branchName=master
 
 
 🐉 Installation
@@ -380,6 +380,13 @@ The following Miscellaneous utilities are available as helper methods:
     * ``vistir.misc.get_canonical_encoding_name``
     * ``vistir.misc.get_wrapped_stream``
     * ``vistir.misc.StreamWrapper``
+    * ``vistir.misc.get_text_stream``
+    * ``vistir.misc.replace_with_text_stream``
+    * ``vistir.misc.get_text_stdin``
+    * ``vistir.misc.get_text_stdout``
+    * ``vistir.misc.get_text_stderr``
+    * ``vistir.misc.echo``
+
 
 .. _`shell_escape`:
 
@@ -583,6 +590,10 @@ Given a stream, wrap it in a `StreamWrapper` instance and return the wrapped str
 
     >>> stream = sys.stdout
     >>> wrapped_stream = vistir.misc.get_wrapped_stream(sys.stdout)
+    >>> wrapped_stream.write("unicode\u0141")
+    >>> wrapped_stream.seek(0)
+    >>> wrapped_stream.read()
+    "unicode\u0141"
 
 
 .. _`StreamWrapper`:
@@ -597,6 +608,80 @@ which may be used in place of ``sys.stdout`` and other streams.
 
     >>> wrapped_stream = vistir.misc.StreamWrapper(sys.stdout, encoding="utf-8", errors="replace", line_buffering=True)
     >>> wrapped_stream = vistir.misc.StreamWrapper(io.StringIO(), encoding="utf-8", errors="replace", line_buffering=True)
+
+
+.. _`get_text_stream`:
+
+**get_text_stream**
+////////////////////
+
+An implementation of the **StreamWrapper** for the purpose of wrapping **sys.stdin** or **sys.stdout**.
+
+On Windows, this returns the appropriate handle to the requested output stream.
+
+.. code-block:: python
+
+    >>> text_stream = vistir.misc.get_text_stream("stdout")
+    >>> sys.stdout = text_stream
+    >>> sys.stdin = vistir.misc.get_text_stream("stdin")
+    >>> vistir.misc.echo(u"\0499", fg="green")
+    ҙ
+
+
+.. _`replace_with_text_stream`:
+
+**replace_with_text_stream**
+/////////////////////////////
+
+Given a text stream name, replaces the text stream with a **StreamWrapper** instance.
+
+
+.. code-block:: python
+
+    >>> vistir.misc.replace_with_text_stream("stdout")
+
+Once invoked, the standard stream in question is replaced with the required wrapper,
+turning it into a ``TextIOWrapper`` compatible stream (which ensures that unicode
+characters can be written to it).
+
+
+.. _`get_text_stdin`:
+
+**get_text_stdin**
+///////////////////
+
+A helper function for calling **get_text_stream("stdin")**.
+
+
+.. _`get_text_stdout`:
+
+**get_text_stdout**
+////////////////////
+
+A helper function for calling **get_text_stream("stdout")**.
+
+
+.. _`get_text_stderr`:
+
+**get_text_stderr**
+////////////////////
+
+A helper function for calling **get_text_stream("stderr")**.
+
+
+.. _`echo`:
+
+**echo**
+/////////
+
+Writes colored, stream-compatible output to the desired handle (``sys.stdout`` by default).
+
+.. code-block:: python
+
+    >>> vistir.misc.echo("some text", fg="green", bg="black", style="bold", err=True)  # write to stderr
+    some text
+    >>> vistir.misc.echo("some other text", fg="cyan", bg="white", style="underline")  # write to stdout
+    some other text
 
 
 🐉 Path Utilities

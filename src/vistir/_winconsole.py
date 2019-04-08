@@ -53,9 +53,10 @@ from ctypes import (
     c_char,
     c_char_p,
     c_void_p,
-    py_object,
     c_ssize_t,
     c_ulong,
+    py_object,
+    Structure,
     windll,
     WINFUNCTYPE,
 )
@@ -79,15 +80,22 @@ GetStdHandle = kernel32.GetStdHandle
 ReadConsoleW = kernel32.ReadConsoleW
 WriteConsoleW = kernel32.WriteConsoleW
 GetLastError = kernel32.GetLastError
+GetConsoleCursorInfo = kernel32.GetConsoleCursorInfo
+SetConsoleCursorInfo = kernel32.SetConsoleCursorInfo
 GetCommandLineW = WINFUNCTYPE(LPWSTR)(("GetCommandLineW", windll.kernel32))
 CommandLineToArgvW = WINFUNCTYPE(POINTER(LPWSTR), LPCWSTR, POINTER(c_int))(
     ("CommandLineToArgvW", windll.shell32)
 )
 
 
+# XXX: Added for cursor hiding on windows
+STDOUT_HANDLE_ID = ctypes.c_ulong(-11)
+STDERR_HANDLE_ID = ctypes.c_ulong(-12)
 STDIN_HANDLE = GetStdHandle(-10)
 STDOUT_HANDLE = GetStdHandle(-11)
 STDERR_HANDLE = GetStdHandle(-12)
+
+STREAM_MAP = {0: STDIN_HANDLE, 1: STDOUT_HANDLE, 2: STDERR_HANDLE}
 
 
 PyBUF_SIMPLE = 0
@@ -105,7 +113,7 @@ EOF = b"\x1a"
 MAX_BYTES_WRITTEN = 32767
 
 
-class Py_buffer(ctypes.Structure):
+class Py_buffer(Structure):
     _fields_ = [
         ("buf", c_void_p),
         ("obj", py_object),
@@ -122,6 +130,11 @@ class Py_buffer(ctypes.Structure):
 
     if PY2:
         _fields_.insert(-1, ("smalltable", c_ssize_t * 2))
+
+
+# XXX: This was added for the use of cursors
+class CONSOLE_CURSOR_INFO(Structure):
+    _fields_ = [("dwSize", ctypes.c_int), ("bVisible", ctypes.c_int)]
 
 
 # On PyPy we cannot get buffers so our ability to operate here is
@@ -232,7 +245,10 @@ class ConsoleStream(object):
             self.write(line)
 
     def __getattr__(self, name):
-        return getattr(self._text_stream, name)
+        try:
+            return getattr(self._text_stream, name)
+        except io.UnsupportedOperation:
+            return getattr(self.buffer, name)
 
     def isatty(self):
         return self.buffer.isatty()
@@ -342,6 +358,8 @@ def _get_windows_console_stream(f, encoding, errors):
         and hasattr(f, "isatty")
         and f.isatty()
     ):
+        if isinstance(f, ConsoleStream):
+            return f
         func = _stream_factories.get(f.fileno())
         if func is not None:
             if not PY2:
@@ -355,3 +373,21 @@ def _get_windows_console_stream(f, encoding, errors):
                 # get_binary_stdin and friends from _compat.
                 msvcrt.setmode(f.fileno(), os.O_BINARY)
             return func(f)
+
+
+def hide_cursor():
+    cursor_info = CONSOLE_CURSOR_INFO()
+    GetConsoleCursorInfo(STDOUT_HANDLE, ctypes.byref(cursor_info))
+    cursor_info.visible = False
+    SetConsoleCursorInfo(STDOUT_HANDLE, ctypes.byref(cursor_info))
+
+
+def show_cursor():
+    cursor_info = CONSOLE_CURSOR_INFO()
+    GetConsoleCursorInfo(STDOUT_HANDLE, ctypes.byref(cursor_info))
+    cursor_info.visible = True
+    SetConsoleCursorInfo(STDOUT_HANDLE, ctypes.byref(cursor_info))
+
+
+def get_stream_handle(stream):
+    return STREAM_MAP.get(stream.fileno())
