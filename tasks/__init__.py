@@ -146,6 +146,8 @@ def get_changelog(ctx):
 def tag_release(ctx, version=None, type_="patch", yes=False):
     if version is None:
         version = bump_version(ctx, type_)
+    else:
+        _write_version(version)
     tag_content = get_changelog(ctx)
     generate_news(ctx, yes=yes)
     ctx.run(f'git commit -am "Release {version}"')
