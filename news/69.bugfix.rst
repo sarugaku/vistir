@@ -1,1 +1,0 @@
-Fixed a bug which caused spinner output to sometimes attempt to double encode on python 2, resulting in failed output encoding.

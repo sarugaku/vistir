@@ -1,3 +1,26 @@
+0.4.0 (2019-04-10)
+==================
+
+Features
+--------
+
+- Added full native support for windows unicode consoles and the extended unicode character set when using ``vistir.misc.StreamWrapper`` instances via ``vistir.misc.get_wrapped_stream`` and ``vistir.misc.get_text_stream``.  `#79 <https://github.com/sarugaku/vistir/issues/79>`_
+  
+
+Bug Fixes
+---------
+
+- Fixed a bug which caused test failures due to generated paths on *nix based operating systems which were too long.  `#65 <https://github.com/sarugaku/vistir/issues/65>`_
+  
+- Fixed a bug which caused spinner output to sometimes attempt to double encode on python 2, resulting in failed output encoding.  `#69 <https://github.com/sarugaku/vistir/issues/69>`_
+  
+- Fixed a bug with the ``rmtree`` error handler implementation in ``compat.TemporaryDirectory`` which caused cleanup to fail intermittently on windows.  `#72 <https://github.com/sarugaku/vistir/issues/72>`_
+  
+- Fixed an issue where paths could sometimes fail to be fs-encoded properly when using backported ``NamedTemporaryFile`` instances.  `#74 <https://github.com/sarugaku/vistir/issues/74>`_
+  
+- Fixed a bug in ``vistir.misc.locale_encoding`` which caused invocation of a non-existent method called ``getlocaleencoding`` which forced all systems to use default encoding of ``ascii``.  `#78 <https://github.com/sarugaku/vistir/issues/78>`_
+
+
 0.3.1 (2019-03-02)
 ==================
 

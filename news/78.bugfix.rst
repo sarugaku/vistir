@@ -1,1 +1,0 @@
-Fixed a bug in ``vistir.misc.locale_encoding`` which caused invocation of a non-existent method called ``getlocaleencoding`` which forced all systems to use default encoding of ``ascii``.
