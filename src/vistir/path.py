@@ -343,9 +343,10 @@ def set_write_bit(fn):
         user_sid = get_current_user()
         icacls_exe = _find_icacls_exe() or "icacls"
         from .misc import run
-
-        run([icacls_exe, "/grant", "r", "{0}:WD".format(user_sid), fn, "/T", "/C", "/Q"])
-        return
+        if user_sid:
+            _, err = run([icacls_exe, "/grant", "{0}:WD".format(user_sid), fn, "/T", "/C", "/Q"])
+            if not err:
+                return
 
     if not os.path.isdir(fn):
         for path in [fn, os.path.dirname(fn)]:
