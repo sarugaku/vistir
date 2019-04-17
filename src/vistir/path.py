@@ -314,7 +314,7 @@ def _find_icacls_exe():
         ]
         for path in paths:
             icacls_path = next(
-                iter(fn for fn in os.listdir(paths) if fn.lower() == "icacls.exe"), None
+                iter(fn for fn in os.listdir(path) if fn.lower() == "icacls.exe"), None
             )
             if icacls_path is not None:
                 icacls_path = os.path.join(path, icacls_path)
