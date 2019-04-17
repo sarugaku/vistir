@@ -917,6 +917,10 @@ def replace_with_text_stream(stream_name):
 
 
 def _can_use_color(stream=None, fg=None, bg=None, style=None):
+    from .termcolors import DISABLE_COLORS
+
+    if DISABLE_COLORS:
+        return False
     if not any([fg, bg, style]):
         if not stream:
             stream = sys.stdin

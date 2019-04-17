@@ -306,6 +306,22 @@ def create_tracked_tempfile(*args, **kwargs):
     return _NamedTemporaryFile(*args, **kwargs)
 
 
+def _find_icacls_exe():
+    if os.name == "nt":
+        paths = [
+            os.path.expandvars(r"%windir%\{0}").format(subdir)
+            for subdir in ("system32", "SysWOW64")
+        ]
+        for path in paths:
+            icacls_path = next(
+                iter(fn for fn in os.listdir(paths) if fn.lower() == "icacls.exe"), None
+            )
+            if icacls_path is not None:
+                icacls_path = os.path.join(path, icacls_path)
+                return icacls_path
+    return None
+
+
 def set_write_bit(fn):
     # type: (str) -> None
     """
@@ -321,6 +337,16 @@ def set_write_bit(fn):
         return
     file_stat = os.stat(fn).st_mode
     os.chmod(fn, file_stat | stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
+    if os.name == "nt":
+        from ._winconsole import get_current_user
+
+        user_sid = get_current_user()
+        icacls_exe = _find_icacls_exe() or "icacls"
+        from .misc import run
+
+        run([icacls_exe, "/grant", "r", "{0}:WD".format(user_sid), fn, "/T", "/C", "/Q"])
+        return
+
     if not os.path.isdir(fn):
         for path in [fn, os.path.dirname(fn)]:
             try:
