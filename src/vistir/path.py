@@ -344,7 +344,7 @@ def set_write_bit(fn):
         icacls_exe = _find_icacls_exe() or "icacls"
         from .misc import run
         if user_sid:
-            _, err = run([icacls_exe, "/grant", "{0}:WD".format(user_sid), fn, "/T", "/C", "/Q"])
+            _, err = run([icacls_exe, "/grant", "{0}:WD".format(user_sid), "''{0}''".format(fn), "/T", "/C", "/Q"])
             if not err:
                 return
 

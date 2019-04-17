@@ -226,7 +226,7 @@ def _create_subprocess(
         import traceback
 
         formatted_tb = "".join(traceback.format_exception(*sys.exc_info()))
-        sys.stderr.write("Error while executing command %s:" % " ".join(cmd._parts))
+        sys.stderr.write("Error while executing command %s:" % to_native_string(" ".join(cmd._parts)))
         sys.stderr.write(formatted_tb)
         raise
     if not block:
