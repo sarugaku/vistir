@@ -235,6 +235,7 @@ def test_strip_colors(capsys, monkeypatch):
         assert "\x1b[32m" not in out
 
 
+@pytest.mark.skipif(sys.version_info[0] < 3, "Python 2 uses bytes by default")
 def test_write_bytes(capsys):
     sys.stdout = vistir.misc.get_text_stream("stdout")
     sys.stdin = vistir.misc.get_text_stream("stdin")
