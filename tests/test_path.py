@@ -5,6 +5,7 @@ import io
 import os
 import stat
 
+import pytest
 from hypothesis import HealthCheck, assume, example, given, settings
 from hypothesis_fspaths import fspaths
 from six.moves.urllib import parse as urllib_parse
@@ -22,6 +23,28 @@ def test_abspathu(tmpdir):
         assert vistir.path.abspathu(new_dir.purebasename) == vistir.misc.to_text(
             new_dir.strpath
         )
+
+
+def test_normalize_path():
+    with vistir.contextmanagers.temp_environ():
+        os.environ["PATH_VAR"] = "some_path"
+        assert os.environ.get("USER")
+        orig_path = os.path.normcase(
+            str(vistir.compat.Path("~").expanduser() / "some_path" / "other_path")
+        )
+        assert vistir.path.normalize_path("~/${PATH_VAR}/other_path") == orig_path
+
+
+@pytest.mark.parametrize(
+    "path, root, result",
+    [
+        ("~/some/path/child", "~/some/path", True),
+        ("~/some", "~/some/path", False),
+        ("~/some/path/child", "~", True),
+    ],
+)
+def test_is_in_path(path, root, result):
+    assert vistir.path.is_in_path(path, root) == result
 
 
 def test_safe_expandvars():
