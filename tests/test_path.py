@@ -28,7 +28,10 @@ def test_abspathu(tmpdir):
 def test_normalize_path():
     with vistir.contextmanagers.temp_environ():
         os.environ["PATH_VAR"] = "some_path"
-        assert os.environ.get("USER")
+        try:
+            assert os.environ.get("HOME")
+        except AssertionError:
+            os.environ["HOME"] = os.getcwd()
         orig_path = os.path.normcase(
             str(vistir.compat.Path("~").expanduser() / "some_path" / "other_path")
         )
