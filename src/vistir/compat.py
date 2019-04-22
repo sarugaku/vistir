@@ -325,7 +325,7 @@ def fs_encode(path):
     if path is None:
         raise TypeError("expected a valid path to encode")
     if isinstance(path, six.text_type):
-        if six.PY3:
+        if six.PY2:
             return b"".join(
                 (
                     _byte(ord(c) - 0xDC00)
@@ -351,7 +351,7 @@ def fs_decode(path):
     if path is None:
         raise TypeError("expected a valid path to decode")
     if isinstance(path, six.binary_type):
-        if six.PY3:
+        if six.PY2:
             from array import array
 
             indexes = _invalid_utf8_indexes(array(str("B"), path))
