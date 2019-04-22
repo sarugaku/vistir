@@ -371,7 +371,10 @@ else:
     _fs_encoding = "utf-8"
     if sys.platform.startswith("win"):
         _fs_error_fn = None
-        alt_strategy = "surrogatepass"
+        if sys.version_info[:2] > (3, 4):
+            alt_strategy = "surrogatepass"
+        else:
+            alt_strategy = "surrogateescape"
     else:
         if sys.version_info >= (3, 3):
             _fs_encoding = sys.getfilesystemencoding()
