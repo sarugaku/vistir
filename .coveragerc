@@ -22,6 +22,7 @@ exclude_lines =
 omit =
     src/vistir/_winconsole.py
     src/vistir/termcolors.py
+    src/vistir/backports/*
 
 [html]
 directory = htmlcov

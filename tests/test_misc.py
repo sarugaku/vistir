@@ -88,6 +88,12 @@ def test_run_return_subprocess():
     assert c.out.strip() == "test"
 
 
+def test_run_failing_subprocess(capsys):
+    c = vistir.misc.run(["fakecommandthatdoesntexist", "fake", "argument"], nospin=True, return_object=True, block=False)
+    out, err = capsys.readouterr()
+    assert "FAIL" in out
+
+
 def test_run_with_long_output():
     long_str = "this is a very long string which exceeds the maximum length per the settings we are passing in to vistir"
     print_cmd = "import time; print('{0}'); time.sleep(2)".format(long_str)
@@ -200,7 +206,7 @@ def test_stream_wrapper(capsys):
 
 
 def test_colorized_stream(capsys):
-    new_stream = vistir.misc.get_text_stream("stdout", allow_color=True)
+    new_stream = vistir.misc.get_text_stream("stdout")
     sys.stdout = new_stream
     green_string = "\x1b[32m\x1b[22mhello\x1b[39m\x1b[22m"
     print(green_string, file=sys.stdout)
@@ -213,15 +219,38 @@ def test_colorized_stream(capsys):
     assert "hello" in out
 
 
-def test_strip_colors(capsys):
+def test_strip_colors(capsys, monkeypatch):
+    with monkeypatch.context() as m:
+        m.setattr("vistir.termcolors.DISABLE_COLORS", True)
+        sys.stdout = vistir.misc.get_text_stream("stdout")
+        sys.stdin = vistir.misc.get_text_stream("stdin")
+        vistir.misc.echo("hello", fg="green")
+        out, _ = capsys.readouterr()
+        assert "\x1b[32m" not in out
+        assert "hello" in out
+        green_string = "\x1b[32m\x1b[22mhello\x1b[39m\x1b[22m"
+        vistir.misc.echo(green_string)
+        out, _ = capsys.readouterr()
+        assert "hello" in out
+        assert "\x1b[32m" not in out
+
+
+@pytest.mark.skipif(sys.version_info[0] < 3, reason="Python 2 uses bytes by default")
+def test_write_bytes(capsys):
     sys.stdout = vistir.misc.get_text_stream("stdout")
-    sys.stdin = vistir.misc.get_text_stream("stdin", allow_color=False)
-    vistir.misc.echo("hello", fg="green")
+    sys.stdin = vistir.misc.get_text_stream("stdin")
+    vistir.misc.echo(vistir.misc.to_bytes("hello"), fg="green")
     out, _ = capsys.readouterr()
     assert "\x1b[32m" not in out
     assert "hello" in out
-    green_string = "\x1b[32m\x1b[22mhello\x1b[39m\x1b[22m"
+    green_string = vistir.misc.to_bytes("\x1b[32m\x1b[22mhello\x1b[39m\x1b[22m")
     vistir.misc.echo(green_string)
     out, _ = capsys.readouterr()
     assert "hello" in out
-    assert "\x1b[32m" not in out
+    assert "\x1b[32m" in out
+    # now add color=True to make sure this works right
+    green_string = vistir.misc.to_bytes("\x1b[32m\x1b[22mhello\x1b[39m\x1b[22m")
+    vistir.misc.echo(green_string, color=True)
+    out, _ = capsys.readouterr()
+    assert "hello" in out
+    assert "\x1b[32m" in out

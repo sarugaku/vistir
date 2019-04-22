@@ -1,0 +1,2 @@
+Fixed a bug with ``vistir.misc.echo`` accidentally wrapping streams with ``colorama`` when it was not needed.
+Fixed a bug with rendering colors in text streams.

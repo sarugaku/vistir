@@ -11,6 +11,7 @@ __pycache__/
 build/
 develop-eggs/
 dist/
+pip-wheel-metadata/
 downloads/
 eggs/
 .eggs/
@@ -103,3 +104,6 @@ venv.bak/
 # mypy
 .mypy_cache/
 .vscode
+
+# pycharm
+.idea

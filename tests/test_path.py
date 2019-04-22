@@ -5,6 +5,7 @@ import io
 import os
 import stat
 
+import pytest
 from hypothesis import HealthCheck, assume, example, given, settings
 from hypothesis_fspaths import fspaths
 from six.moves.urllib import parse as urllib_parse
@@ -22,6 +23,31 @@ def test_abspathu(tmpdir):
         assert vistir.path.abspathu(new_dir.purebasename) == vistir.misc.to_text(
             new_dir.strpath
         )
+
+
+def test_normalize_path():
+    with vistir.contextmanagers.temp_environ():
+        os.environ["PATH_VAR"] = "some_path"
+        try:
+            assert os.environ.get("HOME")
+        except AssertionError:
+            os.environ["HOME"] = os.getcwd()
+        orig_path = os.path.normcase(
+            str(vistir.compat.Path("~").expanduser() / "some_path" / "other_path")
+        )
+        assert vistir.path.normalize_path("~/${PATH_VAR}/other_path") == orig_path
+
+
+@pytest.mark.parametrize(
+    "path, root, result",
+    [
+        ("~/some/path/child", "~/some/path", True),
+        ("~/some", "~/some/path", False),
+        ("~/some/path/child", "~", True),
+    ],
+)
+def test_is_in_path(path, root, result):
+    assert vistir.path.is_in_path(path, root) == result
 
 
 def test_safe_expandvars():
@@ -128,7 +154,7 @@ def test_is_valid_url(url):
 @given(fspaths())
 @settings(suppress_health_check=(HealthCheck.filter_too_much,))
 def test_path_to_url(filepath):
-    filename = vistir.misc.to_text(filepath)
+    filename = vistir.compat.fs_decode(filepath)
     if filepath and filename:
         assume(any(letter in filename for letter in url_alphabet))
     file_url = vistir.path.path_to_url(filename)
