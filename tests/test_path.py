@@ -154,7 +154,7 @@ def test_is_valid_url(url):
 @given(fspaths())
 @settings(suppress_health_check=(HealthCheck.filter_too_much,))
 def test_path_to_url(filepath):
-    filename = vistir.misc.to_text(filepath)
+    filename = vistir.compat.fs_decode(filepath)
     if filepath and filename:
         assume(any(letter in filename for letter in url_alphabet))
     file_url = vistir.path.path_to_url(filename)
