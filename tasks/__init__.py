@@ -86,7 +86,11 @@ def _bump_release(version, type_, log=False):
     if type_ not in REL_TYPES:
         raise ValueError(f"{type_} not in {REL_TYPES}")
     index = REL_TYPES.index(type_)
-    next_version = version.base_version().bump_release(index=index)
+    current_version = version.base_version()
+    if version.is_prerelease and type_ == "patch":
+        next_version = current_version
+    else:
+        next_version = current_version.bump_release(index=index)
     if log:
         print(f"[bump] {version} -> {next_version}")
     print(f"{next_version}")
