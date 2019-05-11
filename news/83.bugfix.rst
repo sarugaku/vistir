@@ -1,0 +1,1 @@
+Fixed ``vistir.misc.to_bytes`` implementation to respect supplied encoding.
