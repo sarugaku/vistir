@@ -26,7 +26,7 @@ jobs:
       install:
         - "pip install --upgrade twine readme-renderer[md]"
       script:
-        - "python setup.py sdist"
+        - "python setup.py sdist bdist_wheel"
         - "twine check dist/*"
     - stage: coverage
       python: "3.6"
