@@ -1,16 +1,9 @@
 [packages]
-vistir = {editable = true, extras = ["spinner", "tests", "dev"], path = "."}
-coverage = "<5.0"
+vistir = {editable = true, extras = ["spinner", "tests", "dev", "typing"], path = "."}
 
 [dev-packages]
-invoke = '*'
-parver = '*'
 towncrier = '*'
 wheel = '*'
-hypothesis = '*'
-sphinx = '*'
-sphinx-rtd-theme = '*'
-six = "*"
 codacy-coverage = "*"
 codecov = "*"
 
