@@ -7,9 +7,8 @@ matrix:
   fast_finish: true
 
 install:
-  - "pip install --upgrade pip pipenv"
+  - "pip install --upgrade pip pipenv pytest==4.5.0 pytest-cov pytest-xdist==1.28 pytest-timeout"
   - "pipenv install --dev"
-  - "pipenv run pip install --upgrade -e .[spinner,tests]"
 script:
     - "pipenv run pytest -v tests/"
 
@@ -33,7 +32,7 @@ jobs:
     - stage: coverage
       python: "3.6"
       install:
-        - "pip install --upgrade pip pipenv pytest-cov pytest-timeout pytest"
+        - "pip install --upgrade pip pipenv pytest==4.5.0 pytest-cov pytest-xdist==1.28 pytest-timeout"
         - "pipenv install --dev"
       script:
         - "pipenv run pytest --timeout 300 --cov=vistir --cov-report=term-missing --cov-report=xml --cov-report=html tests"
