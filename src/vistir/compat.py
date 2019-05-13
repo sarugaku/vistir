@@ -351,14 +351,16 @@ def fs_decode(path):
     if path is None:
         raise TypeError("expected a valid path to decode")
     if isinstance(path, six.binary_type):
-        if six.PY2:
-            from array import array
+        import array
 
-            indexes = _invalid_utf8_indexes(array(str("B"), path))
+        indexes = _invalid_utf8_indexes(array.array(str("B"), path))
+        if six.PY2:
             return "".join(
                 chunk.decode(_fs_encoding, _fs_decode_errors)
                 for chunk in _chunks(path, indexes)
             )
+        if indexes and os.name == "nt":
+            return path.decode(_fs_encoding, "surrogateescape")
         return path.decode(_fs_encoding, _fs_decode_errors)
     return path
 
