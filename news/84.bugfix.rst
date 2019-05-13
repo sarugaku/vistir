@@ -1,0 +1,1 @@
+Blocking calls to ``vistir.misc.run`` will now properly handle ``KeyboardInterrupt`` events by terminating the subprocess and returning the result.
