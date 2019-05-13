@@ -139,7 +139,7 @@ def is_type_checking():
     return TYPE_CHECKING
 
 
-IS_TYPE_CHECKING = is_type_checking()
+IS_TYPE_CHECKING = os.environ.get("MYPY_RUNNING", is_type_checking())
 
 
 class TemporaryDirectory(object):
