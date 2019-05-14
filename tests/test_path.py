@@ -102,6 +102,13 @@ def test_ensure_mkdir_p(base_dir, subdir):
         assert os.path.exists(vistir.compat.fs_encode(target))
 
 
+@pytest.mark.xfail(raises=OSError)
+def test_mkdir_p_fails_when_path_exists(tmpdir):
+    myfile = tmpdir.join("myfile")
+    myfile.write_text("some text", encoding="utf-8")
+    vistir.path.mkdir_p(myfile.strpath)
+
+
 def test_create_tracked_tempdir(tmpdir):
     subdir = tmpdir.join("subdir")
     subdir.mkdir()
@@ -110,6 +117,19 @@ def test_create_tracked_tempdir(tmpdir):
     with io.open(os.path.join(temp_dir, "test_file.txt"), "w") as fh:
         fh.write("this is a test")
     assert len(os.listdir(temp_dir)) > 0
+
+
+def test_create_tracked_tempfile(tmpdir):
+    tmpfile = vistir.path.create_tracked_tempfile(
+        prefix="test_file", dir=tmpdir.strpath, delete=False
+    )
+    tmpfile.write(b"this is some text")
+    tmpfile.close()
+    assert os.path.basename(tmpfile.name).startswith("test_file")
+    assert os.path.exists(tmpfile.name)
+    with io.open(tmpfile.name, "r") as fh:
+        contents = fh.read().strip()
+    assert contents == "this is some text"
 
 
 def test_rmtree(tmpdir):
@@ -131,6 +151,7 @@ def test_is_readonly_path(tmpdir):
     assert not vistir.path.is_readonly_path(new_file.strpath)
     os.chmod(new_file.strpath, get_mode(new_file.strpath) & NON_WRITEABLE)
     assert vistir.path.is_readonly_path(new_file.strpath)
+    assert vistir.path.is_readonly_path("fake_path") is False
     for pth in [new_file.strpath, new_dir.strpath]:
         os.chmod(pth, get_mode(pth) & WRITEABLE)
 
@@ -151,9 +172,30 @@ def test_is_valid_url(url):
     assert vistir.path.is_valid_url(unparsed_url)
 
 
+def test_none_as_valid_url_returns_none():
+    assert vistir.path.is_valid_url(None) is None
+
+
+def test_is_file_url_returns_none_when_passed_none():
+    assert vistir.path.is_file_url(None) is False
+
+
+@pytest.mark.xfail(raises=ValueError)
+def test_is_file_url_raises_valueerror_when_no_url_attribute_found():
+    class FakeLink(object):
+        def __init__(self, url_path):
+            self.url_path = url_path
+
+    assert not vistir.path.is_file_url(FakeLink(vistir.path.path_to_url("some/link")))
+
+
 @given(fspaths())
 @settings(suppress_health_check=(HealthCheck.filter_too_much,))
 def test_path_to_url(filepath):
+    class FakeLink(object):
+        def __init__(self, url=None):
+            self.url = url
+
     filename = vistir.compat.fs_decode(filepath)
     if filepath and filename:
         assume(any(letter in filename for letter in url_alphabet))
@@ -161,7 +203,8 @@ def test_path_to_url(filepath):
     if filename:
         assume(file_url != filename)
         assert file_url.startswith("file:")
-        assert vistir.path.is_file_url(file_url)
+        assert vistir.path.is_file_url(file_url) is True
+        assert vistir.path.is_file_url(FakeLink(url=file_url)) is True
     else:
         assert file_url == filename
         assert not file_url

@@ -8,12 +8,18 @@ import sys
 
 import pytest
 import six
-from hypothesis import assume, given
-from hypothesis import strategies as st
+from hypothesis import assume, given, strategies as st
 
 import vistir
 
 from .strategies import legal_path_chars
+
+
+def test_get_logger():
+    from logging import Logger
+
+    logger = vistir.misc._get_logger(name="vistir_logger", level="DEBUG")
+    assert isinstance(logger, Logger)
 
 
 def test_shell_escape():
@@ -58,11 +64,51 @@ def test_unnest(seed_ints, additional_lists):
     assert sorted(list(vistir.misc.unnest(composite_list))) == sorted(flattened_list)
 
 
+@pytest.mark.parametrize(
+    "iterable, result",
+    [
+        [["abc", "def"], True],
+        [("abc", "def"), True],
+        ["abcdef", True],
+        [None, False],
+        [1234, False],
+    ],
+)
+def test_is_iterable(iterable, result):
+    assert vistir.misc._is_iterable(iterable) is result
+
+
+def test_unnest_none():
+    assert list(vistir.misc.unnest(None)) == [None]
+
+
 def test_dedup():
     dup_strings = ["abcde", "fghij", "klmno", "pqrst", "abcde", "klmno"]
     assert list(vistir.misc.dedup(dup_strings)) == ["abcde", "fghij", "klmno", "pqrst"]
     dup_ints = (12345, 56789, 12345, 54321, 98765, 54321)
     assert list(vistir.misc.dedup(dup_ints)) == [12345, 56789, 54321, 98765]
+
+
+def test_get_stream_results():
+    class MockCmd(object):
+        def __init__(self, stdout, stderr):
+            self.stdout = stdout
+            self.stderr = stderr
+
+    stdout_buffer = vistir.compat.StringIO()
+    stderr_buffer = vistir.compat.StringIO()
+    test_line = (
+        "this is a test line that goes on for many characters and will eventually be "
+        "truncated because it is far too long to display on a normal terminal so we will"
+        " use an ellipsis to break it\n"
+    )
+    stdout_buffer.write(test_line)
+    stdout_buffer.seek(0)
+    cmd_instance = MockCmd(stdout=stdout_buffer, stderr=stderr_buffer)
+    results = vistir.misc.get_stream_results(
+        cmd_instance, False, 50, spinner=None, stdout_allowed=False
+    )
+    assert results["stdout"] == [test_line.strip()], results
 
 
 def test_run():
@@ -89,7 +135,12 @@ def test_run_return_subprocess():
 
 
 def test_run_failing_subprocess(capsys):
-    c = vistir.misc.run(["fakecommandthatdoesntexist", "fake", "argument"], nospin=True, return_object=True, block=False)
+    c = vistir.misc.run(
+        ["fakecommandthatdoesntexist", "fake", "argument"],
+        nospin=True,
+        return_object=True,
+        block=False,
+    )
     out, err = capsys.readouterr()
     assert "FAIL" in out
 
@@ -168,6 +219,20 @@ DIVIDE_ITERABLE = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 )
 def test_divide(n, iterable, expected):
     assert [list(x) for x in vistir.misc.divide(n, iterable)] == expected
+
+
+@pytest.mark.parametrize(
+    "as_text, as_bytes, encoding",
+    (
+        ["mystring", b"mystring", "utf-8"],
+        ["mystring", b"mystring", "latin1"],
+        ["mystring", memoryview(b"mystring"), "utf-8"],
+    ),
+)
+def test_to_bytes(as_text, as_bytes, encoding):
+    assert vistir.misc.to_bytes(as_text, encoding) == vistir.misc.to_bytes(
+        as_bytes, encoding
+    )
 
 
 @given(legal_path_chars())

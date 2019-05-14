@@ -9,7 +9,7 @@ steps:
   - script: pipenv run pip install -e .[spinner,tests] --upgrade
     displayName: Install Package
 
-  - script: pipenv run pytest -ra -n auto --junitxml=junit/test-results.xml tests/
+  - script: pipenv run coverage run -p -m pytest -p no:xdist -ra --junitxml=junit/test-results.xml tests/
     displayName: 'Run Pytest'
 
   - task: PublishTestResults@2

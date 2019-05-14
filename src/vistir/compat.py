@@ -40,18 +40,18 @@ __all__ = [
     "_fs_decode_errors",
 ]
 
-if sys.version_info >= (3, 5):
+if sys.version_info >= (3, 5):  # pragma: no cover
     from pathlib import Path
-else:
+else:  # pragma: no cover
     from pathlib2 import Path
 
-if six.PY3:
+if six.PY3:  # pragma: no cover
     # Only Python 3.4+ is supported
     from functools import lru_cache, partialmethod
     from tempfile import NamedTemporaryFile
     from shutil import get_terminal_size
     from weakref import finalize
-else:
+else:  # pragma: no cover
     # Only Python 2.7 is supported
     from backports.functools_lru_cache import lru_cache
     from .backports.functools import partialmethod  # type: ignore
@@ -65,10 +65,10 @@ else:
 try:
     # Introduced Python 3.5
     from json import JSONDecodeError
-except ImportError:
+except ImportError:  # pragma: no cover
     JSONDecodeError = ValueError  # type: ignore
 
-if six.PY2:
+if six.PY2:  # pragma: no cover
 
     from io import BytesIO as StringIO
 
@@ -98,7 +98,7 @@ if six.PY2:
             super(FileExistsError, self).__init__(*args, **kwargs)
 
 
-else:
+else:  # pragma: no cover
     from builtins import (
         ResourceWarning,
         FileNotFoundError,
@@ -365,11 +365,11 @@ def fs_decode(path):
     return path
 
 
-if sys.version_info[0] < 3:
+if sys.version_info[0] < 3:  # pragma: no cover
     _fs_encode_errors = "surrogateescape"
     _fs_decode_errors = "surrogateescape"
     _fs_encoding = "utf-8"
-else:
+else:  # pragma: no cover
     _fs_encoding = "utf-8"
     if sys.platform.startswith("win"):
         _fs_error_fn = None

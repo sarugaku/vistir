@@ -105,13 +105,16 @@ def unnest(elem):
         elem, target = tee(elem, 2)
     else:
         target = elem
-    for el in target:
-        if isinstance(el, Iterable) and not isinstance(el, six.string_types):
-            el, el_copy = tee(el, 2)
-            for sub in unnest(el_copy):
-                yield sub
-        else:
-            yield el
+    if not target or not _is_iterable(target):
+        yield target
+    else:
+        for el in target:
+            if isinstance(el, Iterable) and not isinstance(el, six.string_types):
+                el, el_copy = tee(el, 2)
+                for sub in unnest(el_copy):
+                    yield sub
+            else:
+                yield el
 
 
 def _is_iterable(elem):
@@ -158,7 +161,7 @@ def _spawn_subprocess(script, env=None, block=True, cwd=None, combine_stderr=Tru
     # a "command" that is non-executable. See pypa/pipenv#2727.
     try:
         return subprocess.Popen(cmd, **options)
-    except WindowsError as e:
+    except WindowsError as e:  # pragma: no cover
         if getattr(e, "winerror", 9999) != 193:
             raise
     options["shell"] = True
@@ -458,7 +461,7 @@ def to_bytes(string, encoding="utf-8", errors=None):
             return string.decode(unicode_name).encode(encoding, errors)
     elif isinstance(string, memoryview):
         return bytes(string)
-    elif not isinstance(string, six.string_types):
+    elif not isinstance(string, six.string_types):  # pragma: no cover
         try:
             if six.PY3:
                 return six.text_type(string).encode(encoding, errors)
@@ -501,13 +504,13 @@ def to_text(string, encoding="utf-8", errors=None):
                     string = six.text_type(string, encoding, errors)
                 else:
                     string = six.text_type(string)
-            elif hasattr(string, "__unicode__"):
+            elif hasattr(string, "__unicode__"):  # pragma: no cover
                 string = six.text_type(string)
             else:
                 string = six.text_type(bytes(string), encoding, errors)
         else:
             string = string.decode(encoding, errors)
-    except UnicodeDecodeError:
+    except UnicodeDecodeError:  # pragma: no cover
         string = " ".join(to_text(arg, encoding, errors) for arg in string)
     return string
 
@@ -820,7 +823,7 @@ class _StreamProvider(object):
 def _isatty(stream):
     try:
         is_a_tty = stream.isatty()
-    except Exception:
+    except Exception:  # pragma: no cover
         is_a_tty = False
     return is_a_tty
 
