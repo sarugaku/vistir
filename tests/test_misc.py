@@ -1,5 +1,5 @@
 # -*- coding=utf-8 -*-
-from __future__ import absolute_import, print_function, unicode_literals
+from __future__ import absolute_import, print_function
 
 import io
 import itertools
@@ -23,17 +23,17 @@ def test_get_logger():
 
 
 def test_shell_escape():
-    printfoo = "python -c \"print('foo')\""
-    assert vistir.misc.shell_escape(printfoo) == "python -c print('foo')"
-    appendscript = "cmd arg1"
-    assert vistir.misc.shell_escape(appendscript) == "cmd arg1"
-    multicommand = 'bash -c "cd docs && make html"'
-    assert vistir.misc.shell_escape(multicommand) == 'bash -c "cd docs && make html"'
-    escaped_python = '"{0}" -c \'print("hello")\''.format(sys.executable)
+    printfoo = u"python -c \"print('foo')\""
+    assert vistir.misc.shell_escape(printfoo) == u"python -c print('foo')"
+    appendscript = u"cmd arg1"
+    assert vistir.misc.shell_escape(appendscript) == u"cmd arg1"
+    multicommand = u'bash -c "cd docs && make html"'
+    assert vistir.misc.shell_escape(multicommand) == u'bash -c "cd docs && make html"'
+    escaped_python = u'"{0}" -c \'print("hello")\''.format(sys.executable)
     if os.name == "nt" and " " in sys.executable:
-        expected = '"{0}" -c print("hello")'.format(sys.executable)
+        expected = u'"{0}" -c print("hello")'.format(sys.executable)
     else:
-        expected = '{0} -c print("hello")'.format(sys.executable)
+        expected = u'{0} -c print("hello")'.format(sys.executable)
     assert vistir.misc.shell_escape(escaped_python) == expected
 
 
@@ -67,9 +67,9 @@ def test_unnest(seed_ints, additional_lists):
 @pytest.mark.parametrize(
     "iterable, result",
     [
-        [["abc", "def"], True],
-        [("abc", "def"), True],
-        ["abcdef", True],
+        [[u"abc", u"def"], True],
+        [(u"abc", u"def"), True],
+        [u"abcdef", True],
         [None, False],
         [1234, False],
     ],
@@ -83,8 +83,13 @@ def test_unnest_none():
 
 
 def test_dedup():
-    dup_strings = ["abcde", "fghij", "klmno", "pqrst", "abcde", "klmno"]
-    assert list(vistir.misc.dedup(dup_strings)) == ["abcde", "fghij", "klmno", "pqrst"]
+    dup_strings = [u"abcde", u"fghij", u"klmno", u"pqrst", u"abcde", u"klmno"]
+    assert list(vistir.misc.dedup(dup_strings)) == [
+        u"abcde",
+        u"fghij",
+        u"klmno",
+        u"pqrst",
+    ]
     dup_ints = (12345, 56789, 12345, 54321, 98765, 54321)
     assert list(vistir.misc.dedup(dup_ints)) == [12345, 56789, 54321, 98765]
 
@@ -95,10 +100,10 @@ def test_get_stream_results():
             self.stdout = stdout
             self.stderr = stderr
 
-    stdout_buffer = vistir.compat.StringIO()
-    stderr_buffer = vistir.compat.StringIO()
+    stdout_buffer = six.StringIO()
+    stderr_buffer = six.StringIO()
     test_line = (
-        "this is a test line that goes on for many characters and will eventually be "
+        u"this is a test line that goes on for many characters and will eventually be "
         "truncated because it is far too long to display on a normal terminal so we will"
         " use an ellipsis to break it\n"
     )
@@ -224,9 +229,9 @@ def test_divide(n, iterable, expected):
 @pytest.mark.parametrize(
     "as_text, as_bytes, encoding",
     (
-        ["mystring", b"mystring", "utf-8"],
-        ["mystring", b"mystring", "latin1"],
-        ["mystring", memoryview(b"mystring"), "utf-8"],
+        [u"mystring", b"mystring", "utf-8"],
+        [u"mystring", b"mystring", "latin1"],
+        [u"mystring", memoryview(b"mystring"), "utf-8"],
     ),
 )
 def test_to_bytes(as_text, as_bytes, encoding):
@@ -237,11 +242,11 @@ def test_to_bytes(as_text, as_bytes, encoding):
 
 @given(legal_path_chars())
 def test_decode_encode(path):
-    assert vistir.misc.to_text(vistir.misc.to_bytes(path)) == "{0}".format(path)
+    assert vistir.misc.to_text(vistir.misc.to_bytes(path)) == u"{0}".format(path)
 
 
 @pytest.mark.parametrize(
-    "test_str", ["this is a test unicode string", "unicode\u0141", "latin\xe9"]
+    "test_str", [u"this is a test unicode string", u"unicode\u0141", u"latin\xe9"]
 )
 def test_wrapped_stream(test_str):
     stream = io.BytesIO()
@@ -252,7 +257,7 @@ def test_wrapped_stream(test_str):
             err_text = r"a bytes-like object is required, not*"
     else:
         err_text = r".*does not have the buffer interface.*"
-    with pytest.raises(TypeError, match=err_text):
+    with pytest.raises(TypeError, match=u"{0}".format(err_text)):
         stream.write(test_str)
     wrapped_stream = vistir.misc.get_wrapped_stream(
         stream, encoding="utf-8", errors="surrogateescape"
@@ -265,23 +270,23 @@ def test_wrapped_stream(test_str):
 def test_stream_wrapper(capsys):
     new_stream = vistir.misc.get_text_stream("stdout")
     sys.stdout = new_stream
-    print("this is a new method\u0141asdf", file=sys.stdout)
+    print(u"this is a new method\u0141asdf", file=sys.stdout)
     out, err = capsys.readouterr()
-    assert out.strip() == "this is a new method\u0141asdf"
+    assert out.strip() == u"this is a new method\u0141asdf"
 
 
 def test_colorized_stream(capsys):
     new_stream = vistir.misc.get_text_stream("stdout")
     sys.stdout = new_stream
-    green_string = "\x1b[32m\x1b[22mhello\x1b[39m\x1b[22m"
+    green_string = u"\x1b[32m\x1b[22mhello\x1b[39m\x1b[22m"
     print(green_string, file=sys.stdout)
     out, _ = capsys.readouterr()
     assert r"\x1b[32m" not in out
-    assert "hello" in out
-    vistir.misc.echo("hello", fg="green")
+    assert u"hello" in out
+    vistir.misc.echo(u"hello", fg="green")
     out, _ = capsys.readouterr()
     assert r"\x1b[32m" not in out
-    assert "hello" in out
+    assert u"hello" in out
 
 
 def test_strip_colors(capsys, monkeypatch):
@@ -289,15 +294,15 @@ def test_strip_colors(capsys, monkeypatch):
         m.setattr("vistir.termcolors.DISABLE_COLORS", True)
         sys.stdout = vistir.misc.get_text_stream("stdout")
         sys.stdin = vistir.misc.get_text_stream("stdin")
-        vistir.misc.echo("hello", fg="green")
+        vistir.misc.echo(u"hello", fg="green")
         out, _ = capsys.readouterr()
         assert "\x1b[32m" not in out
-        assert "hello" in out
-        green_string = "\x1b[32m\x1b[22mhello\x1b[39m\x1b[22m"
+        assert u"hello" in out
+        green_string = u"\x1b[32m\x1b[22mhello\x1b[39m\x1b[22m"
         vistir.misc.echo(green_string)
         out, _ = capsys.readouterr()
-        assert "hello" in out
-        assert "\x1b[32m" not in out
+        assert u"hello" in out
+        assert u"\x1b[32m" not in out
 
 
 @pytest.mark.skipif(sys.version_info[0] < 3, reason="Python 2 uses bytes by default")
@@ -306,16 +311,16 @@ def test_write_bytes(capsys):
     sys.stdin = vistir.misc.get_text_stream("stdin")
     vistir.misc.echo(vistir.misc.to_bytes("hello"), fg="green")
     out, _ = capsys.readouterr()
-    assert "\x1b[32m" not in out
-    assert "hello" in out
-    green_string = vistir.misc.to_bytes("\x1b[32m\x1b[22mhello\x1b[39m\x1b[22m")
+    assert u"\x1b[32m" not in out
+    assert u"hello" in out
+    green_string = vistir.misc.to_bytes(u"\x1b[32m\x1b[22mhello\x1b[39m\x1b[22m")
     vistir.misc.echo(green_string)
     out, _ = capsys.readouterr()
-    assert "hello" in out
-    assert "\x1b[32m" in out
+    assert u"hello" in out
+    assert u"\x1b[32m" in out
     # now add color=True to make sure this works right
-    green_string = vistir.misc.to_bytes("\x1b[32m\x1b[22mhello\x1b[39m\x1b[22m")
+    green_string = vistir.misc.to_bytes(u"\x1b[32m\x1b[22mhello\x1b[39m\x1b[22m")
     vistir.misc.echo(green_string, color=True)
     out, _ = capsys.readouterr()
-    assert "hello" in out
-    assert "\x1b[32m" in out
+    assert u"hello" in out
+    assert u"\x1b[32m" in out

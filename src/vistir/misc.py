@@ -119,7 +119,7 @@ def unnest(elem):
 
 def _is_iterable(elem):
     # type: (Any) -> bool
-    if getattr(elem, "__iter__", False):
+    if getattr(elem, "__iter__", False) or isinstance(elem, Iterable):
         return True
     return False
 
@@ -460,7 +460,7 @@ def to_bytes(string, encoding="utf-8", errors=None):
         else:
             return string.decode(unicode_name).encode(encoding, errors)
     elif isinstance(string, memoryview):
-        return bytes(string)
+        return string.tobytes()
     elif not isinstance(string, six.string_types):  # pragma: no cover
         try:
             if six.PY3:

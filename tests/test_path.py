@@ -95,6 +95,7 @@ def test_ensure_mkdir_p(base_dir, subdir):
             return os.path.join(base, _base_dir, _subdir)
 
         target = join_with_dir(base_dir, subdir)
+        assume(len(vistir.compat.fs_encode(target)) < 255)
         assume(
             vistir.path.abspathu(target)
             != vistir.path.abspathu(os.path.join(temp_dir.name, base_dir))
