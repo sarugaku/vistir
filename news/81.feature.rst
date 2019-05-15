@@ -1,1 +1,0 @@
-Added expanded functionality to assist with the removal of read-only paths on Windows via ``icacls`` system calls if necessary.

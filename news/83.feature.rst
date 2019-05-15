@@ -1,1 +1,0 @@
-Improved ``fs_encode`` compatibility shim in ``vistir.compat`` for handling of non-UTF8 data.

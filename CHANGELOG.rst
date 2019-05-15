@@ -1,3 +1,25 @@
+0.4.1 (2019-05-15)
+==================
+
+Features
+--------
+
+- Added expanded functionality to assist with the removal of read-only paths on Windows via ``icacls`` system calls if necessary.  `#81 <https://github.com/sarugaku/vistir/issues/81>`_
+  
+- Improved ``fs_encode`` compatibility shim in ``vistir.compat`` for handling of non-UTF8 data.  `#83 <https://github.com/sarugaku/vistir/issues/83>`_
+  
+
+Bug Fixes
+---------
+
+- Fixed a bug with ``vistir.misc.echo`` accidentally wrapping streams with ``colorama`` when it was not needed.
+  Fixed a bug with rendering colors in text streams.  `#82 <https://github.com/sarugaku/vistir/issues/82>`_
+  
+- Fixed ``vistir.misc.to_bytes`` implementation to respect supplied encoding.  `#83 <https://github.com/sarugaku/vistir/issues/83>`_
+  
+- Blocking calls to ``vistir.misc.run`` will now properly handle ``KeyboardInterrupt`` events by terminating the subprocess and returning the result.  `#84 <https://github.com/sarugaku/vistir/issues/84>`_
+
+
 0.4.0 (2019-04-10)
 ==================
 
