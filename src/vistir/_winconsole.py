@@ -39,30 +39,32 @@
 # the entire interpreter but just work in our little world of
 # echo and prmopt.
 
+import ctypes
 import io
 import os
 import sys
-import zlib
 import time
-import ctypes
-import msvcrt
+import zlib
 from ctypes import (
-    byref,
     POINTER,
-    c_int,
+    WINFUNCTYPE,
+    Structure,
+    byref,
     c_char,
     c_char_p,
-    c_void_p,
+    c_int,
     c_ssize_t,
     c_ulong,
+    c_void_p,
     py_object,
-    Structure,
     windll,
-    WINFUNCTYPE,
 )
-from ctypes.wintypes import LPWSTR, LPCWSTR
+from ctypes.wintypes import LPCWSTR, LPWSTR
 from itertools import count
+
+import msvcrt
 from six import PY2, text_type
+
 from .misc import StreamWrapper, run
 
 try:
@@ -231,6 +233,10 @@ class ConsoleStream(object):
     @property
     def name(self):
         return self.buffer.name
+
+    @property
+    def fileno(self):
+        return self.buffer.fileno
 
     def write(self, x):
         if isinstance(x, text_type):

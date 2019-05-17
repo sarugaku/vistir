@@ -345,7 +345,7 @@ def set_write_bit(fn):
         from .misc import run
 
         if user_sid:
-            _, err = run(
+            c = run(
                 [
                     icacls_exe,
                     "''{0}''".format(fn),
@@ -354,9 +354,11 @@ def set_write_bit(fn):
                     "/T",
                     "/C",
                     "/Q",
-                ]
+                ],
+                nospin=True,
+                return_object=True,
             )
-            if not err:
+            if not c.err and c.returncode == 0:
                 return
 
     if not os.path.isdir(fn):
