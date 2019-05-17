@@ -941,7 +941,11 @@ _text_stdout = _cached_stream_lookup(lambda: sys.stdout, get_text_stdout)
 _text_stderr = _cached_stream_lookup(lambda: sys.stderr, get_text_stderr)
 
 
-TEXT_STREAMS = {"stdin": _text_stdin, "stdout": _text_stdout, "stderr": _text_stderr}
+TEXT_STREAMS = {
+    "stdin": get_text_stdin,
+    "stdout": get_text_stdout,
+    "stderr": get_text_stderr,
+}
 
 
 def replace_with_text_stream(stream_name):
