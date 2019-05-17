@@ -348,9 +348,9 @@ def set_write_bit(fn):
             _, err = run(
                 [
                     icacls_exe,
+                    "''{0}''".format(fn),
                     "/grant",
                     "{0}:WD".format(user_sid),
-                    "''{0}''".format(fn),
                     "/T",
                     "/C",
                     "/Q",
