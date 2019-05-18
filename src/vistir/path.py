@@ -104,7 +104,7 @@ def normalize_path(path):
     """
 
     path = os.path.abspath(os.path.expandvars(os.path.expanduser(str(path))))
-    if os.name == "nt":
+    if os.name == "nt" and os.path.exists(path):
         from ._winconsole import get_long_path
 
         path = get_long_path(path)
