@@ -103,6 +103,11 @@ def normalize_path(path):
     :rtype: str
     """
 
+    if os.name == "nt":
+        from ._winconsole import get_long_path
+
+        path = get_long_path(path)
+
     return os.path.normpath(
         os.path.normcase(
             os.path.abspath(os.path.expandvars(os.path.expanduser(str(path))))
