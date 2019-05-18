@@ -1,0 +1,1 @@
+Shortened windows paths will now be properly resolved to the full path by ``vistir.path.normalize_path``.

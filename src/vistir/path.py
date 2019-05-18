@@ -103,11 +103,13 @@ def normalize_path(path):
     :rtype: str
     """
 
-    return os.path.normpath(
-        os.path.normcase(
-            os.path.abspath(os.path.expandvars(os.path.expanduser(str(path))))
-        )
-    )
+    path = os.path.abspath(os.path.expandvars(os.path.expanduser(str(path))))
+    if os.name == "nt" and os.path.exists(path):
+        from ._winconsole import get_long_path
+
+        path = get_long_path(path)
+
+    return os.path.normpath(os.path.normcase(path))
 
 
 def is_in_path(path, parent):
