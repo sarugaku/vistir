@@ -1,3 +1,20 @@
+0.4.2 (2019-05-19)
+==================
+
+Features
+--------
+
+- Shortened windows paths will now be properly resolved to the full path by ``vistir.path.normalize_path``.  `#90 <https://github.com/sarugaku/vistir/issues/90>`_
+  
+
+Bug Fixes
+---------
+
+- Corrected argument order of ``icacls`` command for fixing permission issues when removing paths on windows.  `#86 <https://github.com/sarugaku/vistir/issues/86>`_
+  
+- Fixed an issue which caused color wrapping of standard streams on windows to fail to surface critical attributes.  `#88 <https://github.com/sarugaku/vistir/issues/88>`_
+
+
 0.4.1 (2019-05-15)
 ==================
 

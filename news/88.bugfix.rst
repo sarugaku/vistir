@@ -1,1 +1,0 @@
-Fixed an issue which caused color wrapping of standard streams on windows to fail to surface critical attributes.
