@@ -383,7 +383,7 @@ def run(
             spinner=sp,
             combine_stderr=combine_stderr,
             start_text=start_text,
-            write_to_stdout=True,
+            write_to_stdout=write_to_stdout,
         )
 
 
