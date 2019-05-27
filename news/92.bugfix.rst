@@ -1,0 +1,1 @@
+Added compatibility shim for ``TimeoutError`` exception handling.
