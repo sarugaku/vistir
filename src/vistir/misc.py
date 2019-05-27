@@ -194,11 +194,22 @@ def get_stream_results(cmd_instance, verbose, maxlen, spinner=None, stdout_allow
         stderr_line = stream_contents["stderr"]
         if not (stdout_line or stderr_line):
             break
+        last_changed = 0
+        display_line = ""
         for stream_name in stream_contents.keys():
             if stream_contents[stream_name] and stream_name in stream_results:
                 line = stream_contents[stream_name]
                 stream_results[stream_name].append(line)
-                display_line = fs_str("{0}".format(line))
+                display_line = (
+                    fs_str("{0}".format(line))
+                    if stream_name == "stderr"
+                    else display_line
+                )
+                if display_line and last_changed < 100:
+                    last_changed = 0
+                    display_line = ""
+                elif display_line:
+                    last_changed += 1
                 if len(display_line) > maxlen:
                     display_line = "{0}...".format(display_line[:maxlen])
                 if verbose:
