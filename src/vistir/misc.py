@@ -20,6 +20,7 @@ from .compat import (
     Iterable,
     Path,
     StringIO,
+    TimeoutError,
     fs_str,
     is_bytes,
     partialmethod,
