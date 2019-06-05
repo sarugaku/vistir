@@ -1,0 +1,1 @@
+Exceptions are no longer suppressed after being handled during ``vistir.misc.run``.
