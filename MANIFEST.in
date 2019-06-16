@@ -1,5 +1,6 @@
 include LICENSE* README*
 include CHANGELOG.rst
+include CODE_OF_CONDUCT.md
 include pyproject.toml
 
 exclude .editorconfig
@@ -11,7 +12,6 @@ exclude tox.ini
 exclude appveyor.yml
 exclude Pipfile*
 
-recursive-exclude .azure-pipelines *.yml
 recursive-include docs Makefile *.rst *.py *.bat
 recursive-exclude docs requirements*.txt
 
@@ -20,3 +20,4 @@ prune docs/build
 prune news
 prune tasks
 prune tests
+prune .azure-pipelines

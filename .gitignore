@@ -38,6 +38,7 @@ pip-delete-this-directory.txt
 
 # Unit test / coverage reports
 htmlcov/
+junit/
 .tox/
 .coverage
 .coverage.*
@@ -56,6 +57,9 @@ coverage.xml
 *.log
 local_settings.py
 db.sqlite3
+
+# javascript
+node_modules/
 
 # Flask stuff:
 instance/
@@ -107,3 +111,7 @@ venv.bak/
 
 # pycharm
 .idea
+
+# Random caches
+pip-wheel-metadata/
+XDG_CACHE_HOME/

@@ -43,6 +43,7 @@ jobs:
     maxParallel: 4
   steps:
   - template: .azure-pipelines/templates/run-tests.yml
+  - template: .azure-pipelines/templates/run-coverage.yml
 
 - job: TestMacOS
   pool:
