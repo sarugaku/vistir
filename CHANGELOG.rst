@@ -1,3 +1,16 @@
+0.4.3 (2019-07-09)
+==================
+
+Bug Fixes
+---------
+
+- Added compatibility shim for ``TimeoutError`` exception handling.  `#92 <https://github.com/sarugaku/vistir/issues/92>`_
+  
+- Exceptions are no longer suppressed after being handled during ``vistir.misc.run``.  `#95 <https://github.com/sarugaku/vistir/issues/95>`_
+  
+- The signal handler for ``VistirSpinner`` will no longer cause deadlocks when ``CTRL_BREAK_EVENTS`` occur on windows.  `#96 <https://github.com/sarugaku/vistir/issues/96>`_
+
+
 0.4.2 (2019-05-19)
 ==================
 
