@@ -1,7 +1,10 @@
+# -*- coding=utf-8 -*-
+import datetime
 import pathlib
 import re
 import shutil
 import subprocess
+import time
 
 import invoke
 import parver
@@ -15,6 +18,10 @@ def _get_git_root(ctx):
     )
 
 
+def _get_branch(ctx):
+    return ctx.run("git rev-parse --abbrev-ref HEAD", hide=True).stdout.strip()
+
+
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 
 PACKAGE_NAME = "vistir"
@@ -26,11 +33,13 @@ INIT_PY = ROOT.joinpath("src", PACKAGE_NAME, "__init__.py")
 def clean(ctx):
     """Clean previously built package artifacts.
     """
-    ctx.run(f"python setup.py clean")
     dist = ROOT.joinpath("dist")
-    print(f"[clean] Removing {dist}")
+    build = ROOT.joinpath("build")
+    print("[clean] Removing dist and build dirs")
     if dist.exists():
-        shutil.rmtree(str(dist))
+        shutil.rmtree(dist.as_posix())
+    if build.exists():
+        shutil.rmtree(build.as_posix())
 
 
 def _read_version():
@@ -44,6 +53,18 @@ def _read_version():
     except ValueError:
         version = parver.Version.parse("0.0.0")
     return version
+
+
+def _read_text_version():
+    lines = INIT_PY.read_text().splitlines()
+    match = next(iter(line for line in lines if line.startswith("__version__")), None)
+    if match is not None:
+        _, _, version_text = match.partition("=")
+        version_text = version_text.strip().strip('"').strip("'")
+        version = parver.Version.parse(version_text).normalize()
+        return version
+    else:
+        return _read_version()
 
 
 def _write_version(v):
@@ -68,6 +89,11 @@ def _render_log():
         None,
         definitions,
     )
+    project_options = {
+        "name": config["package"],
+        "version": _read_text_version(),
+        "date": datetime.date.today().isoformat(),
+    }
     rendered = render_fragments(
         pathlib.Path(config["template"]).read_text(encoding="utf-8"),
         config["issue_format"],
@@ -75,6 +101,7 @@ def _render_log():
         definitions,
         config["underlines"][1:],
         False,  # Don't add newlines to wrapped text.
+        project_options,
     )
     return rendered
 
@@ -169,8 +196,36 @@ def tag_release(ctx, version=None, type_="patch", yes=False, dry_run=False):
         ctx.run(git_tag_cmd)
 
 
+@invoke.task(optional=["version", "type_"])
+def release(ctx, version=None, type_="patch", yes=False, dry_run=False):
+    if version is None:
+        version = bump_version(ctx, type_, log=not dry_run, dry_run=dry_run)
+    else:
+        _write_version(version)
+    tag_content = get_changelog(ctx)
+    current_branch = _get_branch(ctx)
+    generate_news(ctx, yes=yes, dry_run=dry_run)
+    git_commit_cmd = f'git commit -am "Release {version}"'
+    git_tag_cmd = f'git tag -a {version} -m "Version {version}\n\n{tag_content}"'
+    git_push_cmd = f"git push origin {current_branch}"
+    git_push_tags_cmd = "git push --tags"
+    if dry_run:
+        print("Would run commands:")
+        print(f"    {git_commit_cmd}")
+        print(f"    {git_tag_cmd}")
+        print(f"    {git_push_cmd}")
+        print(f"    {git_push_tags_cmd}")
+    else:
+        ctx.run(git_commit_cmd)
+        ctx.run(git_tag_cmd)
+        ctx.run(git_push_cmd)
+        print("Waiting 5 seconds before pushing tags...")
+        time.sleep(5)
+        ctx.run(git_push_tags_cmd)
+
+
 @invoke.task(pre=[clean])
-def release(ctx, type_, repo, prebump=PREBUMP, yes=False):
+def full_release(ctx, type_, repo, prebump=PREBUMP, yes=False):
     """Make a new release.
     """
     if prebump not in REL_TYPES:
@@ -207,9 +262,7 @@ def release(ctx, type_, repo, prebump=PREBUMP, yes=False):
 
 @invoke.task
 def build_docs(ctx):
-    from vistir import __version__
-
-    _current_version = parver.Version.parse(__version__)
+    _current_version = _read_text_version()
     minor = [str(i) for i in _current_version.release[:2]]
     docs_folder = (_get_git_root(ctx) / "docs").as_posix()
     if not docs_folder.endswith("/"):
@@ -217,7 +270,6 @@ def build_docs(ctx):
     args = ["--ext-autodoc", "--ext-viewcode", "-o", docs_folder]
     args.extend(["-A", "'Dan Ryan <dan@danryan.co>'"])
     args.extend(["-R", str(_current_version)])
-
     args.extend(["-V", ".".join(minor)])
     args.extend(["-e", "-M", "-F", f"src/{PACKAGE_NAME}"])
     print("Building docs...")
