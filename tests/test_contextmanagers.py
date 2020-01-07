@@ -4,13 +4,18 @@ from __future__ import absolute_import, unicode_literals
 import io
 import os
 import shutil
-import six
 import sys
-
-import vistir
 import warnings
 
+import pytest
+import six
+
+import vistir
+
 from .utils import read_file
+
+if six.PY2:
+    ResourceWarning = RuntimeWarning
 
 
 def test_path():
@@ -67,9 +72,27 @@ def test_atomic_open(tmpdir):
     assert read_file(test_file.strpath) == replace_with_text
 
 
+def test_open_file_without_requests(monkeypatch):
+    if six.PY3:
+        warnings.filterwarnings(
+            "ignore", category=ResourceWarning, message="unclosed.*<ssl.SSLSocket.*>"
+        )
+    target_file = (
+        "https://www2.census.gov/geo/tiger/GENZ2017/shp/cb_2017_02_tract_500k.zip"
+    )
+    filecontents = io.BytesIO(b"")
+    with monkeypatch.context() as m:
+        m.delitem(sys.modules, "requests", raising=False)
+        m.delitem(sys.modules, "requests.sessions", raising=False)
+        with vistir.contextmanagers.open_file(target_file, stream=True) as fp:
+            shutil.copyfileobj(fp, filecontents)
+
+
 def test_open_file(tmpdir):
     if six.PY3:
-        warnings.filterwarnings("ignore", category=ResourceWarning, message="unclosed.*<ssl.SSLSocket.*>")
+        warnings.filterwarnings(
+            "ignore", category=ResourceWarning, message="unclosed.*<ssl.SSLSocket.*>"
+        )
     target_file = (
         "https://www2.census.gov/geo/tiger/GENZ2017/shp/cb_2017_02_tract_500k.zip"
     )
