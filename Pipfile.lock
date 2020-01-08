@@ -807,6 +807,7 @@
                 "sha256:e7c7661f7276507bce416eaae22040fd91ca471b5b33c13f8ff21137ed6f248c",
                 "sha256:ecc6de77df3ef68fee966bb8cb4e067e84d4d1f397d0ef6fce46913663540d77"
             ],
+            "markers": "os_name != 'nt' or (os_name == 'nt' and python_version != '3.5')",
             "version": "==2020.1.8"
         },
         "requests": {
