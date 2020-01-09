@@ -5,7 +5,7 @@ import io
 import os
 import stat
 import sys
-from contextlib import contextmanager
+from contextlib import closing, contextmanager
 
 import six
 
@@ -292,12 +292,8 @@ def open_file(link, session=None, stream=True):
             else:
                 session = Session()
         if session is None:
-            with six.moves.urllib.request.urlopen(link) as f:
-                if stream:
-                    yield f
-                else:
-                    result = f.read().decode("utf-8")
-                    yield result
+            with closing(six.moves.urllib.request.urlopen(link)) as f:
+                yield f
         else:
             with session.get(link, headers=headers, stream=stream) as resp:
                 try:
