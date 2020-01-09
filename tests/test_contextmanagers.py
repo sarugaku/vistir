@@ -1,16 +1,25 @@
 # -*- coding=utf-8 -*-
-from __future__ import absolute_import, unicode_literals
+from __future__ import absolute_import, print_function, unicode_literals
 
+import importlib
 import io
 import os
 import shutil
-import six
 import sys
-
-import vistir
 import warnings
 
+import pytest
+import six
+
+import vistir
+
 from .utils import read_file
+
+if six.PY2:
+    ResourceWarning = RuntimeWarning
+    from mock import patch
+else:
+    from unittest.mock import patch
 
 
 def test_path():
@@ -67,15 +76,73 @@ def test_atomic_open(tmpdir):
     assert read_file(test_file.strpath) == replace_with_text
 
 
-def test_open_file(tmpdir):
+class MockLink(object):
+    def __init__(self, url):
+        self.url = url
+
+    @property
+    def url_without_fragment(self):
+        return self.url
+
+
+@pytest.mark.parametrize(
+    "stream, use_requests, use_link",
+    [
+        (True, True, True),
+        (True, True, False),
+        (True, False, True),
+        (True, False, False),
+        (False, True, True),
+        (False, True, False),
+        (False, False, True),
+        (False, False, False),
+    ],
+)
+def test_open_file_without_requests(monkeypatch, tmpdir, stream, use_requests, use_link):
+    module_prefix = "__builtins__" if six.PY2 else "builtins"
     if six.PY3:
-        warnings.filterwarnings("ignore", category=ResourceWarning, message="unclosed.*<ssl.SSLSocket.*>")
-    target_file = (
-        "https://www2.census.gov/geo/tiger/GENZ2017/shp/cb_2017_02_tract_500k.zip"
+        bi = importlib.import_module(module_prefix)
+        import_func = bi.__import__
+        del bi
+    else:
+        import_func = __builtins__["__import__"]
+
+    def _import(name, globals=None, locals=None, fromlist=(), level=0):
+        if not use_requests and name.startswith("requests"):
+            raise ImportError(name)
+        return import_func(name, globals, locals, fromlist, level)
+
+    warnings.filterwarnings(
+        "ignore", category=ResourceWarning, message="unclosed.*<ssl.SSLSocket.*>"
     )
+    if stream:
+        target_file = (
+            "https://www2.census.gov/geo/tiger/GENZ2017/shp/cb_2017_02_tract_500k.zip"
+        )
+    else:
+        target_file = "https://www.gutenberg.org/files/1342/1342-0.txt"
+    if use_link:
+        target_file = MockLink(target_file)
     filecontents = io.BytesIO(b"")
-    with vistir.contextmanagers.open_file(target_file, stream=True) as fp:
-        shutil.copyfileobj(fp, filecontents)
+    module_name = "{0}.__import__".format(module_prefix)
+    with monkeypatch.context() as m:
+        if not use_requests:
+            m.delitem(sys.modules, "requests", raising=False)
+            m.delitem(sys.modules, "requests.sessions", raising=False)
+        if six.PY3:
+            with patch(module_name, _import):
+                with vistir.contextmanagers.open_file(target_file, stream=stream) as fp:
+                    if stream:
+                        shutil.copyfileobj(fp, filecontents)
+                    else:
+                        filecontents.write(fp.read())
+        else:
+            with patch.dict("vistir.contextmanagers.__builtins__", __import__=_import):
+                with vistir.contextmanagers.open_file(target_file, stream=stream) as fp:
+                    if stream:
+                        shutil.copyfileobj(fp, filecontents)
+                    else:
+                        filecontents.write(fp.read())
     local_file = tmpdir.join("local_copy.txt")
     with io.open(local_file.strpath, "w", encoding="utf-8") as fp:
         fp.write(filecontents.read().decode())
@@ -93,3 +160,15 @@ def test_replace_stream(capsys):
         assert stdout.getvalue() == "hello"
     out, err = capsys.readouterr()
     assert out.strip() != "hello"
+
+
+def test_replace_streams(capsys):
+    with vistir.contextmanagers.replaced_streams() as streams:
+        stdout, stderr = streams
+        sys.stdout.write("hello")
+        sys.stderr.write("this is an error")
+        assert stdout.getvalue() == "hello"
+        assert stderr.getvalue() == "this is an error"
+    out, err = capsys.readouterr()
+    assert out.strip() != "hello"
+    assert err.strip() != "this is an error"

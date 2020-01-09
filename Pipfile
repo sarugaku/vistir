@@ -1,5 +1,5 @@
 [packages]
-vistir = {editable = true, extras = ["spinner", "tests", "dev", "typing"], path = "."}
+vistir = {editable = true, extras = ["requests", "spinner", "tests", "dev", "typing"], path = "."}
 
 [dev-packages]
 towncrier = '*'

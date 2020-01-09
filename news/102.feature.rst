@@ -1,0 +1,1 @@
+Reimplemented ``vistir.contextmanagers.open_file`` to fall back to ``urllib.urlopen`` in the absence of ``requests``, which is now an optional extra.
