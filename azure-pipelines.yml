@@ -9,7 +9,7 @@ trigger:
 jobs:
 - job: TestLinux
   pool:
-    vmImage: 'Ubuntu-16.04'
+    vmImage: 'ubuntu-latest'
   strategy:
     matrix:
       Python27:
@@ -68,6 +68,6 @@ jobs:
     - TestWindows
     - TestMacOS
   pool:
-    vmImage: ubuntu-16.04
+    vmImage: ubuntu-latest
   steps:
   - template: .azure-pipelines/templates/build-package.yml
