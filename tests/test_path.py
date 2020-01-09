@@ -3,6 +3,7 @@ from __future__ import absolute_import, unicode_literals
 
 import io
 import os
+import shutil
 import stat
 
 import pytest
@@ -13,7 +14,7 @@ from six.moves.urllib import parse as urllib_parse
 import vistir
 
 from .strategies import legal_path_chars, relative_paths, url_alphabet, urls
-from .utils import NON_WRITE_OR_EXEC, NON_WRITEABLE, WRITEABLE, get_mode
+from .utils import EXEC, NON_WRITE_OR_EXEC, NON_WRITEABLE, WRITEABLE, get_mode
 
 
 def test_abspathu(tmpdir):
@@ -155,8 +156,10 @@ def test_is_readonly_path(tmpdir):
     os.chmod(new_file.strpath, get_mode(new_file.strpath) & NON_WRITEABLE)
     assert vistir.path.is_readonly_path(new_file.strpath)
     assert vistir.path.is_readonly_path("fake_path") is False
-    for pth in [new_file.strpath, new_dir.strpath]:
-        os.chmod(pth, get_mode(pth) & WRITEABLE)
+    WRITE_EXEC = WRITEABLE | EXEC
+    os.chmod(new_dir.strpath, WRITE_EXEC)
+    os.chmod(new_file.strpath, WRITEABLE)
+    shutil.rmtree(new_dir.strpath)
 
 
 @given(relative_paths())
