@@ -171,8 +171,8 @@ def path_to_url(path):
     if not path:
         return path
     normalized_path = Path(normalize_drive(os.path.abspath(path))).as_posix()
-    if os.name == "nt" and normalized_path.as_posix()[1] == ":":
-        drive, _, path = normalized_path.as_posix().partition(":")
+    if os.name == "nt" and normalized_path[1] == ":":
+        drive, _, path = normalized_path.partition(":")
         # XXX: This enables us to handle half-surrogates that were never
         # XXX: actually part of a surrogate pair, but were just incidentally
         # XXX: passed in as a piece of a filename
