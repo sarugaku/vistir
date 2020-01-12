@@ -196,6 +196,7 @@ def test_is_file_url_raises_valueerror_when_no_url_attribute_found():
 
 
 @given(fspaths())
+@example("0\ud800")
 @settings(suppress_health_check=(HealthCheck.filter_too_much,))
 def test_path_to_url(filepath):
     class FakeLink(object):
