@@ -177,7 +177,7 @@ def path_to_url(path):
         # XXX: actually part of a surrogate pair, but were just incidentally
         # XXX: passed in as a piece of a filename
         quoted_path = quote(fs_encode(path))
-        return fs_decode("file:///{0}/{1}".format(drive, quoted_path))
+        return fs_decode("file:///{0}:{1}".format(drive, quoted_path))
     # XXX: This is also here to help deal with incidental dangling surrogates
     # XXX: on linux, by making sure they are preserved during encoding so that
     # XXX: we can urlencode the backslash correctly
