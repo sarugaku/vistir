@@ -1,1 +1,0 @@
-Fixed a bug which caused ``path_to_url`` to sometimes fail to properly encode surrogates using utf-8 on windows using python 3.

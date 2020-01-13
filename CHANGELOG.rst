@@ -1,3 +1,18 @@
+0.5.0 (2020-01-13)
+==================
+
+Features
+--------
+
+- Reimplemented ``vistir.contextmanagers.open_file`` to fall back to ``urllib.urlopen`` in the absence of ``requests``, which is now an optional extra.  `#102 <https://github.com/sarugaku/vistir/issues/102>`_
+  
+
+Bug Fixes
+---------
+
+- Fixed a bug which caused ``path_to_url`` to sometimes fail to properly encode surrogates using utf-8 on windows using python 3.  `#100 <https://github.com/sarugaku/vistir/issues/100>`_
+
+
 0.4.3 (2019-07-09)
 ==================
 
