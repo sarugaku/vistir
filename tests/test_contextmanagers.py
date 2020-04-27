@@ -52,7 +52,7 @@ def test_environ():
     assert os.environ.get("VISTIR_OTHER_KEY") is None
 
 
-def test_atomic_open(tmpdir):
+def test_atomic_open(tmpdir, monkeypatch):
     test_file = tmpdir.join("test_file.txt")
     replace_with_text = "new test text"
     test_file.write_text("some test text", encoding="utf-8")
@@ -64,6 +64,9 @@ def test_atomic_open(tmpdir):
             fh.write(new_text)
             raise RuntimeError("This should not overwrite the file")
 
+    def raise_oserror_on_chmod(path, mode, dir_fd=None, follow_symlinks=True):
+        raise OSError("No permission!")
+
     try:
         raise_exception_while_writing(test_file.strpath, replace_with_text)
     except RuntimeError:
@@ -74,6 +77,18 @@ def test_atomic_open(tmpdir):
         fh.write(replace_with_text)
     # make sure that we now have the new text in the file
     assert read_file(test_file.strpath) == replace_with_text
+    another_test_file = tmpdir.join("test_file_for_exceptions.txt")
+    another_test_file.write_text("original test text", encoding="utf-8")
+    more_text = "this is more test text"
+    with monkeypatch.context() as m:
+        m.setattr(os, "chmod", raise_oserror_on_chmod)
+        with pytest.raises(OSError):
+            os.chmod(another_test_file.strpath, 0o644)
+        with vistir.contextmanagers.atomic_open_for_write(
+            another_test_file.strpath
+        ) as fh:
+            fh.write(more_text)
+        assert read_file(another_test_file.strpath) == more_text
 
 
 class MockLink(object):

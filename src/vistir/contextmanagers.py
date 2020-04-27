@@ -234,7 +234,10 @@ def atomic_open_for_write(target, binary=False, newline=None, encoding=None):
         delete=False,
     )
     # set permissions to 0644
-    os.chmod(f.name, stat.S_IWUSR | stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
+    try:
+        os.chmod(f.name, stat.S_IWUSR | stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
+    except OSError:
+        pass
     try:
         yield f
     except BaseException:
