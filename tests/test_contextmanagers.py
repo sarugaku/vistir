@@ -250,6 +250,8 @@ class MockLink(object):
     ],
 )
 def test_open_file_without_requests(monkeypatch, tmpdir, stream, use_requests, use_link):
+    import six
+
     module_prefix = "__builtins__" if six.PY2 else "builtins"
     if six.PY3:
         bi = importlib.import_module(module_prefix)
@@ -271,7 +273,7 @@ def test_open_file_without_requests(monkeypatch, tmpdir, stream, use_requests, u
             "https://www2.census.gov/geo/tiger/GENZ2017/shp/cb_2017_02_tract_500k.zip"
         )
     else:
-        target_file = "https://www.gutenberg.org/files/1342/1342-0.txt"
+        target_file = "https://www.fakegutenberg.org/files/1342/1342-0.txt"
     if use_link:
         target_file = MockLink(target_file)
     filecontents = io.BytesIO(b"")
@@ -287,13 +289,30 @@ def test_open_file_without_requests(monkeypatch, tmpdir, stream, use_requests, u
             ):
                 yield
         elif stream and not use_requests:
-            import six.moves.urllib.request
+            import six
 
-            with patch(
-                "six.moves.urllib.request.urlopen",
-                return_value=MockUrllib3Response(GUTENBERG_FILE),
-            ):
-                yield
+            if six.PY2:
+                import httplib
+
+                with patch(
+                    "httplib.HTTPSConnection.request",
+                    return_value=MockUrllib3Response(GUTENBERG_FILE),
+                ), patch(
+                    "urllib2.urlopen", return_value=MockUrllib3Response(GUTENBERG_FILE)
+                ):
+                    yield
+            else:
+                import http
+
+                with patch(
+                    "http.client.HTTPSConnection.request",
+                    return_value=MockUrllib3Response(GUTENBERG_FILE),
+                ), patch(
+                    "urllib.request.urlopen",
+                    return_value=MockUrllib3Response(GUTENBERG_FILE),
+                ):
+                    yield
+
         else:
             yield
 
@@ -301,6 +320,12 @@ def test_open_file_without_requests(monkeypatch, tmpdir, stream, use_requests, u
         if not use_requests:
             m.delitem(sys.modules, "requests", raising=False)
             m.delitem(sys.modules, "requests.sessions", raising=False)
+            import six.moves.urllib.request
+
+            def do_urlopen(*args, **kwargs):
+                return MockUrllib3Response(GUTENBERG_FILE)
+
+            m.setattr(six.moves.urllib.request, "urlopen", do_urlopen)
 
         if six.PY3:
             with patch(module_name, _import):
