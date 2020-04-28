@@ -1,6 +1,7 @@
 # -*- coding=utf-8 -*-
 from __future__ import absolute_import, print_function, unicode_literals
 
+import contextlib
 import importlib
 import io
 import os
@@ -20,6 +21,143 @@ if six.PY2:
     from mock import patch
 else:
     from unittest.mock import patch
+
+
+GUTENBERG_FILE = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "fixtures/gutenberg_document.txt"
+)
+
+
+def is_fp_closed(fp):
+    try:
+        return fp.isclosed()
+    except AttributeError:
+        pass
+    try:
+        return fp.closed
+    except AttributeError:
+        pass
+    try:
+        return fp.fp is None
+    except AttributeError:
+        pass
+    raise ValueError("could not find fp on object")
+
+
+class MockUrllib3Response(object):
+    def __init__(self, path):
+        self._fp = io.open(path, "rb")
+        self._fp_bytes_read = 0
+        self.auto_close = True
+        self.length_remaining = 799738
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args, **kwargs):
+        self.close()
+
+    def stream(self, amt=2 ** 16, decode_content=None):
+        while not is_fp_closed(self._fp):
+            data = self.read(amt=amt, decode_content=decode_content)
+            if data:
+                yield data
+
+    def close(self):
+        if not self.closed:
+            self._fp.close()
+
+    @property
+    def closed(self):
+        if not self.auto_close:
+            return io.IOBase.closed.__get__(self)
+        elif self._fp is None:
+            return True
+        elif hasattr(self._fp, "isclosed"):
+            return self._fp.isclosed()
+        elif hasattr(self._fp, "closed"):
+            return self._fp.closed
+        else:
+            return True
+
+    def fileno(self):
+        if self._fp is None:
+            raise IOError("HTTPResponse has no file to get a fileno from")
+        elif hasattr(self._fp, "fileno"):
+            return self._fp.fileno()
+        else:
+            raise IOError(
+                "The file-like object this HTTPResponse is wrapped "
+                "around has no file descriptor"
+            )
+
+    def readinto(self, b):
+        # This method is required for `io` module compatibility.
+        temp = self.read(len(b))
+        if len(temp) == 0:
+            return 0
+        else:
+            b[: len(temp)] = temp
+            return len(temp)
+
+    @property
+    def data(self):
+        if self._body:
+            return self._body
+        if self._fp:
+            return self.read(cache_content=True)
+
+    def read(self, amt=None, decode_content=None, cache_content=False):
+        if self._fp is None:
+            return
+        fp_closed = getattr(self._fp, "closed", False)
+        if amt is None:
+            # cStringIO doesn't like amt=None
+            data = self._fp.read() if not fp_closed else b""
+            flush_decoder = True
+        else:
+            cache_content = False
+            data = self._fp.read(amt) if not fp_closed else b""
+            if amt != 0 and not data:  # Platform-specific: Buggy versions of Python.
+                self._fp.close()
+
+        if data:
+            self._fp_bytes_read += len(data)
+            if self.length_remaining is not None:
+                self.length_remaining -= len(data)
+
+            if cache_content:
+                self._body = data
+
+        return data
+
+    def isclosed(self):
+        return is_fp_closed(self._fp)
+
+    def tell(self):
+        """
+        Obtain the number of bytes pulled over the wire so far. May differ from
+        the amount of content returned by :meth:``HTTPResponse.read`` if bytes
+        are encoded on the wire (e.g, compressed).
+        """
+        return self._fp_bytes_read
+
+    def __iter__(self):
+        buffer = []
+        for chunk in self.stream(decode_content=True):
+            if b"\n" in chunk:
+                chunk = chunk.split(b"\n")
+                yield b"".join(buffer) + chunk[0] + b"\n"
+                for x in chunk[1:-1]:
+                    yield x + b"\n"
+                if chunk[-1]:
+                    buffer = [chunk[-1]]
+                else:
+                    buffer = []
+            else:
+                buffer.append(chunk)
+        if buffer:
+            yield b"".join(buffer)
 
 
 def test_path():
@@ -82,8 +220,6 @@ def test_atomic_open(tmpdir, monkeypatch):
     more_text = "this is more test text"
     with monkeypatch.context() as m:
         m.setattr(os, "chmod", raise_oserror_on_chmod)
-        with pytest.raises(OSError):
-            os.chmod(another_test_file.strpath, 0o644)
         with vistir.contextmanagers.atomic_open_for_write(
             another_test_file.strpath
         ) as fh:
@@ -140,10 +276,24 @@ def test_open_file_without_requests(monkeypatch, tmpdir, stream, use_requests, u
         target_file = MockLink(target_file)
     filecontents = io.BytesIO(b"")
     module_name = "{0}.__import__".format(module_prefix)
-    with monkeypatch.context() as m:
+
+    @contextlib.contextmanager
+    def patch_context():
+        if use_requests and use_link:
+            import requests
+
+            with patch(
+                "requests.Session.get", return_value=MockUrllib3Response(GUTENBERG_FILE)
+            ):
+                yield
+        else:
+            yield
+
+    with monkeypatch.context() as m, patch_context():
         if not use_requests:
             m.delitem(sys.modules, "requests", raising=False)
             m.delitem(sys.modules, "requests.sessions", raising=False)
+
         if six.PY3:
             with patch(module_name, _import):
                 with vistir.contextmanagers.open_file(target_file, stream=stream) as fp:
