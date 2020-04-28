@@ -279,11 +279,19 @@ def test_open_file_without_requests(monkeypatch, tmpdir, stream, use_requests, u
 
     @contextlib.contextmanager
     def patch_context():
-        if use_requests and use_link:
+        if not stream and use_requests:
             import requests
 
             with patch(
                 "requests.Session.get", return_value=MockUrllib3Response(GUTENBERG_FILE)
+            ):
+                yield
+        elif stream and not use_requests:
+            import six.moves.urllib.request
+
+            with patch(
+                "six.moves.urllib.request.urlopen",
+                return_value=MockUrllib3Response(GUTENBERG_FILE),
             ):
                 yield
         else:
