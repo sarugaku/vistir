@@ -29,11 +29,22 @@ __all__ = [
     "TemporaryDirectory",
     "NamedTemporaryFile",
     "to_native_string",
-    "Iterable",
     "Mapping",
-    "Sequence",
-    "Set",
+    "Hashable",
+    "MutableMapping",
+    "Container",
+    "Iterator",
+    "KeysView",
     "ItemsView",
+    "MappingView",
+    "Iterable",
+    "Set",
+    "Sequence",
+    "Sized",
+    "ValuesView",
+    "MutableSet",
+    "MutableSequence",
+    "Callable",
     "fs_encode",
     "fs_decode",
     "_fs_encode_errors",
@@ -45,18 +56,55 @@ if sys.version_info >= (3, 5):  # pragma: no cover
 else:  # pragma: no cover
     from pathlib2 import Path
 
-if six.PY3:  # pragma: no cover
+if sys.version_info >= (3, 4):  # pragma: no cover
     # Only Python 3.4+ is supported
     from functools import lru_cache, partialmethod
     from tempfile import NamedTemporaryFile
     from shutil import get_terminal_size
     from weakref import finalize
+    from collections.abc import (
+        Mapping,
+        Hashable,
+        MutableMapping,
+        Container,
+        Iterator,
+        KeysView,
+        ItemsView,
+        MappingView,
+        Iterable,
+        Set,
+        Sequence,
+        Sized,
+        ValuesView,
+        MutableSet,
+        MutableSequence,
+        Callable,
+    )
+
 else:  # pragma: no cover
     # Only Python 2.7 is supported
     from backports.functools_lru_cache import lru_cache
-    from .backports.functools import partialmethod  # type: ignore
     from backports.shutil_get_terminal_size import get_terminal_size
+    from .backports.functools import partialmethod  # type: ignore
     from .backports.surrogateescape import register_surrogateescape
+    from collections import (
+        Mapping,
+        Hashable,
+        MutableMapping,
+        Container,
+        Iterator,
+        KeysView,
+        ItemsView,
+        MappingView,
+        Iterable,
+        Set,
+        Sequence,
+        Sized,
+        ValuesView,
+        MutableSet,
+        MutableSequence,
+        Callable,
+    )
 
     register_surrogateescape()
     NamedTemporaryFile = _NamedTemporaryFile
@@ -117,24 +165,6 @@ else:  # pragma: no cover
         TimeoutError,
     )
     from io import StringIO
-
-six.add_move(
-    six.MovedAttribute("Iterable", "collections", "collections.abc")
-)  # type: ignore
-six.add_move(
-    six.MovedAttribute("Mapping", "collections", "collections.abc")
-)  # type: ignore
-six.add_move(
-    six.MovedAttribute("Sequence", "collections", "collections.abc")
-)  # type: ignore
-six.add_move(six.MovedAttribute("Set", "collections", "collections.abc"))  # type: ignore
-six.add_move(
-    six.MovedAttribute("ItemsView", "collections", "collections.abc")
-)  # type: ignore
-
-# fmt: off
-from six.moves import ItemsView, Iterable, Mapping, Sequence, Set  # type: ignore  # noqa  # isort:skip
-# fmt: on
 
 
 if not sys.warnoptions:

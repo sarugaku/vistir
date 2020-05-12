@@ -58,7 +58,7 @@ __all__ = [
 
 
 if MYPY_RUNNING:
-    from typing import Any, Dict, List, Optional, Union
+    from typing import Any, Dict, List, Optional, Tuple, Union
     from .spin import VistirSpinner
 
 
@@ -66,8 +66,7 @@ def _get_logger(name=None, level="ERROR"):
     # type: (Optional[str], str) -> logging.Logger
     if not name:
         name = __name__
-    if isinstance(level, six.string_types):
-        level = getattr(logging, level.upper())
+    level = getattr(logging, level.upper())
     logger = logging.getLogger(name)
     logger.setLevel(level)
     formatter = logging.Formatter(
@@ -83,8 +82,9 @@ def shell_escape(cmd):
     # type: (Union[str, List[str]]) -> str
     """Escape strings for use in :func:`~subprocess.Popen` and :func:`run`.
 
-    This is a passthrough method for instantiating a :class:`~vistir.cmdparse.Script`
-    object which can be used to escape commands to output as a single string.
+    This is a passthrough method for instantiating a
+    :class:`~vistir.cmdparse.Script` object which can be used to escape
+    commands to output as a single string.
     """
     cmd = Script.parse(cmd)
     return cmd.cmdify()
@@ -92,14 +92,25 @@ def shell_escape(cmd):
 
 def unnest(elem):
     # type: (Iterable) -> Any
-    """Flatten an arbitrarily nested iterable
+    """Flatten an arbitrarily nested iterable.
 
     :param elem: An iterable to flatten
     :type elem: :class:`~collections.Iterable`
 
-    >>> nested_iterable = (1234, (3456, 4398345, (234234)), (2396, (23895750, 9283798, 29384, (289375983275, 293759, 2347, (2098, 7987, 27599)))))
+    >>> nested_iterable = (
+            1234, (3456, 4398345, (234234)), (
+                2396, (
+                    23895750, 9283798, 29384, (
+                        289375983275, 293759, 2347, (
+                            2098, 7987, 27599
+                        )
+                    )
+                )
+            )
+        )
     >>> list(vistir.misc.unnest(nested_iterable))
-    [1234, 3456, 4398345, 234234, 2396, 23895750, 9283798, 29384, 289375983275, 293759, 2347, 2098, 7987, 27599]
+    [1234, 3456, 4398345, 234234, 2396, 23895750, 9283798, 29384, 289375983275, 293759,
+     2347, 2098, 7987, 27599]
     """
 
     if isinstance(elem, Iterable) and not isinstance(elem, six.string_types):
@@ -127,14 +138,19 @@ def _is_iterable(elem):
 
 def dedup(iterable):
     # type: (Iterable) -> Iterable
-    """Deduplicate an iterable object like iter(set(iterable)) but
-    order-reserved.
-    """
+    """Deduplicate an iterable object like iter(set(iterable)) but order-
+    preserved."""
     return iter(OrderedDict.fromkeys(iterable))
 
 
-def _spawn_subprocess(script, env=None, block=True, cwd=None, combine_stderr=True):
-    # type: (Union[str, List[str]], Optional[Dict[str, str], bool, Optional[str], bool]) -> subprocess.Popen
+def _spawn_subprocess(
+    script,  # type: Union[str, List[str]]
+    env=None,  # type: Optional[Dict[str, str]]
+    block=True,  # type: bool
+    cwd=None,  # type: Optional[Union[str, Path]]
+    combine_stderr=True,  # type: bool
+):
+    # type: (...) -> subprocess.Popen
     from distutils.spawn import find_executable
 
     if not env:
@@ -147,6 +163,8 @@ def _spawn_subprocess(script, env=None, block=True, cwd=None, combine_stderr=Tru
         "stderr": subprocess.PIPE if not combine_stderr else subprocess.STDOUT,
         "shell": False,
     }
+    if os.name != "nt":
+        options["universal_newlines"] = True
     if not block:
         options["stdin"] = subprocess.PIPE
     if cwd:
@@ -177,11 +195,18 @@ def _read_streams(stream_dict):
         if not stream:
             results[outstream] = None
             continue
-        line = to_text(stream.readline())
+        stream_encoding = get_output_encoding(
+            getattr(stream, "encoding", PREFERRED_ENCODING)
+        )
+        line = stream.readline()
+        if isinstance(line, bytes):
+            line = to_text(line, encoding=stream_encoding, errors="replace")
+        else:
+            line = to_text(to_bytes(line, errors="surrogateescape"), errors="replace")
         if not line:
             results[outstream] = None
             continue
-        line = to_text("{0}".format(line.rstrip()))
+        line = to_text("{}".format(line)).rstrip()
         results[outstream] = line
     return results
 
@@ -193,7 +218,7 @@ def get_stream_results(cmd_instance, verbose, maxlen, spinner=None, stdout_allow
         stream_contents = _read_streams(streams)
         stdout_line = stream_contents["stdout"]
         stderr_line = stream_contents["stderr"]
-        if not (stdout_line or stderr_line):
+        if all(line is None for line in (stdout_line, stderr_line)):
             break
         last_changed = 0
         display_line = ""
@@ -202,9 +227,7 @@ def get_stream_results(cmd_instance, verbose, maxlen, spinner=None, stdout_allow
                 line = stream_contents[stream_name]
                 stream_results[stream_name].append(line)
                 display_line = (
-                    fs_str("{0}".format(line))
-                    if stream_name == "stderr"
-                    else display_line
+                    fs_str("{}".format(line)) if stream_name == "stderr" else display_line
                 )
                 if display_line and last_changed > 10:
                     last_changed = 0
@@ -212,7 +235,7 @@ def get_stream_results(cmd_instance, verbose, maxlen, spinner=None, stdout_allow
                 elif display_line:
                     last_changed += 1
                 if len(display_line) > maxlen:
-                    display_line = "{0}...".format(display_line[:maxlen])
+                    display_line = "{}...".format(display_line[:maxlen])
                 if verbose:
                     use_stderr = not stdout_allowed or stream_name != "stdout"
                     if spinner:
@@ -224,10 +247,10 @@ def get_stream_results(cmd_instance, verbose, maxlen, spinner=None, stdout_allow
                         target.flush()
                 if spinner:
                     spinner.text = to_native_string(
-                        "{0} {1}".format(spinner.text, display_line)
+                        "{} {}".format(spinner.text, display_line)
                     )
                     continue
-    return stream_results
+    return _decode_process_output(cmd_instance, stream_results)
 
 
 def _handle_nonblocking_subprocess(c, spinner=None):
@@ -235,9 +258,9 @@ def _handle_nonblocking_subprocess(c, spinner=None):
     try:
         c.wait()
     finally:
-        if c.stdout:
+        if c.stdout and not c.stdout.closed:
             c.stdout.close()
-        if c.stderr:
+        if c.stderr and not c.stderr.closed:
             c.stderr.close()
     if spinner:
         if c.returncode > 0:
@@ -247,6 +270,41 @@ def _handle_nonblocking_subprocess(c, spinner=None):
         else:
             spinner.ok(to_native_string("Complete"))
     return c
+
+
+def _decode_process_output(
+    subprocess_instance,  # type: subprocess.Popen
+    stream_dict,  # type: Dict[str, List[Union[str, bytes]]]
+):
+    # type: (...) -> Tuple[subprocess.Popen, Dict[str, List[str]]]
+    output, error = fs_str(""), fs_str("")
+    stdout_lines = stream_dict.get("stdout", [])
+    stderr_lines = stream_dict.get("stderr", [])
+    text_stdout, text_stderr = [], []
+    if stdout_lines and subprocess_instance.stdout:
+        output_encoding = get_output_encoding(
+            getattr(subprocess_instance.stdout, "encoding", None)
+        )
+        for line in stdout_lines:
+            if isinstance(line, six.binary_type):
+                line = to_text(line.decode(output_encoding).encode("utf-8"))
+            else:
+                line = to_text(line, encoding=output_encoding)
+            text_stdout.append(line)
+        output = "\n".join(text_stdout)
+    if stderr_lines and subprocess_instance.stderr:
+        error_encoding = get_output_encoding(
+            getattr(subprocess_instance.stderr, "encoding", None)
+        )
+        for line in stderr_lines:
+            if isinstance(line, six.binary_type):
+                line = to_text(line.decode(error_encoding).encode("utf-8"))
+            else:
+                line = to_text(line, encoding=error_encoding)
+            text_stderr.append(line)
+        error = "\n".join(text_stderr)
+    subprocess_instance.out, subprocess_instance.err = output, error
+    return subprocess_instance, {"stdout": text_stdout, "stderr": text_stderr}
 
 
 def _create_subprocess(
@@ -284,7 +342,7 @@ def _create_subprocess(
             spinner_orig_text = spinner.text
         if not spinner_orig_text and start_text is not None:
             spinner_orig_text = start_text
-        stream_results = get_stream_results(
+        c, stream_results = get_stream_results(
             c,
             verbose=verbose,
             maxlen=display_limit,
@@ -292,10 +350,6 @@ def _create_subprocess(
             stdout_allowed=write_to_stdout,
         )
         _handle_nonblocking_subprocess(c, spinner)
-        output = stream_results["stdout"]
-        err = stream_results["stderr"]
-        c.out = "\n".join(output) if output else ""
-        c.err = "\n".join(err) if err else ""
     else:
         try:
             c.out, c.err = c.communicate()
@@ -305,8 +359,6 @@ def _create_subprocess(
             raise
     if not block:
         c.wait()
-    c.out = to_text("{0}".format(c.out)) if c.out else fs_str("")
-    c.err = to_text("{0}".format(c.err)) if c.err else fs_str("")
     if not return_object:
         return c.out.strip(), c.err.strip()
     return c
@@ -330,14 +382,19 @@ def run(
     :param list cmd: A list representing the command you want to run.
     :param dict env: Additional environment settings to pass through to the subprocess.
     :param bool return_object: When True, returns the whole subprocess instance
-    :param bool block: When False, returns a potentially still-running :class:`subprocess.Popen` instance
+    :param bool block: When False, returns a potentially still-running
+        :class:`subprocess.Popen` instance
     :param str cwd: Current working directory contect to use for spawning the subprocess.
     :param bool verbose: Whether to print stdout in real time when non-blocking.
     :param bool nospin: Whether to disable the cli spinner.
-    :param str spinner_name: The name of the spinner to use if enabled, defaults to bouncingBar
-    :param bool combine_stderr: Optionally merge stdout and stderr in the subprocess, false if nonblocking.
-    :param int dispay_limit: The max width of output lines to display when using a spinner.
-    :param bool write_to_stdout: Whether to write to stdout when using a spinner, default True.
+    :param str spinner_name: The name of the spinner to use if enabled, defaults to
+        bouncingBar
+    :param bool combine_stderr: Optionally merge stdout and stderr in the subprocess,
+        false if nonblocking.
+    :param int dispay_limit: The max width of output lines to display when using a
+        spinner.
+    :param bool write_to_stdout: Whether to write to stdout when using a spinner,
+        defaults to True.
     :returns: A 2-tuple of (output, error) or a :class:`subprocess.Popen` object.
 
     .. Warning:: Merging standard out and standarad error in a nonblocking subprocess
@@ -346,11 +403,13 @@ def run(
     """
 
     _env = os.environ.copy()
+    _env["PYTHONIOENCODING"] = str("utf-8")
+    _env["PYTHONUTF8"] = str("1")
     if env:
         _env.update(env)
     if six.PY2:
-        fs_encode = partial(to_bytes, encoding=locale_encoding)
-        _env = {fs_encode(k): fs_encode(v) for k, v in _env.items()}
+        _fs_encode = partial(to_bytes, encoding=locale_encoding)
+        _env = {_fs_encode(k): _fs_encode(v) for k, v in _env.items()}
     else:
         _env = {k: fs_str(v) for k, v in _env.items()}
     if not spinner_name:
@@ -386,14 +445,21 @@ def run(
 
 
 def load_path(python):
-    """Load the :mod:`sys.path` from the given python executable's environment as json
+    """Load the :mod:`sys.path` from the given python executable's environment
+    as json.
 
     :param str python: Path to a valid python executable
-    :return: A python representation of the `sys.path` value of the given python executable.
+    :return: A python representation of the `sys.path` value of the given python
+        executable.
     :rtype: list
 
     >>> load_path("/home/user/.virtualenvs/requirementslib-5MhGuG3C/bin/python")
-    ['', '/home/user/.virtualenvs/requirementslib-5MhGuG3C/lib/python37.zip', '/home/user/.virtualenvs/requirementslib-5MhGuG3C/lib/python3.7', '/home/user/.virtualenvs/requirementslib-5MhGuG3C/lib/python3.7/lib-dynload', '/home/user/.pyenv/versions/3.7.0/lib/python3.7', '/home/user/.virtualenvs/requirementslib-5MhGuG3C/lib/python3.7/site-packages', '/home/user/git/requirementslib/src']
+    ['', '/home/user/.virtualenvs/requirementslib-5MhGuG3C/lib/python37.zip',
+     '/home/user/.virtualenvs/requirementslib-5MhGuG3C/lib/python3.7',
+     '/home/user/.virtualenvs/requirementslib-5MhGuG3C/lib/python3.7/lib-dynload',
+     '/home/user/.pyenv/versions/3.7.0/lib/python3.7',
+     '/home/user/.virtualenvs/requirementslib-5MhGuG3C/lib/python3.7/site-packages',
+     '/home/user/git/requirementslib/src']
     """
 
     python = Path(python).as_posix()
@@ -407,7 +473,7 @@ def load_path(python):
 
 
 def partialclass(cls, *args, **kwargs):
-    """Returns a partially instantiated class
+    """Returns a partially instantiated class.
 
     :return: A partial class instance
     :rtype: cls
@@ -417,7 +483,15 @@ def partialclass(cls, *args, **kwargs):
     <class '__main__.Source'>
     >>> source(name="pypi")
     >>> source.__dict__
-    mappingproxy({'__module__': '__main__', '__dict__': <attribute '__dict__' of 'Source' objects>, '__weakref__': <attribute '__weakref__' of 'Source' objects>, '__doc__': None, '__init__': functools.partialmethod(<function Source.__init__ at 0x7f23af429bf8>, , url='https://pypi.org/simple')})
+    mappingproxy({
+        '__module__': '__main__',
+        '__dict__': <attribute '__dict__' of 'Source' objects>,
+        '__weakref__': <attribute '__weakref__' of 'Source' objects>,
+        '__doc__': None,
+        '__init__': functools.partialmethod(
+            <function Source.__init__ at 0x7f23af429bf8>, , url='https://pypi.org/simple'
+        )
+    })
     >>> new_source = source(name="pypi")
     >>> new_source
     <__main__.Source object at 0x7f23af189b38>
@@ -526,8 +600,8 @@ def to_text(string, encoding="utf-8", errors=None):
 
 
 def divide(n, iterable):
-    """
-    split an iterable into n groups, per https://more-itertools.readthedocs.io/en/latest/api.html#grouping
+    """split an iterable into n groups, per https://more-
+    itertools.readthedocs.io/en/latest/api.html#grouping.
 
     :param int n: Number of unique groups
     :param iter iterable: An iterable to split up
@@ -578,11 +652,11 @@ except Exception:
 
 
 def getpreferredencoding():
-    """Determine the proper output encoding for terminal rendering"""
+    """Determine the proper output encoding for terminal rendering."""
 
     # Borrowed from Invoke
     # (see https://github.com/pyinvoke/invoke/blob/93af29d/invoke/runners.py#L881)
-    _encoding = locale.getpreferredencoding(False)
+    _encoding = sys.getdefaultencoding() or locale.getpreferredencoding(False)
     if six.PY2 and not sys.platform == "win32":
         _default_encoding = locale.getdefaultlocale()[1]
         if _default_encoding is not None:
@@ -594,8 +668,7 @@ PREFERRED_ENCODING = getpreferredencoding()
 
 
 def get_output_encoding(source_encoding):
-    """
-    Given a source encoding, determine the preferred output encoding.
+    """Given a source encoding, determine the preferred output encoding.
 
     :param str source_encoding: The encoding of the source material.
     :returns: The output encoding to decode to.
@@ -630,11 +703,13 @@ def _encode(output, encoding=None, errors=None, translation_map=None):
 
 
 def decode_for_output(output, target_stream=None, translation_map=None):
-    """Given a string, decode it for output to a terminal
+    """Given a string, decode it for output to a terminal.
 
     :param str output: A string to print to a terminal
-    :param target_stream: A stream to write to, we will encode to target this stream if possible.
-    :param dict translation_map: A mapping of unicode character ordinals to replacement strings.
+    :param target_stream: A stream to write to, we will encode to target this stream if
+        possible.
+    :param dict translation_map: A mapping of unicode character ordinals to replacement
+        strings.
     :return: A re-encoded string using the preferred encoding
     :rtype: str
     """
@@ -657,8 +732,7 @@ def decode_for_output(output, target_stream=None, translation_map=None):
 
 def get_canonical_encoding_name(name):
     # type: (str) -> str
-    """
-    Given an encoding name, get the canonical name from a codec lookup.
+    """Given an encoding name, get the canonical name from a codec lookup.
 
     :param str name: The name of the codec to lookup
     :return: The canonical version of the codec name
@@ -696,8 +770,8 @@ def _get_binary_buffer(stream):
 
 
 def get_wrapped_stream(stream, encoding=None, errors="replace"):
-    """
-    Given a stream, wrap it in a `StreamWrapper` instance and return the wrapped stream.
+    """Given a stream, wrap it in a `StreamWrapper` instance and return the
+    wrapped stream.
 
     :param stream: A stream instance to wrap
     :param str encoding: The encoding to use for the stream
@@ -712,7 +786,7 @@ def get_wrapped_stream(stream, encoding=None, errors="replace"):
     if stream is not None and encoding is None:
         encoding = "utf-8"
     if not encoding:
-        encoding = get_output_encoding(stream)
+        encoding = get_output_encoding(getattr(stream, "encoding", None))
     else:
         encoding = get_canonical_encoding_name(encoding)
     return StreamWrapper(stream, encoding, errors, line_buffering=True)
@@ -720,10 +794,8 @@ def get_wrapped_stream(stream, encoding=None, errors="replace"):
 
 class StreamWrapper(io.TextIOWrapper):
 
-    """
-    This wrapper class will wrap a provided stream and supply an interface
-    for compatibility.
-    """
+    """This wrapper class will wrap a provided stream and supply an interface
+    for compatibility."""
 
     def __init__(self, stream, encoding, errors, line_buffering=True, **kwargs):
         self._stream = stream = _StreamProvider(stream)
@@ -907,7 +979,7 @@ def _cached_stream_lookup(stream_lookup_func, stream_resolution_func):
 
 
 def get_text_stream(stream="stdout", encoding=None):
-    """Retrieve a unicode stream wrapper around **sys.stdout** or **sys.stderr**.
+    """Retrieve a utf-8 stream wrapper around **sys.stdout** or **sys.stderr**.
 
     :param str stream: The name of the stream to wrap from the :mod:`sys` module.
     :param str encoding: An optional encoding to use.
@@ -959,7 +1031,8 @@ TEXT_STREAMS = {
 
 
 def replace_with_text_stream(stream_name):
-    """Given a stream name, replace the target stream with a text-converted equivalent
+    """Given a stream name, replace the target stream with a text-converted
+    equivalent.
 
     :param str stream_name: The name of a target stream, such as **stdout** or **stderr**
     :return: None
@@ -984,7 +1057,8 @@ def _can_use_color(stream=None, color=None):
 
 
 def echo(text, fg=None, bg=None, style=None, file=None, err=False, color=None):
-    """Write the given text to the provided stream or **sys.stdout** by default.
+    """Write the given text to the provided stream or **sys.stdout** by
+    default.
 
     Provides optional foreground and background colors from the ansi defaults:
     **grey**, **red**, **green**, **yellow**, **blue**, **magenta**, **cyan**
@@ -1002,7 +1076,7 @@ def echo(text, fg=None, bg=None, style=None, file=None, err=False, color=None):
     """
 
     if file and not hasattr(file, "write"):
-        raise TypeError("Expected a writable stream, received {0!r}".format(file))
+        raise TypeError("Expected a writable stream, received {!r}".format(file))
     if not file:
         if err:
             file = _text_stderr()

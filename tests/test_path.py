@@ -7,14 +7,21 @@ import shutil
 import stat
 
 import pytest
+import six
 from hypothesis import HealthCheck, assume, example, given, settings
-from hypothesis_fspaths import fspaths
+from hypothesis_fspaths import _PathLike, fspaths
 from six.moves.urllib import parse as urllib_parse
 
 import vistir
 
-from .strategies import legal_path_chars, relative_paths, url_alphabet, urls
+from .strategies import legal_path_chars, paths, relative_paths, url_alphabet, urls
 from .utils import EXEC, NON_WRITE_OR_EXEC, NON_WRITEABLE, WRITEABLE, get_mode
+
+
+def get_ord(char):
+    if isinstance(char, int):
+        return char
+    return ord(char)
 
 
 def test_abspathu(tmpdir):
@@ -59,51 +66,96 @@ def test_safe_expandvars():
         assert vistir.path.safe_expandvars(sanitized) == expected
 
 
-@given(legal_path_chars(), legal_path_chars())
+@given(paths(), paths())
 @example(base_dir="0", subdir="\x80")
 @settings(suppress_health_check=(HealthCheck.filter_too_much,), deadline=None)
 def test_mkdir_p(base_dir, subdir):
+    # base_dir_path = base_dir._value if isinstance(base_dir, _PathLike) else base_dir
+    # subdir_path = subdir._value if isinstance(subdir, _PathLike) else subdir
+    base_dir_path = base_dir
+    subdir_path = subdir
+    assume(base_dir_path.strip() and subdir_path.strip())
+    # if not isinstance(base_dir_path, type(subdir_path)):
+    #     base_dir_path = vistir.compat.fs_decode(base_dir_path)
+    #     subdir_path = vistir.compat.fs_decode(subdir_path)
     assume(
-        not any((dir_name in ["", ".", "./", ".."] for dir_name in [base_dir, subdir]))
+        not any(
+            (
+                dir_name in ["", ".", "./", ".."]
+                for dir_name in [base_dir_path, subdir_path]
+            )
+        )
     )
-    assume(not (os.path.relpath(subdir, start=base_dir) == "."))
-    assume(os.path.abspath(base_dir) != os.path.abspath(os.path.join(base_dir, subdir)))
-    assume(len(base_dir) < 255 and len(subdir) < 255)
-    assume(len(vistir.compat.fs_encode(subdir)) < 255)
-    assume(len(vistir.compat.fs_encode(base_dir)) < 255)
+    assume(not (os.path.relpath(subdir_path, start=base_dir_path) == "."))
+    assume(
+        os.path.abspath(base_dir_path)
+        != os.path.abspath(os.path.join(base_dir_path, subdir_path))
+    )
+    total_len = len(
+        vistir.compat.fs_encode(os.path.join(os.path.abspath(base_dir_path), subdir_path))
+    )
+    assume(total_len <= 255)
     with vistir.compat.TemporaryDirectory() as temp_dir:
-        target = os.path.join(temp_dir.name, base_dir, subdir)
+        temp_dirname = (
+            temp_dir.name
+            if isinstance(base_dir_path, six.text_type)
+            else vistir.compat.fs_encode(temp_dir.name)
+        )
+        target = os.path.join(temp_dirname, base_dir_path, subdir_path)
         assume(
             vistir.path.abspathu(target)
-            != vistir.path.abspathu(os.path.join(temp_dir.name, base_dir))
+            != vistir.path.abspathu(os.path.join(temp_dirname, base_dir_path))
         )
         vistir.path.mkdir_p(target)
-        assert os.path.exists(vistir.compat.fs_encode(target))
+        assert os.path.exists(target)
 
 
-@given(legal_path_chars(), legal_path_chars())
+@given(paths(), paths())
 @example(base_dir="0", subdir="\x80")
 @settings(suppress_health_check=(HealthCheck.filter_too_much,), deadline=None)
 def test_ensure_mkdir_p(base_dir, subdir):
+    # base_dir_path = base_dir._value if isinstance(base_dir, _PathLike) else base_dir
+    # subdir_path = subdir._value if isinstance(subdir, _PathLike) else subdir
+    # assume(base_dir_path.strip() and subdir_path.strip())
+    base_dir_path = base_dir
+    subdir_path = subdir
+    # if not isinstance(base_dir, type(subdir_path)):
+    #     base_dir_path = vistir.compat.fs_decode(base_dir_path)
+    #     subdir_path = vistir.compat.fs_decode(subdir_path)
     assume(
-        not any((dir_name in ["", ".", "./", ".."] for dir_name in [base_dir, subdir]))
+        not any(
+            (
+                dir_name in ["", ".", "./", ".."]
+                for dir_name in [base_dir_path, subdir_path]
+            )
+        )
     )
-    assume(not (os.path.relpath(subdir, start=base_dir) == "."))
-    assume(os.path.abspath(base_dir) != os.path.abspath(os.path.join(base_dir, subdir)))
+    assume(not (os.path.relpath(subdir_path, start=base_dir_path) == "."))
+    assume(
+        os.path.abspath(base_dir_path)
+        != os.path.abspath(os.path.join(base_dir_path, subdir_path))
+    )
+    total_len = len(
+        vistir.compat.fs_encode(os.path.join(os.path.abspath(base_dir_path), subdir_path))
+    )
+    assume(total_len <= 255)
     with vistir.compat.TemporaryDirectory() as temp_dir:
-        temp_dirname = temp_dir.name
+        temp_dirname = (
+            temp_dir.name
+            if isinstance(temp_dir.name, type(base_dir_path))
+            else vistir.compat.fs_encode(temp_dir.name)
+        )
 
         @vistir.path.ensure_mkdir_p(mode=0o777)
         def join_with_dir(_base_dir, _subdir, base=temp_dirname):
             return os.path.join(base, _base_dir, _subdir)
 
-        target = join_with_dir(base_dir, subdir)
-        assume(len(vistir.compat.fs_encode(target)) < 255)
+        target = join_with_dir(base_dir_path, subdir_path, base=temp_dirname)
         assume(
             vistir.path.abspathu(target)
-            != vistir.path.abspathu(os.path.join(temp_dir.name, base_dir))
+            != vistir.path.abspathu(os.path.join(temp_dirname, base_dir_path))
         )
-        assert os.path.exists(vistir.compat.fs_encode(target))
+        assert os.path.exists(target)
 
 
 @pytest.mark.xfail(raises=OSError)

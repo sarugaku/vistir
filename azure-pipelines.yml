@@ -18,6 +18,10 @@ trigger:
     - 'news/*'
     - 'docs/*'
 
+variables:
+  PYTHONIOENCODING: 'utf-8'
+  PYTHONUTF8: '1'
+
 jobs:
 - job: TestLinux
   pool:
