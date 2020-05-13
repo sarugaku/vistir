@@ -2,18 +2,21 @@
 from __future__ import absolute_import, print_function, unicode_literals
 
 import io
+import itertools
 import json
 import locale
 import logging
 import os
 import subprocess
 import sys
+import threading
 from collections import OrderedDict
 from functools import partial
 from itertools import islice, tee
 from weakref import WeakKeyDictionary
 
 import six
+from six.moves.queue import Empty, Queue
 
 from .cmdparse import Script
 from .compat import (
@@ -21,6 +24,8 @@ from .compat import (
     Path,
     StringIO,
     TimeoutError,
+    _fs_decode_errors,
+    _fs_encode_errors,
     fs_str,
     is_bytes,
     partialmethod,
@@ -58,7 +63,7 @@ __all__ = [
 
 
 if MYPY_RUNNING:
-    from typing import Any, Dict, List, Optional, Tuple, Union
+    from typing import Any, Dict, Generator, IO, List, Optional, Text, Tuple, Union
     from .spin import VistirSpinner
 
 
@@ -163,7 +168,9 @@ def _spawn_subprocess(
         "stderr": subprocess.PIPE if not combine_stderr else subprocess.STDOUT,
         "shell": False,
     }
-    if os.name != "nt":
+    if sys.version_info[:2] > (3, 5):
+        options.update({"universal_newlines": True, "encoding": "utf-8"})
+    elif os.name != "nt":
         options["universal_newlines"] = True
     if not block:
         options["stdin"] = subprocess.PIPE
@@ -188,69 +195,281 @@ def _spawn_subprocess(
     return subprocess.Popen(script.cmdify(), **options)
 
 
-def _read_streams(stream_dict):
-    results = {}
-    for outstream in stream_dict.keys():
-        stream = stream_dict[outstream]
-        if not stream:
-            results[outstream] = None
-            continue
-        stream_encoding = get_output_encoding(
-            getattr(stream, "encoding", PREFERRED_ENCODING)
+class SubprocessStreamWrapper(object):
+    def __init__(
+        self,
+        display_stderr_maxlen=200,  # type: int
+        display_line_for_loops=20,  # type: int
+        subprocess=None,  # type: subprocess.Popen
+        spinner=None,  # type: Optional[VistirSpinner]
+        verbose=False,  # type: bool
+        stdout_allowed=False,  # type: bool
+    ):
+        # type: (...) -> None
+        if subprocess is not None:
+            stdout_encoding = self.get_subprocess_encoding(subprocess, "stdout")
+            stderr_encoding = self.get_subprocess_encoding(subprocess, "stderr")
+        self.stdout_encoding = stdout_encoding or PREFERRED_ENCODING
+        self.stderr_encoding = stderr_encoding or PREFERRED_ENCODING
+        self.stdout_lines = []
+        self.text_stdout_lines = []
+        self.stderr_lines = []
+        self.text_stderr_lines = []
+        self.display_line = ""
+        self.display_line_loops_displayed = 0
+        self.display_line_shown_for_loops = display_line_for_loops
+        self.display_line_max_len = display_stderr_maxlen
+        self.spinner = spinner
+        self.stdout_allowed = stdout_allowed
+        self.verbose = verbose
+        self._iterated_stdout = None
+        self._iterated_stderr = None
+        self._subprocess = subprocess
+        self._queues = {
+            "streams": Queue(),
+            "lines": Queue(),
+        }
+        self._threads = {
+            stream_name: threading.Thread(
+                target=self.enqueue_stream,
+                args=(self._subprocess, stream_name, self._queues["streams"]),
+            )
+            for stream_name in ("stdout", "stderr")
+        }
+        self._threads["watcher"] = threading.Thread(
+            target=self.process_output_lines,
+            args=(self._queues["streams"], self._queues["lines"]),
         )
-        line = stream.readline()
-        if isinstance(line, bytes):
-            line = to_text(line, encoding=stream_encoding, errors="replace")
+        self.start_threads()
+
+    def enqueue_stream(self, proc, stream_name, queue):
+        # type: (subprocess.Popen, str, Queue) -> None
+        if not getattr(proc, stream_name, None):
+            queue.put(("stderr", None))
         else:
-            line = to_text(to_bytes(line, errors="surrogateescape"), errors="replace")
-        if not line:
-            results[outstream] = None
-            continue
-        line = to_text("{}".format(line)).rstrip()
-        results[outstream] = line
-    return results
+            for line in iter(getattr(proc, stream_name).readline, ""):
+                queue.put((stream_name, line))
+            getattr(proc, stream_name).close()
 
+    @property
+    def stderr(self):
+        return self._subprocess.stderr
 
-def get_stream_results(cmd_instance, verbose, maxlen, spinner=None, stdout_allowed=False):
-    stream_results = {"stdout": [], "stderr": []}
-    streams = {"stderr": cmd_instance.stderr, "stdout": cmd_instance.stdout}
-    while True:
-        stream_contents = _read_streams(streams)
-        stdout_line = stream_contents["stdout"]
-        stderr_line = stream_contents["stderr"]
-        if all(line is None for line in (stdout_line, stderr_line)):
-            break
-        last_changed = 0
-        display_line = ""
-        for stream_name in stream_contents.keys():
-            if stream_contents[stream_name] and stream_name in stream_results:
-                line = stream_contents[stream_name]
-                stream_results[stream_name].append(line)
-                display_line = (
-                    fs_str("{}".format(line)) if stream_name == "stderr" else display_line
-                )
-                if display_line and last_changed > 10:
-                    last_changed = 0
-                    display_line = ""
-                elif display_line:
-                    last_changed += 1
-                if len(display_line) > maxlen:
-                    display_line = "{}...".format(display_line[:maxlen])
+    @property
+    def stdout(self):
+        return self._subprocess.stdout
+
+    @classmethod
+    def get_subprocess_encoding(cls, cmd_instance, stream_name):
+        # type: (subprocess.Popen, str) -> Optional[str]
+        stream = getattr(cmd_instance, stream_name, None)
+        if stream is not None:
+            return get_output_encoding(getattr(stream, "encoding", None))
+        return None
+
+    @property
+    def stdout_iter(self):
+        if self._iterated_stdout is None and self.stdout:
+            self._iterated_stdout = iter(self.stdout.readline, "")
+        return self._iterated_stdout
+
+    @property
+    def stderr_iter(self):
+        if self._iterated_stderr is None and self.stderr:
+            self._iterated_stderr = iter(self.stderr.readline, "")
+        return self._iterated_stderr
+
+    def _decode_line(self, line, encoding):
+        # type: (Union[str, bytes], str) -> str
+        if isinstance(line, six.binary_type):
+            line = to_text(
+                line.decode(encoding, errors=_fs_decode_errors).encode(
+                    "utf-8", errors=_fs_encode_errors
+                ),
+                errors="backslashreplace",
+            )
+        else:
+            line = to_text(line, encoding=encoding, errors=_fs_encode_errors)
+        return line
+
+    def start_threads(self):
+        for thread in self._threads.values():
+            thread.daemon = True
+            thread.start()
+
+    @property
+    def subprocess(self):
+        return self._subprocess
+
+    @property
+    def out(self):
+        # type: () -> str
+        return getattr(self.subprocess, "out", "")
+
+    @out.setter
+    def out(self, value):
+        # type: (str) -> None
+        self._subprocess.out = value
+
+    @property
+    def err(self):
+        # type: () -> str
+        return getattr(self.subprocess, "err", "")
+
+    @err.setter
+    def err(self, value):
+        # type: (str) -> None
+        self._subprocess.err = value
+
+    def poll(self):
+        # type: () -> Optional[int]
+        return self.subprocess.poll()
+
+    def wait(self, timeout=None):
+        # type: (self, Optional[int]) -> Optional[int]
+        if self._subprocess.stdin and not self._subprocess.stdin.closed:
+            self._subprocess.stdin.close()
+        kwargs = {}
+        if sys.version_info[0] >= 3:
+            kwargs = {"timeout": timeout}
+        result = self.subprocess.wait(**kwargs)
+        self.gather_output()
+        return result
+
+    @property
+    def returncode(self):
+        # type: () -> Optional[int]
+        return self.subprocess.returncode
+
+    @property
+    def text_stdout(self):
+        return os.linesep.join(self.text_stdout_lines)
+
+    @property
+    def text_stderr(self):
+        return os.linesep.join(self.text_stderr_lines)
+
+    @property
+    def stderr_closed(self):
+        # type: () -> bool
+        return self.stderr is None or (self.stderr is not None and self.stderr.closed)
+
+    @property
+    def stdout_closed(self):
+        # type: () -> bool
+        return self.stdout is None or (self.stdout is not None and self.stdout.closed)
+
+    @property
+    def subprocess_finished(self):
+        if self._subprocess is None:
+            return False
+        return (
+            self._subprocess.poll() is not None or self._subprocess.returncode is not None
+        )
+
+    def update_display_line(self, new_line):
+        # type: () -> None
+        if self.display_line:
+            if new_line != self.display_line:
+                self.display_line_loops_displayed = 0
+                new_line = fs_str("{}".format(new_line))
+                if len(new_line) > self.display_line_max_len:
+                    new_line = "{}...".format(new_line[: self.display_line_max_len])
+                self.display_line = new_line
+            elif self.display_line_loops_displayed >= self.display_line_shown_for_loops:
+                self.display_line = ""
+                self.display_line_loops_displayed = 0
+            else:
+                self.display_line_loops_displayed += 1
+        return None
+
+    @classmethod
+    def check_line_content(cls, line):
+        # type: (Optional[str]) -> bool
+        return line is not None and line != ""
+
+    def get_line(self, queue):
+        # type: (Queue) -> Tuple[Optional[str], ...]
+        stream, result = None, None
+        try:
+            stream, result = queue.get_nowait()
+        except Empty:
+            result = None
+        return stream, result
+
+    def process_output_lines(self, recv_queue, line_queue):
+        # type: (Queue, Queue) -> None
+        stream, line = self.get_line(recv_queue)
+        while self.poll() is None or line is not None:
+            if self.check_line_content(line):
+                line = to_text("{}".format(line).rstrip())
+                line_queue.put((stream, line))
+            stream, line = self.get_line(recv_queue)
+
+    def gather_output(self, spinner=None, stdout_allowed=False, verbose=False):
+        # type: (Optional[VistirSpinner], bool, bool) -> None
+        if not getattr(self._subprocess, "out", None):
+            self._subprocess.out = ""
+        if not getattr(self._subprocess, "err", None):
+            self._subprocess.err = ""
+        if not self._queues["streams"].empty():
+            self.process_output_lines(self._queues["streams"], self._queues["lines"])
+        while not self._queues["lines"].empty():
+            try:
+                stream_name, line = self._queues["lines"].get()
+            except Empty:
+                if not self._threads["watcher"].is_active():
+                    break
+                pass
+            if stream_name == "stdout":
+                text_line = self._decode_line(line, self.stdout_encoding)
+                self.text_stdout_lines.append(text_line)
+                self.out += "{}\n".format(text_line)
                 if verbose:
-                    use_stderr = not stdout_allowed or stream_name != "stdout"
-                    if spinner:
-                        target = spinner.stderr if use_stderr else spinner.stdout
-                        spinner.hide_and_write(display_line, target=target)
-                    else:
-                        target = sys.stderr if use_stderr else sys.stdout
-                        target.write(display_line)
-                        target.flush()
-                if spinner:
-                    spinner.text = to_native_string(
-                        "{} {}".format(spinner.text, display_line)
+                    _write_subprocess_result(
+                        line, "stdout", spinner=spinner, stdout_allowed=stdout_allowed
                     )
-                    continue
-    return _decode_process_output(cmd_instance, stream_results)
+            else:
+                text_err = self._decode_line(line, self.stderr_encoding)
+                self.text_stderr_lines.append(text_err)
+                self.update_display_line(line)
+                self.err += "{}\n".format(text_err)
+                _write_subprocess_result(
+                    line, "stderr", spinner=spinner, stdout_allowed=stdout_allowed
+                )
+            if spinner:
+                spinner.text = to_native_string(
+                    "{} {}".format(spinner.text, self.display_line)
+                )
+        self.out = self.out.strip()
+        self.err = self.err.strip()
+
+
+def _write_subprocess_result(result, stream_name, spinner=None, stdout_allowed=False):
+    # type: (str, str, Optional[VistirSpinner], bool) -> None
+    if not stdout_allowed and stream_name == "stdout":
+        stream_name = "stderr"
+    if spinner:
+        spinner.hide_and_write(result, target=getattr(spinner, stream_name))
+    else:
+        target_stream = getattr(sys, stream_name)
+        target_stream.write(result)
+        target_stream.flush()
+    return None
+
+
+def attach_stream_reader(
+    cmd_instance, verbose, maxlen, spinner=None, stdout_allowed=False
+):
+    streams = SubprocessStreamWrapper(
+        subprocess=cmd_instance,
+        display_stderr_maxlen=maxlen,
+        spinner=spinner,
+        verbose=verbose,
+        stdout_allowed=stdout_allowed,
+    )
+    streams.gather_output(spinner=spinner, verbose=verbose, stdout_allowed=stdout_allowed)
+    return streams
 
 
 def _handle_nonblocking_subprocess(c, spinner=None):
@@ -263,48 +482,13 @@ def _handle_nonblocking_subprocess(c, spinner=None):
         if c.stderr and not c.stderr.closed:
             c.stderr.close()
     if spinner:
-        if c.returncode > 0:
+        if c.returncode != 0:
             spinner.fail(to_native_string("Failed...cleaning up..."))
-        if not os.name == "nt":
+        elif c.returncode == 0 and not os.name == "nt":
             spinner.ok(to_native_string("✔ Complete"))
         else:
             spinner.ok(to_native_string("Complete"))
     return c
-
-
-def _decode_process_output(
-    subprocess_instance,  # type: subprocess.Popen
-    stream_dict,  # type: Dict[str, List[Union[str, bytes]]]
-):
-    # type: (...) -> Tuple[subprocess.Popen, Dict[str, List[str]]]
-    output, error = fs_str(""), fs_str("")
-    stdout_lines = stream_dict.get("stdout", [])
-    stderr_lines = stream_dict.get("stderr", [])
-    text_stdout, text_stderr = [], []
-    if stdout_lines and subprocess_instance.stdout:
-        output_encoding = get_output_encoding(
-            getattr(subprocess_instance.stdout, "encoding", None)
-        )
-        for line in stdout_lines:
-            if isinstance(line, six.binary_type):
-                line = to_text(line.decode(output_encoding).encode("utf-8"))
-            else:
-                line = to_text(line, encoding=output_encoding)
-            text_stdout.append(line)
-        output = "\n".join(text_stdout)
-    if stderr_lines and subprocess_instance.stderr:
-        error_encoding = get_output_encoding(
-            getattr(subprocess_instance.stderr, "encoding", None)
-        )
-        for line in stderr_lines:
-            if isinstance(line, six.binary_type):
-                line = to_text(line.decode(error_encoding).encode("utf-8"))
-            else:
-                line = to_text(line, encoding=error_encoding)
-            text_stderr.append(line)
-        error = "\n".join(text_stderr)
-    subprocess_instance.out, subprocess_instance.err = output, error
-    return subprocess_instance, {"stdout": text_stdout, "stderr": text_stderr}
 
 
 def _create_subprocess(
@@ -342,7 +526,7 @@ def _create_subprocess(
             spinner_orig_text = spinner.text
         if not spinner_orig_text and start_text is not None:
             spinner_orig_text = start_text
-        c, stream_results = get_stream_results(
+        c = attach_stream_reader(
             c,
             verbose=verbose,
             maxlen=display_limit,
@@ -357,8 +541,6 @@ def _create_subprocess(
             c.terminate()
             c.out, c.err = c.communicate()
             raise
-    if not block:
-        c.wait()
     if not return_object:
         return c.out.strip(), c.err.strip()
     return c

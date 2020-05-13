@@ -116,11 +116,9 @@ else:
 
     def abspathu(path):
         # type: (TPath) -> Text
-        """
-        Version of os.path.abspath that uses the unicode representation
-        of the current working directory, thus avoiding a UnicodeDecodeError
-        in join when the cwd has non-ASCII characters.
-        """
+        """Version of os.path.abspath that uses the unicode representation of
+        the current working directory, thus avoiding a UnicodeDecodeError in
+        join when the cwd has non-ASCII characters."""
         if not os.path.isabs(path):
             path = os.path.join(os.getcwdu(), path)
         return os.path.normpath(path)
@@ -128,8 +126,7 @@ else:
 
 def normalize_path(path):
     # type: (TPath) -> Text
-    """
-    Return a case-normalized absolute variable-expanded path.
+    """Return a case-normalized absolute variable-expanded path.
 
     :param str path: The non-normalized path
     :return: A normalized, expanded, case-normalized path
@@ -147,8 +144,7 @@ def normalize_path(path):
 
 def is_in_path(path, parent):
     # type: (TPath, TPath) -> bool
-    """
-    Determine if the provided full path is in the given parent root.
+    """Determine if the provided full path is in the given parent root.
 
     :param str path: The full path to check the location of.
     :param str parent: The parent path to check for membership in
@@ -204,18 +200,17 @@ def path_to_url(path):
         # XXX: actually part of a surrogate pair, but were just incidentally
         # XXX: passed in as a piece of a filename
         quoted_path = quote(fs_encode(path))
-        return fs_decode("file:///{0}:{1}".format(drive, quoted_path))
+        return fs_decode("file:///{}:{}".format(drive, quoted_path))
     # XXX: This is also here to help deal with incidental dangling surrogates
     # XXX: on linux, by making sure they are preserved during encoding so that
     # XXX: we can urlencode the backslash correctly
     bytes_path = to_bytes(normalized_path, errors="backslashreplace")
-    return fs_decode("file://{0}".format(quote(bytes_path)))
+    return fs_decode("file://{}".format(quote(bytes_path)))
 
 
 def url_to_path(url):
     # type: (str) -> str
-    """
-    Convert a valid file url to a local filesystem path
+    """Convert a valid file url to a local filesystem path.
 
     Follows logic taken from pip's equivalent function
     """
@@ -232,7 +227,7 @@ def url_to_path(url):
 
 def is_valid_url(url):
     # type: (Union[str, bytes]) -> bool
-    """Checks if a given string is an url"""
+    """Checks if a given string is an url."""
     from .misc import to_text
 
     if not url:
@@ -243,7 +238,7 @@ def is_valid_url(url):
 
 def is_file_url(url):
     # type: (Any) -> bool
-    """Returns true if the given url is a file url"""
+    """Returns true if the given url is a file url."""
     from .misc import to_text
 
     if not url:
@@ -252,7 +247,7 @@ def is_file_url(url):
         try:
             url = url.url
         except AttributeError:
-            raise ValueError("Cannot parse url from unknown type: {0!r}".format(url))
+            raise ValueError("Cannot parse url from unknown type: {!r}".format(url))
     url = to_text(url, encoding="utf-8")
     return urllib_parse.urlparse(url.lower()).scheme == "file"
 
@@ -261,7 +256,8 @@ def is_readonly_path(fn):
     # type: (TPath) -> bool
     """Check if a provided path exists and is readonly.
 
-    Permissions check is `bool(path.stat & stat.S_IREAD)` or `not os.access(path, os.W_OK)`
+    Permissions check is `bool(path.stat & stat.S_IREAD)` or `not
+    os.access(path, os.W_OK)`
     """
 
     fn = fs_encode(fn)
@@ -273,18 +269,17 @@ def is_readonly_path(fn):
 
 def mkdir_p(newdir, mode=0o777):
     # type: (TPath, int) -> None
-    """Recursively creates the target directory and all of its parents if they do not
-    already exist.  Fails silently if they do.
+    """Recursively creates the target directory and all of its parents if they
+    do not already exist.  Fails silently if they do.
 
     :param str newdir: The directory path to ensure
     :raises: OSError if a file is encountered along the way
     """
-    # http://code.activestate.com/recipes/82465-a-friendly-mkdir/
     newdir = fs_encode(newdir)
     if os.path.exists(newdir):
         if not os.path.isdir(newdir):
             raise OSError(
-                "a file with the same name as the desired dir, '{0}', already exists.".format(
+                "a file with the same name as the desired dir, '{}', already exists.".format(
                     fs_decode(newdir)
                 )
             )
@@ -294,8 +289,8 @@ def mkdir_p(newdir, mode=0o777):
 
 def ensure_mkdir_p(mode=0o777):
     # type: (int) -> Callable[Callable[..., Any], Callable[..., Any]]
-    """Decorator to ensure `mkdir_p` is called to the function's return value.
-    """
+    """Decorator to ensure `mkdir_p` is called to the function's return
+    value."""
 
     def decorator(f):
         # type: (Callable[..., Any]) -> Callable[..., Any]
@@ -365,9 +360,8 @@ def _find_icacls_exe():
 
 def set_write_bit(fn):
     # type: (str) -> None
-    """
-    Set read-write permissions for the current user on the target path.  Fail silently
-    if the path doesn't exist.
+    """Set read-write permissions for the current user on the target path. Fail
+    silently if the path doesn't exist.
 
     :param str fn: The target filename or path
     :return: None
@@ -389,9 +383,9 @@ def set_write_bit(fn):
             c = run(
                 [
                     icacls_exe,
-                    "''{0}''".format(fn),
+                    "''{}''".format(fn),
                     "/grant",
-                    "{0}:WD".format(user_sid),
+                    "{}:WD".format(user_sid),
                     "/T",
                     "/C",
                     "/Q",
@@ -418,8 +412,7 @@ def set_write_bit(fn):
 
 def rmtree(directory, ignore_errors=False, onerror=None):
     # type: (str, bool, Optional[Callable]) -> None
-    """
-    Stand-in for :func:`~shutil.rmtree` with additional error-handling.
+    """Stand-in for :func:`~shutil.rmtree` with additional error-handling.
 
     This version of `rmtree` handles read-only paths, especially in the case of index
     files written by certain source control systems.
@@ -438,7 +431,7 @@ def rmtree(directory, ignore_errors=False, onerror=None):
         onerror = handle_remove_readonly
     try:
         shutil.rmtree(directory, ignore_errors=ignore_errors, onerror=onerror)
-    except (IOError, OSError, FileNotFoundError, PermissionError) as exc:
+    except (IOError, OSError, FileNotFoundError, PermissionError) as exc:  # noqa:B014
         # Ignore removal failures where the file doesn't exist
         if exc.errno != errno.ENOENT:
             raise
@@ -446,8 +439,7 @@ def rmtree(directory, ignore_errors=False, onerror=None):
 
 def _wait_for_files(path):  # pragma: no cover
     # type: (Union[str, TPath]) -> Optional[List[TPath]]
-    """
-    Retry with backoff up to 1 second to delete files from a directory.
+    """Retry with backoff up to 1 second to delete files from a directory.
 
     :param str path: The path to crawl to delete files from
     :return: A list of remaining paths or None
@@ -469,7 +461,7 @@ def _wait_for_files(path):  # pragma: no cover
         except FileNotFoundError as e:
             if e.errno == errno.ENOENT:
                 return
-        except (OSError, IOError, PermissionError):
+        except (OSError, IOError, PermissionError):  # noqa:B014
             time.sleep(timeout)
             timeout *= 2
             remaining.append(path)
@@ -504,7 +496,7 @@ def handle_remove_readonly(func, path, exc):
         set_write_bit(path)
         try:
             func(path)
-        except (
+        except (  # noqa:B014
             OSError,
             IOError,
             FileNotFoundError,
@@ -527,7 +519,7 @@ def handle_remove_readonly(func, path, exc):
         remaining = _wait_for_files(path)
         try:
             func(path)
-        except (OSError, IOError, FileNotFoundError, PermissionError) as e:
+        except (OSError, IOError, FileNotFoundError, PermissionError) as e:  # noqa:B014
             if e.errno in PERM_ERRORS:
                 if e.errno != errno.ENOENT:  # File still exists
                     warnings.warn(default_warning_message.format(path), ResourceWarning)
@@ -539,6 +531,7 @@ def handle_remove_readonly(func, path, exc):
 def walk_up(bottom):
     # type: (Union[TPath, str]) -> Generator[Tuple[str, List[str], List[str]], None, None]
     """Mimic os.walk, but walk 'up' instead of down the directory tree.
+
     From: https://gist.github.com/zdavkeos/1098474
     """
     bottom = os.path.realpath(str(bottom))
@@ -567,7 +560,7 @@ def walk_up(bottom):
 
 def check_for_unc_path(path):
     # type: (Path) -> bool
-    """ Checks to see if a pathlib `Path` object is a unc path or not"""
+    """Checks to see if a pathlib `Path` object is a unc path or not."""
     if (
         os.name == "nt"
         and len(path.drive) > 2
@@ -637,8 +630,7 @@ def get_converted_relative_path(path, relative_to=None):
 
 def safe_expandvars(value):
     # type: (TPath) -> str
-    """Call os.path.expandvars if value is a string, otherwise do nothing.
-    """
+    """Call os.path.expandvars if value is a string, otherwise do nothing."""
     if isinstance(value, six.string_types):
         return os.path.expandvars(value)
     return value  # type: ignore

@@ -67,7 +67,6 @@ def test_safe_expandvars():
 
 
 @given(paths(), paths())
-@example(base_dir="0", subdir="\x80")
 @settings(suppress_health_check=(HealthCheck.filter_too_much,), deadline=None)
 def test_mkdir_p(base_dir, subdir):
     # base_dir_path = base_dir._value if isinstance(base_dir, _PathLike) else base_dir
@@ -80,10 +79,7 @@ def test_mkdir_p(base_dir, subdir):
     #     subdir_path = vistir.compat.fs_decode(subdir_path)
     assume(
         not any(
-            (
-                dir_name in ["", ".", "./", ".."]
-                for dir_name in [base_dir_path, subdir_path]
-            )
+            dir_name in ["", ".", "./", ".."] for dir_name in [base_dir_path, subdir_path]
         )
     )
     assume(not (os.path.relpath(subdir_path, start=base_dir_path) == "."))
@@ -111,7 +107,6 @@ def test_mkdir_p(base_dir, subdir):
 
 
 @given(paths(), paths())
-@example(base_dir="0", subdir="\x80")
 @settings(suppress_health_check=(HealthCheck.filter_too_much,), deadline=None)
 def test_ensure_mkdir_p(base_dir, subdir):
     # base_dir_path = base_dir._value if isinstance(base_dir, _PathLike) else base_dir
@@ -124,10 +119,7 @@ def test_ensure_mkdir_p(base_dir, subdir):
     #     subdir_path = vistir.compat.fs_decode(subdir_path)
     assume(
         not any(
-            (
-                dir_name in ["", ".", "./", ".."]
-                for dir_name in [base_dir_path, subdir_path]
-            )
+            dir_name in ["", ".", "./", ".."] for dir_name in [base_dir_path, subdir_path]
         )
     )
     assume(not (os.path.relpath(subdir_path, start=base_dir_path) == "."))

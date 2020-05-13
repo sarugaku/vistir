@@ -124,7 +124,7 @@ if six.PY2:  # pragma: no cover
         pass
 
     class FileNotFoundError(IOError):
-        """No such file or directory"""
+        """No such file or directory."""
 
         def __init__(self, *args, **kwargs):
             self.errno = errno.ENOENT
@@ -143,7 +143,7 @@ if six.PY2:  # pragma: no cover
             super(TimeoutError, self).__init__(*args, **kwargs)
 
     class IsADirectoryError(OSError):
-        """The command does not work on directories"""
+        """The command does not work on directories."""
 
         def __init__(self, *args, **kwargs):
             self.errno = errno.EISDIR
@@ -243,7 +243,7 @@ class TemporaryDirectory(object):
 
 
 def is_bytes(string):
-    """Check if a string is a bytes instance
+    """Check if a string is a bytes instance.
 
     :param Union[str, bytes] string: A string that may be string or bytes like
     :return: Whether the provided string is a bytes type or not
@@ -257,7 +257,7 @@ def is_bytes(string):
 
 
 def fs_str(string):
-    """Encodes a string into the proper filesystem encoding
+    """Encodes a string into the proper filesystem encoding.
 
     Borrowed from pip-tools
     """
@@ -269,8 +269,7 @@ def fs_str(string):
 
 
 def _get_path(path):
-    """
-    Fetch the string value from a path-like object
+    """Fetch the string value from a path-like object.
 
     Returns **None** if there is no string value.
     """
@@ -354,8 +353,7 @@ def _chunks(b, indexes):
 
 
 def fs_encode(path):
-    """
-    Encode a filesystem path to the proper filesystem encoding
+    """Encode a filesystem path to the proper filesystem encoding.
 
     :param Union[str, bytes] path: A string-like path
     :returns: A bytes-encoded filesystem path representation
@@ -379,8 +377,7 @@ def fs_encode(path):
 
 
 def fs_decode(path):
-    """
-    Decode a filesystem path using the proper filesystem encoding
+    """Decode a filesystem path using the proper filesystem encoding.
 
     :param path: The filesystem path to decode from bytes or string
     :return: The filesystem path, decoded with the determined encoding
@@ -408,12 +405,12 @@ def fs_decode(path):
 if sys.version_info[0] < 3:  # pragma: no cover
     _fs_encode_errors = "surrogateescape"
     _fs_decode_errors = "surrogateescape"
-    _fs_encoding = "utf-8"
+    _fs_encoding = sys.getfilesystemencoding()
 else:  # pragma: no cover
     _fs_encoding = "utf-8"
     if sys.platform.startswith("win"):
         _fs_error_fn = None
-        if sys.version_info[:2] > (3, 4):
+        if sys.version_info[:2] > (3, 5):
             alt_strategy = "surrogatepass"
         else:
             alt_strategy = "surrogateescape"

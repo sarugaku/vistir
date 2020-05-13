@@ -100,6 +100,12 @@ def test_get_stream_results():
             self.stdout = stdout
             self.stderr = stderr
 
+        def poll(self):
+            return 0
+
+        def wait(self):
+            return 0
+
     stdout_buffer = six.StringIO()
     stderr_buffer = six.StringIO()
     test_line = (
@@ -110,10 +116,10 @@ def test_get_stream_results():
     stdout_buffer.write(test_line)
     stdout_buffer.seek(0)
     cmd_instance = MockCmd(stdout=stdout_buffer, stderr=stderr_buffer)
-    instance, results = vistir.misc.get_stream_results(
+    instance = vistir.misc.attach_stream_reader(
         cmd_instance, False, 50, spinner=None, stdout_allowed=False
     )
-    assert results["stdout"] == [test_line.strip()], results
+    assert instance.text_stdout_lines == [test_line.strip()], instance.text_stdout_lines
 
 
 def test_run():
