@@ -1,3 +1,14 @@
+0.5.1 (2020-05-14)
+==================
+
+Bug Fixes
+---------
+
+- Fixed an issue which caused failures when calling ``contextmanagers.atomic_open_for_write`` due to assumed permission to call ``chmod`` which may not always be possible.  `#110 <https://github.com/sarugaku/vistir/issues/110>`_
+  
+- Fixed several bugs with encoding of stream output on Windows and filesystem paths on OSX as well as Windows.  `#111 <https://github.com/sarugaku/vistir/issues/111>`_
+
+
 0.5.0 (2020-01-13)
 ==================
 
