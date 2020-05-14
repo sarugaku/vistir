@@ -120,7 +120,7 @@ def test_get_stream_results():
         cmd_instance, False, 50, spinner=None, stdout_allowed=False
     )
     assert instance.text_stdout_lines == [test_line.strip()], "\n".join(
-        ["{}: {}".format(k, v) for k, v in instance.__dict__]
+        ["{}: {}".format(k, v) for k, v in instance.__dict__.items()]
     )
 
 
