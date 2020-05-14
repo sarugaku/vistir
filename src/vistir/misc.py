@@ -1,6 +1,7 @@
 # -*- coding=utf-8 -*-
 from __future__ import absolute_import, print_function, unicode_literals
 
+import atexit
 import io
 import itertools
 import json
@@ -327,12 +328,10 @@ class SubprocessStreamWrapper(object):
 
     def wait(self, timeout=None):
         # type: (self, Optional[int]) -> Optional[int]
-        if self._subprocess.stdin and not self._subprocess.stdin.closed:
-            self._subprocess.stdin.close()
         kwargs = {}
         if sys.version_info[0] >= 3:
             kwargs = {"timeout": timeout}
-        result = self.subprocess.wait(**kwargs)
+        result = self._subprocess.wait(**kwargs)
         self.gather_output()
         return result
 
@@ -358,6 +357,13 @@ class SubprocessStreamWrapper(object):
     def stdout_closed(self):
         # type: () -> bool
         return self.stdout is None or (self.stdout is not None and self.stdout.closed)
+
+    @property
+    def running(self):
+        # type: () -> bool
+        return any(t.is_alive() for t in self._threads.values()) or not all(
+            [self.stderr_closed, self.stdout_closed, self.subprocess_finished]
+        )
 
     @property
     def subprocess_finished(self):
@@ -473,14 +479,8 @@ def attach_stream_reader(
 
 
 def _handle_nonblocking_subprocess(c, spinner=None):
-    # type: (subprocess.Popen, VistirSpinner) -> subprocess.Popen
-    try:
+    while c.running:
         c.wait()
-    finally:
-        if c.stdout and not c.stdout.closed:
-            c.stdout.close()
-        if c.stderr and not c.stderr.closed:
-            c.stderr.close()
     if spinner:
         if c.returncode != 0:
             spinner.fail(to_native_string("Failed...cleaning up..."))

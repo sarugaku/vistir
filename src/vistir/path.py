@@ -260,7 +260,7 @@ def is_readonly_path(fn):
     os.access(path, os.W_OK)`
     """
 
-    fn = fs_encode(fn)
+    fn = fs_decode(fs_encode(fn))
     if os.path.exists(fn):
         file_stat = os.stat(fn).st_mode
         return not bool(file_stat & stat.S_IWRITE) or not os.access(fn, os.W_OK)
@@ -275,7 +275,7 @@ def mkdir_p(newdir, mode=0o777):
     :param str newdir: The directory path to ensure
     :raises: OSError if a file is encountered along the way
     """
-    newdir = fs_encode(newdir)
+    newdir = fs_decode(fs_encode(newdir))
     if os.path.exists(newdir):
         if not os.path.isdir(newdir):
             raise OSError(
@@ -367,7 +367,7 @@ def set_write_bit(fn):
     :return: None
     """
 
-    fn = fs_encode(fn)
+    fn = fs_decode(fs_encode(fn))
     if not os.path.exists(fn):
         return
     file_stat = os.stat(fn).st_mode
@@ -426,7 +426,7 @@ def rmtree(directory, ignore_errors=False, onerror=None):
        Setting `ignore_errors=True` may cause this to silently fail to delete the path
     """
 
-    directory = fs_encode(directory)
+    directory = fs_decode(fs_encode(directory))
     if onerror is None:
         onerror = handle_remove_readonly
     try:

@@ -119,7 +119,9 @@ def test_get_stream_results():
     instance = vistir.misc.attach_stream_reader(
         cmd_instance, False, 50, spinner=None, stdout_allowed=False
     )
-    assert instance.text_stdout_lines == [test_line.strip()], instance.text_stdout_lines
+    assert instance.text_stdout_lines == [test_line.strip()], "\n".join(
+        ["{}: {}".format(k, v) for k, v in instance.__dict__]
+    )
 
 
 def test_run():

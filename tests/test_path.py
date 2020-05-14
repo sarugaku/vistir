@@ -79,24 +79,25 @@ def test_mkdir_p(base_dir, subdir):
     #     subdir_path = vistir.compat.fs_decode(subdir_path)
     assume(
         not any(
-            dir_name in ["", ".", "./", ".."] for dir_name in [base_dir_path, subdir_path]
+            dir_name in [u"", u".", u"./", u".."]
+            for dir_name in [base_dir_path, subdir_path]
         )
     )
-    assume(not (os.path.relpath(subdir_path, start=base_dir_path) == "."))
+    assume(not (os.path.relpath(subdir_path, start=base_dir_path) == u"."))
     assume(
         os.path.abspath(base_dir_path)
         != os.path.abspath(os.path.join(base_dir_path, subdir_path))
     )
-    total_len = len(
-        vistir.compat.fs_encode(os.path.join(os.path.abspath(base_dir_path), subdir_path))
-    )
-    assume(total_len <= 255)
     with vistir.compat.TemporaryDirectory() as temp_dir:
         temp_dirname = (
-            temp_dir.name
+            u"{}".format(temp_dir.name)
             if isinstance(base_dir_path, six.text_type)
-            else vistir.compat.fs_encode(temp_dir.name)
+            else vistir.compat.fs_encode(u"{}".format(temp_dir.name))
         )
+        joined_encoded_path = vistir.compat.fs_encode(
+            os.path.join(temp_dirname, base_dir_path, subdir_path)
+        )
+        assume(len(joined_encoded_path) <= 255)
         target = os.path.join(temp_dirname, base_dir_path, subdir_path)
         assume(
             vistir.path.abspathu(target)
@@ -109,34 +110,29 @@ def test_mkdir_p(base_dir, subdir):
 @given(paths(), paths())
 @settings(suppress_health_check=(HealthCheck.filter_too_much,), deadline=None)
 def test_ensure_mkdir_p(base_dir, subdir):
-    # base_dir_path = base_dir._value if isinstance(base_dir, _PathLike) else base_dir
-    # subdir_path = subdir._value if isinstance(subdir, _PathLike) else subdir
-    # assume(base_dir_path.strip() and subdir_path.strip())
     base_dir_path = base_dir
     subdir_path = subdir
-    # if not isinstance(base_dir, type(subdir_path)):
-    #     base_dir_path = vistir.compat.fs_decode(base_dir_path)
-    #     subdir_path = vistir.compat.fs_decode(subdir_path)
     assume(
         not any(
-            dir_name in ["", ".", "./", ".."] for dir_name in [base_dir_path, subdir_path]
+            dir_name in [u"", u".", u"./", u".."]
+            for dir_name in [base_dir_path, subdir_path]
         )
     )
-    assume(not (os.path.relpath(subdir_path, start=base_dir_path) == "."))
+    assume(not (os.path.relpath(subdir_path, start=base_dir_path) == u"."))
     assume(
         os.path.abspath(base_dir_path)
         != os.path.abspath(os.path.join(base_dir_path, subdir_path))
     )
-    total_len = len(
-        vistir.compat.fs_encode(os.path.join(os.path.abspath(base_dir_path), subdir_path))
-    )
-    assume(total_len <= 255)
     with vistir.compat.TemporaryDirectory() as temp_dir:
         temp_dirname = (
-            temp_dir.name
+            u"{}".format(temp_dir.name)
             if isinstance(temp_dir.name, type(base_dir_path))
-            else vistir.compat.fs_encode(temp_dir.name)
+            else vistir.compat.fs_encode(u"{}".format(temp_dir.name))
         )
+        joined_encoded_path = vistir.compat.fs_encode(
+            os.path.join(temp_dirname, base_dir_path, subdir_path)
+        )
+        assume(len(joined_encoded_path) <= 255)
 
         @vistir.path.ensure_mkdir_p(mode=0o777)
         def join_with_dir(_base_dir, _subdir, base=temp_dirname):
@@ -153,7 +149,7 @@ def test_ensure_mkdir_p(base_dir, subdir):
 @pytest.mark.xfail(raises=OSError)
 def test_mkdir_p_fails_when_path_exists(tmpdir):
     myfile = tmpdir.join("myfile")
-    myfile.write_text("some text", encoding="utf-8")
+    myfile.write_text(u"some text", encoding="utf-8")
     vistir.path.mkdir_p(myfile.strpath)
 
 
@@ -163,7 +159,7 @@ def test_create_tracked_tempdir(tmpdir):
     temp_dir = vistir.path.create_tracked_tempdir(prefix="test_dir", dir=subdir.strpath)
     assert os.path.basename(temp_dir).startswith("test_dir")
     with io.open(os.path.join(temp_dir, "test_file.txt"), "w") as fh:
-        fh.write("this is a test")
+        fh.write(u"this is a test")
     assert len(os.listdir(temp_dir)) > 0
 
 
@@ -184,7 +180,7 @@ def test_rmtree(tmpdir):
     """This will also test `handle_remove_readonly` and `set_write_bit`."""
     new_dir = tmpdir.join("test_dir").mkdir()
     new_file = new_dir.join("test_file.py")
-    new_file.write_text("some test text", encoding="utf-8")
+    new_file.write_text(u"some test text", encoding="utf-8")
     os.chmod(new_file.strpath, stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
     assert new_dir.exists()
     vistir.path.rmtree(new_dir.strpath)
@@ -194,7 +190,7 @@ def test_rmtree(tmpdir):
 def test_is_readonly_path(tmpdir):
     new_dir = tmpdir.join("some_dir").mkdir()
     new_file = new_dir.join("some_file.txt")
-    new_file.write_text("this is some text", encoding="utf-8")
+    new_file.write_text(u"this is some text", encoding="utf-8")
     assert not vistir.path.is_readonly_path(new_dir.strpath)
     assert not vistir.path.is_readonly_path(new_file.strpath)
     os.chmod(new_file.strpath, get_mode(new_file.strpath) & NON_WRITEABLE)
@@ -278,15 +274,15 @@ def test_normalize_drive(filepath):
 
 
 def test_walk_up(tmpdir):
-    tmpdir.join("test.txt").write_text("some random text", encoding="utf-8")
+    tmpdir.join("test.txt").write_text(u"some random text", encoding="utf-8")
     one_down = tmpdir.join("one_down").mkdir()
-    one_down.join("test.txt").write_text("some random text", encoding="utf-8")
-    one_down.join("test1.txt").write_text("some random text 2", encoding="utf-8")
-    one_down.join("test2.txt").write_text("some random text 3", encoding="utf-8")
+    one_down.join("test.txt").write_text(u"some random text", encoding="utf-8")
+    one_down.join("test1.txt").write_text(u"some random text 2", encoding="utf-8")
+    one_down.join("test2.txt").write_text(u"some random text 3", encoding="utf-8")
     two_down = one_down.join("two_down").mkdir()
-    two_down.join("test2.txt").write_text("some random text", encoding="utf-8")
-    two_down.join("test2_1.txt").write_text("some random text 2", encoding="utf-8")
-    two_down.join("test2_2.txt").write_text("some random text 3", encoding="utf-8")
+    two_down.join("test2.txt").write_text(u"some random text", encoding="utf-8")
+    two_down.join("test2_1.txt").write_text(u"some random text 2", encoding="utf-8")
+    two_down.join("test2_2.txt").write_text(u"some random text 3", encoding="utf-8")
     expected = (
         (
             os.path.abspath(two_down.strpath),
@@ -313,7 +309,7 @@ def test_walk_up(tmpdir):
 
 def test_handle_remove_readonly(tmpdir):
     test_file = tmpdir.join("test_file.txt")
-    test_file.write_text("a bunch of text", encoding="utf-8")
+    test_file.write_text(u"a bunch of text", encoding="utf-8")
     os.chmod(test_file.strpath, NON_WRITE_OR_EXEC)
     fake_oserror = OSError(13, "Permission denied")
     fake_oserror.filename = test_file.strpath

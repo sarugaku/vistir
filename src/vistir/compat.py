@@ -403,17 +403,15 @@ def fs_decode(path):
 
 
 if sys.version_info[0] < 3:  # pragma: no cover
-    _fs_encode_errors = "surrogateescape"
+    _fs_encode_errors = "surrogatepass" if sys.platform == "win32" else "surrogateescape"
     _fs_decode_errors = "surrogateescape"
-    _fs_encoding = sys.getfilesystemencoding()
+    _fs_encoding = "utf-8"
 else:  # pragma: no cover
     _fs_encoding = "utf-8"
+    _fs_decode_errors = "surrogateescape"
     if sys.platform.startswith("win"):
         _fs_error_fn = None
-        if sys.version_info[:2] > (3, 5):
-            alt_strategy = "surrogatepass"
-        else:
-            alt_strategy = "surrogateescape"
+        _fs_encode_errors = "surrogatepass"
     else:
         if sys.version_info >= (3, 3):
             _fs_encoding = sys.getfilesystemencoding()
@@ -421,8 +419,8 @@ else:  # pragma: no cover
                 _fs_encoding = sys.getdefaultencoding()
         alt_strategy = "surrogateescape"
         _fs_error_fn = getattr(sys, "getfilesystemencodeerrors", None)
-    _fs_encode_errors = _fs_error_fn() if _fs_error_fn else alt_strategy
-    _fs_decode_errors = _fs_error_fn() if _fs_error_fn else alt_strategy
+        _fs_encode_errors = _fs_error_fn() if _fs_error_fn else alt_strategy
+        _fs_decode_errors = _fs_error_fn() if _fs_error_fn else _fs_decode_errors
 
 _byte = chr if sys.version_info < (3,) else lambda i: bytes([i])
 
