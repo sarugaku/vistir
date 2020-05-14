@@ -1,6 +1,7 @@
 # -*- coding=utf-8 -*-
 from __future__ import absolute_import, print_function, unicode_literals
 
+import contextlib
 import importlib
 import io
 import os
@@ -20,6 +21,143 @@ if six.PY2:
     from mock import patch
 else:
     from unittest.mock import patch
+
+
+GUTENBERG_FILE = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "fixtures/gutenberg_document.txt"
+)
+
+
+def is_fp_closed(fp):
+    try:
+        return fp.isclosed()
+    except AttributeError:
+        pass
+    try:
+        return fp.closed
+    except AttributeError:
+        pass
+    try:
+        return fp.fp is None
+    except AttributeError:
+        pass
+    raise ValueError("could not find fp on object")
+
+
+class MockUrllib3Response(object):
+    def __init__(self, path):
+        self._fp = io.open(path, "rb")
+        self._fp_bytes_read = 0
+        self.auto_close = True
+        self.length_remaining = 799738
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args, **kwargs):
+        self.close()
+
+    def stream(self, amt=2 ** 16, decode_content=None):
+        while not is_fp_closed(self._fp):
+            data = self.read(amt=amt, decode_content=decode_content)
+            if data:
+                yield data
+
+    def close(self):
+        if not self.closed:
+            self._fp.close()
+
+    @property
+    def closed(self):
+        if not self.auto_close:
+            return io.IOBase.closed.__get__(self)
+        elif self._fp is None:
+            return True
+        elif hasattr(self._fp, "isclosed"):
+            return self._fp.isclosed()
+        elif hasattr(self._fp, "closed"):
+            return self._fp.closed
+        else:
+            return True
+
+    def fileno(self):
+        if self._fp is None:
+            raise IOError("HTTPResponse has no file to get a fileno from")
+        elif hasattr(self._fp, "fileno"):
+            return self._fp.fileno()
+        else:
+            raise IOError(
+                "The file-like object this HTTPResponse is wrapped "
+                "around has no file descriptor"
+            )
+
+    def readinto(self, b):
+        # This method is required for `io` module compatibility.
+        temp = self.read(len(b))
+        if len(temp) == 0:
+            return 0
+        else:
+            b[: len(temp)] = temp
+            return len(temp)
+
+    @property
+    def data(self):
+        if self._body:
+            return self._body
+        if self._fp:
+            return self.read(cache_content=True)
+
+    def read(self, amt=None, decode_content=None, cache_content=False):
+        if self._fp is None:
+            return
+        fp_closed = getattr(self._fp, "closed", False)
+        if amt is None:
+            # cStringIO doesn't like amt=None
+            data = self._fp.read() if not fp_closed else b""
+            flush_decoder = True
+        else:
+            cache_content = False
+            data = self._fp.read(amt) if not fp_closed else b""
+            if amt != 0 and not data:  # Platform-specific: Buggy versions of Python.
+                self._fp.close()
+
+        if data:
+            self._fp_bytes_read += len(data)
+            if self.length_remaining is not None:
+                self.length_remaining -= len(data)
+
+            if cache_content:
+                self._body = data
+
+        return data
+
+    def isclosed(self):
+        return is_fp_closed(self._fp)
+
+    def tell(self):
+        """
+        Obtain the number of bytes pulled over the wire so far. May differ from
+        the amount of content returned by :meth:``HTTPResponse.read`` if bytes
+        are encoded on the wire (e.g, compressed).
+        """
+        return self._fp_bytes_read
+
+    def __iter__(self):
+        buffer = []
+        for chunk in self.stream(decode_content=True):
+            if b"\n" in chunk:
+                chunk = chunk.split(b"\n")
+                yield b"".join(buffer) + chunk[0] + b"\n"
+                for x in chunk[1:-1]:
+                    yield x + b"\n"
+                if chunk[-1]:
+                    buffer = [chunk[-1]]
+                else:
+                    buffer = []
+            else:
+                buffer.append(chunk)
+        if buffer:
+            yield b"".join(buffer)
 
 
 def test_path():
@@ -52,7 +190,7 @@ def test_environ():
     assert os.environ.get("VISTIR_OTHER_KEY") is None
 
 
-def test_atomic_open(tmpdir):
+def test_atomic_open(tmpdir, monkeypatch):
     test_file = tmpdir.join("test_file.txt")
     replace_with_text = "new test text"
     test_file.write_text("some test text", encoding="utf-8")
@@ -64,6 +202,9 @@ def test_atomic_open(tmpdir):
             fh.write(new_text)
             raise RuntimeError("This should not overwrite the file")
 
+    def raise_oserror_on_chmod(path, mode, dir_fd=None, follow_symlinks=True):
+        raise OSError("No permission!")
+
     try:
         raise_exception_while_writing(test_file.strpath, replace_with_text)
     except RuntimeError:
@@ -74,6 +215,16 @@ def test_atomic_open(tmpdir):
         fh.write(replace_with_text)
     # make sure that we now have the new text in the file
     assert read_file(test_file.strpath) == replace_with_text
+    another_test_file = tmpdir.join("test_file_for_exceptions.txt")
+    another_test_file.write_text("original test text", encoding="utf-8")
+    more_text = "this is more test text"
+    with monkeypatch.context() as m:
+        m.setattr(os, "chmod", raise_oserror_on_chmod)
+        with vistir.contextmanagers.atomic_open_for_write(
+            another_test_file.strpath
+        ) as fh:
+            fh.write(more_text)
+        assert read_file(another_test_file.strpath) == more_text
 
 
 class MockLink(object):
@@ -99,6 +250,8 @@ class MockLink(object):
     ],
 )
 def test_open_file_without_requests(monkeypatch, tmpdir, stream, use_requests, use_link):
+    import six
+
     module_prefix = "__builtins__" if six.PY2 else "builtins"
     if six.PY3:
         bi = importlib.import_module(module_prefix)
@@ -120,15 +273,60 @@ def test_open_file_without_requests(monkeypatch, tmpdir, stream, use_requests, u
             "https://www2.census.gov/geo/tiger/GENZ2017/shp/cb_2017_02_tract_500k.zip"
         )
     else:
-        target_file = "https://www.gutenberg.org/files/1342/1342-0.txt"
+        target_file = "https://www.fakegutenberg.org/files/1342/1342-0.txt"
     if use_link:
         target_file = MockLink(target_file)
     filecontents = io.BytesIO(b"")
     module_name = "{0}.__import__".format(module_prefix)
-    with monkeypatch.context() as m:
+
+    @contextlib.contextmanager
+    def patch_context():
+        if not stream and use_requests:
+            import requests
+
+            with patch(
+                "requests.Session.get", return_value=MockUrllib3Response(GUTENBERG_FILE)
+            ):
+                yield
+        elif stream and not use_requests:
+            import six
+
+            if six.PY2:
+                import httplib
+
+                with patch(
+                    "httplib.HTTPSConnection.request",
+                    return_value=MockUrllib3Response(GUTENBERG_FILE),
+                ), patch(
+                    "urllib2.urlopen", return_value=MockUrllib3Response(GUTENBERG_FILE)
+                ):
+                    yield
+            else:
+                import http
+
+                with patch(
+                    "http.client.HTTPSConnection.request",
+                    return_value=MockUrllib3Response(GUTENBERG_FILE),
+                ), patch(
+                    "urllib.request.urlopen",
+                    return_value=MockUrllib3Response(GUTENBERG_FILE),
+                ):
+                    yield
+
+        else:
+            yield
+
+    with monkeypatch.context() as m, patch_context():
         if not use_requests:
             m.delitem(sys.modules, "requests", raising=False)
             m.delitem(sys.modules, "requests.sessions", raising=False)
+            import six.moves.urllib.request
+
+            def do_urlopen(*args, **kwargs):
+                return MockUrllib3Response(GUTENBERG_FILE)
+
+            m.setattr(six.moves.urllib.request, "urlopen", do_urlopen)
+
         if six.PY3:
             with patch(module_name, _import):
                 with vistir.contextmanagers.open_file(target_file, stream=stream) as fp:

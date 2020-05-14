@@ -29,11 +29,11 @@ def test_shell_escape():
     assert vistir.misc.shell_escape(appendscript) == u"cmd arg1"
     multicommand = u'bash -c "cd docs && make html"'
     assert vistir.misc.shell_escape(multicommand) == u'bash -c "cd docs && make html"'
-    escaped_python = u'"{0}" -c \'print("hello")\''.format(sys.executable)
+    escaped_python = u'"{}" -c \'print("hello")\''.format(sys.executable)
     if os.name == "nt" and " " in sys.executable:
-        expected = u'"{0}" -c print("hello")'.format(sys.executable)
+        expected = u'"{}" -c print("hello")'.format(sys.executable)
     else:
-        expected = u'{0} -c print("hello")'.format(sys.executable)
+        expected = u'{} -c print("hello")'.format(sys.executable)
     assert vistir.misc.shell_escape(escaped_python) == expected
 
 
@@ -100,6 +100,12 @@ def test_get_stream_results():
             self.stdout = stdout
             self.stderr = stderr
 
+        def poll(self):
+            return 0
+
+        def wait(self):
+            return 0
+
     stdout_buffer = six.StringIO()
     stderr_buffer = six.StringIO()
     test_line = (
@@ -110,15 +116,17 @@ def test_get_stream_results():
     stdout_buffer.write(test_line)
     stdout_buffer.seek(0)
     cmd_instance = MockCmd(stdout=stdout_buffer, stderr=stderr_buffer)
-    results = vistir.misc.get_stream_results(
+    instance = vistir.misc.attach_stream_reader(
         cmd_instance, False, 50, spinner=None, stdout_allowed=False
     )
-    assert results["stdout"] == [test_line.strip()], results
+    assert instance.text_stdout_lines == [test_line.strip()], "\n".join(
+        ["{}: {}".format(k, v) for k, v in instance.__dict__.items()]
+    )
 
 
 def test_run():
     out, err = vistir.misc.run(
-        [r"{0}".format(sys.executable), "-c", "print('hello')"], nospin=True
+        [r"{}".format(sys.executable), "-c", "print('hello')"], nospin=True
     )
     assert out == "hello"
     out, err = vistir.misc.run(
@@ -126,12 +134,12 @@ def test_run():
     )
     assert any(
         error_text in err for error_text in ["ImportError", "ModuleNotFoundError"]
-    ), "{0} => {1}".format(out, err)
+    ), "{} => {}".format(out, err)
 
 
 def test_run_return_subprocess():
     c = vistir.misc.run(
-        [r"{0}".format(sys.executable), "-c", "print('test')"],
+        [r"{}".format(sys.executable), "-c", "print('test')"],
         return_object=True,
         nospin=True,
     )
@@ -152,8 +160,8 @@ def test_run_failing_subprocess(capsys):
 
 def test_run_with_long_output():
     long_str = "this is a very long string which exceeds the maximum length per the settings we are passing in to vistir"
-    print_cmd = "import time; print('{0}'); time.sleep(2)".format(long_str)
-    run_args = [r"{0}".format(sys.executable), "-c", print_cmd]
+    print_cmd = "import time; print('{}'); time.sleep(2)".format(long_str)
+    run_args = [r"{}".format(sys.executable), "-c", print_cmd]
     c = vistir.misc.run(
         run_args, block=False, display_limit=100, nospin=True, return_object=True
     )
@@ -184,7 +192,7 @@ def test_run_with_long_output():
 
 def test_nonblocking_run():
     c = vistir.misc.run(
-        [r"{0}".format(sys.executable), "--help"],
+        [r"{}".format(sys.executable), "--help"],
         block=False,
         return_object=True,
         nospin=True,
@@ -193,7 +201,7 @@ def test_nonblocking_run():
     c.wait()
     assert "PYTHONDONTWRITEBYTECODE" in c.out, c.out
     out, _ = vistir.misc.run(
-        [r"{0}".format(sys.executable), "--help"], block=False, nospin=True
+        [r"{}".format(sys.executable), "--help"], block=False, nospin=True
     )
     assert "PYTHONDONTWRITEBYTECODE" in out, out
 
@@ -242,7 +250,7 @@ def test_to_bytes(as_text, as_bytes, encoding):
 
 @given(legal_path_chars())
 def test_decode_encode(path):
-    assert vistir.misc.to_text(vistir.misc.to_bytes(path)) == u"{0}".format(path)
+    assert vistir.misc.to_text(vistir.misc.to_bytes(path)) == u"{}".format(path)
 
 
 @pytest.mark.parametrize(
@@ -257,7 +265,7 @@ def test_wrapped_stream(test_str):
             err_text = r"a bytes-like object is required, not*"
     else:
         err_text = r".*does not have the buffer interface.*"
-    with pytest.raises(TypeError, match=u"{0}".format(err_text)):
+    with pytest.raises(TypeError, match=u"{}".format(err_text)):
         stream.write(test_str)
     wrapped_stream = vistir.misc.get_wrapped_stream(
         stream, encoding="utf-8", errors="surrogateescape"

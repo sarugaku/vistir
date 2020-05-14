@@ -1,15 +1,14 @@
 # -*- coding=utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 
+import codecs
 import os
-
 from collections import namedtuple
 
 from hypothesis import strategies as st
 from six.moves.urllib import parse as urllib_parse
 
 from vistir.misc import to_text
-
 
 parsed_url = namedtuple("ParsedUrl", "scheme netloc path params query fragment")
 parsed_url.__new__.__defaults__ = ("", "", "", "", "", "")
@@ -94,20 +93,29 @@ def legal_path_chars():
     blacklist = ["/"]
     if os.name == "nt":
         blacklist.extend(["<", ">", ":", '"', "\\", "|", "?", "*"])
-    return (
-        st.text(
-            st.characters(
-                blacklist_characters=blacklist,
-                blacklist_categories=("Cs",),
-                min_codepoint=32,
-            ),
-            min_size=0,
-            max_size=64,
-        )
-        .filter(lambda s: not any(s.endswith(c) for c in [".", "/", "./", "/.", " "]))
-        .filter(lambda s: not s.startswith("/"))
-        .filter(lambda s: s not in ["", ".", "./", ".."])
+    return st.text(
+        st.characters(
+            blacklist_characters=blacklist, blacklist_categories=("C",), min_codepoint=32,
+        ),
+        min_size=1,
+        max_size=10,
     )
+
+
+def path_strategy():
+    return (
+        st.lists(legal_path_chars(), min_size=1, max_size=200)
+        .map("".join)
+        .filter(lambda s: not any(s.endswith(c) for c in [".", "..", " "]))
+        .filter(lambda s: not s.startswith(" "))
+        .filter(lambda s: len(s) < 255)
+    )
+
+
+@st.composite
+def paths(draw, path=path_strategy()):
+    path_part = draw(path)
+    return path_part
 
 
 def relative_paths():
