@@ -1,0 +1,1 @@
+Fixed several bugs with encoding of stream output on Windows and filesystem paths on OSX as well as Windows.
