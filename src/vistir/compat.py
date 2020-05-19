@@ -81,7 +81,7 @@ if sys.version_info >= (3, 4):  # pragma: no cover
         MutableSequence,
         Callable,
     )
-    from os import samefile
+    from os.path import samefile
 
 else:  # pragma: no cover
     # Only Python 2.7 is supported
@@ -113,7 +113,7 @@ else:  # pragma: no cover
     from backports.weakref import finalize  # type: ignore
 
     try:
-        from os import samefile
+        from os.path import samefile
     except ImportError:
 
         def samestat(s1, s2):
