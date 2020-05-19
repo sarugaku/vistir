@@ -1,0 +1,1 @@
+``vistir.compat`` now includes a backport of ``os.path.samefile`` for use on Windows on python 2.7.
