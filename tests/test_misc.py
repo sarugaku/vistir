@@ -147,6 +147,7 @@ def test_run_return_subprocess():
     assert c.out.strip() == "test"
 
 
+@pytest.mark.flaky(reruns=5)
 def test_run_failing_subprocess(capsys):
     c = vistir.misc.run(
         ["fakecommandthatdoesntexist", "fake", "argument"],
@@ -158,6 +159,7 @@ def test_run_failing_subprocess(capsys):
     assert "FAIL" in out
 
 
+@pytest.mark.flaky(reruns=5)
 def test_run_with_long_output():
     long_str = "this is a very long string which exceeds the maximum length per the settings we are passing in to vistir"
     print_cmd = "import time; print('{}'); time.sleep(2)".format(long_str)
@@ -190,6 +192,7 @@ def test_run_with_long_output():
     assert c.out == long_str
 
 
+@pytest.mark.flaky(reruns=5)
 def test_nonblocking_run():
     c = vistir.misc.run(
         [r"{}".format(sys.executable), "--help"],
