@@ -29,7 +29,7 @@ on:
     - '.editorconfig'
 
 jobs:
-  build:
+  test:
     name: ${{matrix.os}} / ${{ matrix.python-version }}
     runs-on: ${{ matrix.os }}-latest
     strategy:
