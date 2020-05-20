@@ -1,3 +1,12 @@
+0.5.2 (2020-05-20)
+==================
+
+Features
+--------
+
+- ``vistir.compat`` now includes a backport of ``os.path.samefile`` for use on Windows on python 2.7.  `#112 <https://github.com/sarugaku/vistir/issues/112>`_
+
+
 0.5.1 (2020-05-14)
 ==================
 
