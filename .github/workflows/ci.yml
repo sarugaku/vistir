@@ -73,7 +73,7 @@ jobs:
         git submodule update --init --recursive
         python -m pip install pipenv --pre --upgrade
         python -m pipenv install --dev --python=${{ steps.python-path.outputs.path }}
-        pipenv run coverage run -m pytest -p no:xdist -ra tests/
+        python -m pipenv run coverage run -m pytest -p no:xdist -ra tests/
         coveralls
 
   coveralls-complete:
