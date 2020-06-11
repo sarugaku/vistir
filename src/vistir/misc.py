@@ -155,6 +155,7 @@ def _spawn_subprocess(
     block=True,  # type: bool
     cwd=None,  # type: Optional[Union[str, Path]]
     combine_stderr=True,  # type: bool
+    encoding="utf-8",  # type: str
 ):
     # type: (...) -> subprocess.Popen
     from distutils.spawn import find_executable
@@ -170,7 +171,7 @@ def _spawn_subprocess(
         "shell": False,
     }
     if sys.version_info[:2] > (3, 5):
-        options.update({"universal_newlines": True, "encoding": "utf-8"})
+        options.update({"universal_newlines": True, "encoding": encoding})
     elif os.name != "nt":
         options["universal_newlines"] = True
     if not block:
@@ -506,12 +507,18 @@ def _create_subprocess(
     display_limit=200,
     start_text="",
     write_to_stdout=True,
+    encoding="utf-8",
 ):
     if not env:
         env = os.environ.copy()
     try:
         c = _spawn_subprocess(
-            cmd, env=env, block=block, cwd=cwd, combine_stderr=combine_stderr
+            cmd,
+            env=env,
+            block=block,
+            cwd=cwd,
+            combine_stderr=combine_stderr,
+            encoding=encoding,
         )
     except Exception as exc:  # pragma: no cover
         import traceback
@@ -561,6 +568,7 @@ def run(
     combine_stderr=True,
     display_limit=200,
     write_to_stdout=True,
+    encoding="utf-8",
 ):
     """Use `subprocess.Popen` to get the output of a command and decode it.
 
@@ -626,6 +634,7 @@ def run(
             combine_stderr=combine_stderr,
             start_text=start_text,
             write_to_stdout=write_to_stdout,
+            encoding=encoding,
         )
 
 
