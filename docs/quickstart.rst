@@ -120,7 +120,7 @@ Shims are provided for full API compatibility from python 2.7 through 3.7 for th
     * :exc:`~vistir.compat.IsADirectoryError`
 
 The following additional function is provided for encoding strings to the filesystem
-defualt encoding:
+default encoding:
 
     * :func:`~vistir.compat.fs_str`
     * :func:`~vistir.compat.to_native_string`

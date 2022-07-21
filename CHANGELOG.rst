@@ -305,7 +305,7 @@ Features
 Features
 --------
 
-- Added suport for coverage and tox builds.  `#2 <https://github.com/sarugaku/vistir/issues/2>`_
+- Added support for coverage and tox builds.  `#2 <https://github.com/sarugaku/vistir/issues/2>`_
 
 - Enhanced subprocess runner to reproduce the behavior of pipenv's subprocess runner.  `#4 <https://github.com/sarugaku/vistir/issues/4>`_
 

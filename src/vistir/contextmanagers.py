@@ -322,7 +322,7 @@ def open_file(
         try:
             link = link.url_without_fragment
         except AttributeError:
-            raise ValueError("Cannot parse url from unkown type: {0!r}".format(link))
+            raise ValueError("Cannot parse url from unknown type: {0!r}".format(link))
 
     if not is_valid_url(link) and os.path.exists(link):
         link = path_to_url(link)
