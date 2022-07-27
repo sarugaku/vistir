@@ -98,7 +98,7 @@ def _render_log():
         False,  # Don't add newlines to wrapped text.
         {
             "name": "vistir",
-            "version": "0.5.3",
+            "version": "0.5.4",
             "date": "2022-7-27",
         },  # towncrier==19.9.0
     )
