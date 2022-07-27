@@ -96,6 +96,11 @@ def _render_log():
         definitions,
         config["underlines"][1:],
         False,  # Don't add newlines to wrapped text.
+        {
+            "name": "vistir",
+            "version": "0.5.3",
+            "date": "2022-7-27",
+        },  # towncrier==19.9.0
     )
     return rendered
 
