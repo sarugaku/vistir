@@ -2,3 +2,5 @@
 * Add test runner for Python 3.9
 * remove reference to distutils
 * Update ``vistir`` Pipfile.lock after pinning ``pytest`` to prior working version
+* Remove ``pytype`` from the lock file as it was faiing to install
+* Remove ``coveralls`` from the CI
