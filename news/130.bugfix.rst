@@ -1,4 +1,4 @@
 * Remove unsupported test runners for Python 2.7, 3.5 and 3.6
-* Add test runner for Python 3.9 and 3.10
+* Add test runner for Python 3.9
 * remove reference to distutils
 * Update ``vistir`` Pipfile.lock after pinning ``pytest`` to prior working version
