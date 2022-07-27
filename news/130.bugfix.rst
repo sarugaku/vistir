@@ -4,3 +4,4 @@
 * Update ``vistir`` Pipfile.lock after pinning ``pytest`` to prior working version
 * Remove ``pytype`` from the lock file as it was faiing to install
 * Remove ``coveralls`` from the CI
+* Remove Azure pipelines
