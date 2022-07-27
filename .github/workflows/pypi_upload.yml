@@ -15,11 +15,7 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v1
-
-    - uses: webfactory/ssh-agent@v0.1.1
-      with:
-        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+      uses: actions/checkout@v2
 
     - name: Create Release
       id: create_release
@@ -33,7 +29,7 @@ jobs:
         prerelease: false
 
     - name: Set up Python 3.7
-      uses: actions/setup-python@v1
+      uses: actions/setup-python@v2
       with:
         python-version: 3.7
 
@@ -57,4 +53,9 @@ jobs:
         git config --local user.email action@github.com
         python -m pipenv run inv bump-version -t dev
         git commit -am 'pre-bump'
-        git push git@github.com:${{ github.repository }}.git HEAD:master
+
+    - name: Push changes
+      uses: ad-m/github-push-action@master
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+	branch: main
