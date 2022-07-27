@@ -158,11 +158,11 @@ def _spawn_subprocess(
     encoding="utf-8",  # type: str
 ):
     # type: (...) -> subprocess.Popen
-    from distutils.spawn import find_executable
+    from shutil import which
 
     if not env:
         env = os.environ.copy()
-    command = find_executable(script.command)
+    command = which(script.command)
     options = {
         "env": env,
         "universal_newlines": True,
@@ -577,7 +577,7 @@ def run(
     :param bool return_object: When True, returns the whole subprocess instance
     :param bool block: When False, returns a potentially still-running
         :class:`subprocess.Popen` instance
-    :param str cwd: Current working directory contect to use for spawning the subprocess.
+    :param str cwd: Current working directory context to use for spawning the subprocess.
     :param bool verbose: Whether to print stdout in real time when non-blocking.
     :param bool nospin: Whether to disable the cli spinner.
     :param str spinner_name: The name of the spinner to use if enabled, defaults to
@@ -590,7 +590,7 @@ def run(
         defaults to True.
     :returns: A 2-tuple of (output, error) or a :class:`subprocess.Popen` object.
 
-    .. Warning:: Merging standard out and standarad error in a nonblocking subprocess
+    .. Warning:: Merging standard out and standard error in a nonblocking subprocess
         can cause errors in some cases and may not be ideal. Consider disabling
         this functionality.
     """
