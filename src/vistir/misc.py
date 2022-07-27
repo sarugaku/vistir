@@ -157,11 +157,11 @@ def _spawn_subprocess(
     combine_stderr=True,  # type: bool
 ):
     # type: (...) -> subprocess.Popen
-    import shutil.which as swhich
+    from shutil import which
 
     if not env:
         env = os.environ.copy()
-    command = swhich(script.command)
+    command = which(script.command)
     options = {
         "env": env,
         "universal_newlines": True,
