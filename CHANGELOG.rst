@@ -1,3 +1,20 @@
+0.5.3 (2022-07-27)
+==================
+
+Bug Fixes
+---------
+
+- Fix bug where ``rmtree`` fails in non ``utf-8`` system.  `#116 <https://github.com/sarugaku/vistir/issues/116>`_
+  
+- * Remove unsupported test runners for Python 2.7, 3.5 and 3.6
+  * Add test runner for Python 3.9
+  * remove reference to distutils
+  * Update ``vistir`` Pipfile.lock after pinning ``pytest`` to prior working version
+  * Remove ``pytype`` from the lock file as it was faiing to install
+  * Remove ``coveralls`` from the CI
+  * Remove Azure pipelines  `#130 <https://github.com/sarugaku/vistir/issues/130>`_
+
+
 0.5.2 (2020-05-20)
 ==================
 
