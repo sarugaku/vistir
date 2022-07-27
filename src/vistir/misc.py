@@ -157,11 +157,11 @@ def _spawn_subprocess(
     combine_stderr=True,  # type: bool
 ):
     # type: (...) -> subprocess.Popen
-    from distutils.spawn import find_executable
+    import shutil.which as swhich
 
     if not env:
         env = os.environ.copy()
-    command = find_executable(script.command)
+    command = swhich(script.command)
     options = {
         "env": env,
         "universal_newlines": True,
