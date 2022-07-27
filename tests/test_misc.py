@@ -3,6 +3,7 @@ from __future__ import absolute_import, print_function
 
 import io
 import itertools
+import locale
 import os
 import sys
 
@@ -154,6 +155,7 @@ def test_run_failing_subprocess(capsys):
         nospin=True,
         return_object=True,
         block=False,
+        encoding=locale.getpreferredencoding(),
     )
     out, err = capsys.readouterr()
     assert "FAIL" in out
