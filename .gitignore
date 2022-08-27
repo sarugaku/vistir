@@ -115,3 +115,5 @@ venv.bak/
 # Random caches
 pip-wheel-metadata/
 XDG_CACHE_HOME/
+
+*.sw[o,p]

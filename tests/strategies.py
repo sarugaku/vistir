@@ -6,7 +6,7 @@ import os
 from collections import namedtuple
 
 from hypothesis import strategies as st
-from six.moves.urllib import parse as urllib_parse
+from urllib import parse as urllib_parse
 
 from vistir.misc import to_text
 

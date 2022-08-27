@@ -7,8 +7,6 @@ import os
 import sys
 from tempfile import _bin_openflags, _mkstemp_inner, gettempdir
 
-import six
-
 try:
     from weakref import finalize
 except ImportError:
@@ -43,7 +41,7 @@ except ImportError:
     def _infer_return_type(*args):
         _types = set()
         for arg in args:
-            if isinstance(type(arg), six.string_types):
+            if isinstance(type(arg), str):
                 _types.add(str)
             elif isinstance(type(arg), bytes):
                 _types.add(bytes)
@@ -181,54 +179,3 @@ class _TemporaryFileWrapper:
         # closed when the generator is finalized, due to PEP380 semantics.
         for line in self.file:
             yield line
-
-
-def NamedTemporaryFile(
-    mode="w+b",
-    buffering=-1,
-    encoding=None,
-    newline=None,
-    suffix=None,
-    prefix=None,
-    dir=None,
-    delete=True,
-    wrapper_class_override=None,
-):
-    """Create and return a temporary file.
-    Arguments:
-    'prefix', 'suffix', 'dir' -- as for mkstemp.
-    'mode' -- the mode argument to io.open (default "w+b").
-    'buffering' -- the buffer size argument to io.open (default -1).
-    'encoding' -- the encoding argument to io.open (default None)
-    'newline' -- the newline argument to io.open (default None)
-    'delete' -- whether the file is deleted on close (default True).
-    The file is created as mkstemp() would do it.
-    Returns an object with a file-like interface; the name of the file
-    is accessible as its 'name' attribute.  The file will be automatically
-    deleted when it is closed unless the 'delete' argument is set to False.
-    """
-    prefix, suffix, dir, output_type = _sanitize_params(prefix, suffix, dir)
-    flags = _bin_openflags
-    # Setting O_TEMPORARY in the flags causes the OS to delete
-    # the file when it is closed.  This is only supported by Windows.
-    if not wrapper_class_override:
-        wrapper_class_override = _TemporaryFileWrapper
-    if os.name == "nt" and delete:
-        flags |= os.O_TEMPORARY
-    if sys.version_info < (3, 5):
-        (fd, name) = _mkstemp_inner(dir, prefix, suffix, flags)
-    else:
-        (fd, name) = _mkstemp_inner(dir, prefix, suffix, flags, output_type)
-    try:
-        file = io.open(fd, mode, buffering=buffering, newline=newline, encoding=encoding)
-        if wrapper_class_override is not None:
-            return type(str("_TempFileWrapper"), (wrapper_class_override, object), {})(
-                file, name, delete
-            )
-        else:
-            return _TemporaryFileWrapper(file, name, delete)
-
-    except BaseException:
-        os.unlink(name)
-        os.close(fd)
-        raise

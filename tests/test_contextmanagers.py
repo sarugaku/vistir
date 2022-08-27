@@ -10,17 +10,12 @@ import sys
 import warnings
 
 import pytest
-import six
 
 import vistir
 
 from .utils import read_file
 
-if six.PY2:
-    ResourceWarning = RuntimeWarning
-    from mock import patch
-else:
-    from unittest.mock import patch
+from unittest.mock import patch
 
 
 GUTENBERG_FILE = os.path.join(
@@ -250,15 +245,11 @@ class MockLink(object):
     ],
 )
 def test_open_file_without_requests(monkeypatch, tmpdir, stream, use_requests, use_link):
-    import six
 
-    module_prefix = "__builtins__" if six.PY2 else "builtins"
-    if six.PY3:
-        bi = importlib.import_module(module_prefix)
-        import_func = bi.__import__
-        del bi
-    else:
-        import_func = __builtins__["__import__"]
+    module_prefix = "builtins"
+    bi = importlib.import_module(module_prefix)
+    import_func = bi.__import__
+    del bi
 
     def _import(name, globals=None, locals=None, fromlist=(), level=0):
         if not use_requests and name.startswith("requests"):
@@ -289,29 +280,17 @@ def test_open_file_without_requests(monkeypatch, tmpdir, stream, use_requests, u
             ):
                 yield
         elif stream and not use_requests:
-            import six
 
-            if six.PY2:
-                import httplib
+            import http
 
-                with patch(
-                    "httplib.HTTPSConnection.request",
-                    return_value=MockUrllib3Response(GUTENBERG_FILE),
-                ), patch(
-                    "urllib2.urlopen", return_value=MockUrllib3Response(GUTENBERG_FILE)
-                ):
-                    yield
-            else:
-                import http
-
-                with patch(
-                    "http.client.HTTPSConnection.request",
-                    return_value=MockUrllib3Response(GUTENBERG_FILE),
-                ), patch(
-                    "urllib.request.urlopen",
-                    return_value=MockUrllib3Response(GUTENBERG_FILE),
-                ):
-                    yield
+            with patch(
+                "http.client.HTTPSConnection.request",
+                return_value=MockUrllib3Response(GUTENBERG_FILE),
+            ), patch(
+                "urllib.request.urlopen",
+                return_value=MockUrllib3Response(GUTENBERG_FILE),
+            ):
+                yield
 
         else:
             yield
@@ -320,27 +299,19 @@ def test_open_file_without_requests(monkeypatch, tmpdir, stream, use_requests, u
         if not use_requests:
             m.delitem(sys.modules, "requests", raising=False)
             m.delitem(sys.modules, "requests.sessions", raising=False)
-            import six.moves.urllib.request
+            import urllib.request
 
             def do_urlopen(*args, **kwargs):
                 return MockUrllib3Response(GUTENBERG_FILE)
+            
+            m.setattr(urllib.request, "urlopen", do_urlopen)
 
-            m.setattr(six.moves.urllib.request, "urlopen", do_urlopen)
-
-        if six.PY3:
-            with patch(module_name, _import):
-                with vistir.contextmanagers.open_file(target_file, stream=stream) as fp:
-                    if stream:
-                        shutil.copyfileobj(fp, filecontents)
-                    else:
-                        filecontents.write(fp.read())
-        else:
-            with patch.dict("vistir.contextmanagers.__builtins__", __import__=_import):
-                with vistir.contextmanagers.open_file(target_file, stream=stream) as fp:
-                    if stream:
-                        shutil.copyfileobj(fp, filecontents)
-                    else:
-                        filecontents.write(fp.read())
+        with patch(module_name, _import):
+            with vistir.contextmanagers.open_file(target_file, stream=stream) as fp:
+                if stream:
+                    shutil.copyfileobj(fp, filecontents)
+                else:
+                    filecontents.write(fp.read())
     local_file = tmpdir.join("local_copy.txt")
     with io.open(local_file.strpath, "w", encoding="utf-8") as fp:
         fp.write(filecontents.read().decode())
