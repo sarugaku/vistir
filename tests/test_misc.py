@@ -8,7 +8,6 @@ import os
 import sys
 
 import pytest
-import six
 from hypothesis import assume, given, strategies as st
 
 import vistir
@@ -60,7 +59,7 @@ def test_unnest(seed_ints, additional_lists):
                 else:
                     composite_list.append(list_copies[i])
     assert all(
-        (isinstance(x, six.integer_types) or x.isdigit()) for x in flattened_list
+        (isinstance(x, int) or x.isdigit()) for x in flattened_list
     ), flattened_list
     assert sorted(list(vistir.misc.unnest(composite_list))) == sorted(flattened_list)
 
@@ -107,8 +106,8 @@ def test_get_stream_results():
         def wait(self):
             return 0
 
-    stdout_buffer = six.StringIO()
-    stderr_buffer = six.StringIO()
+    stdout_buffer = io.StringIO()
+    stderr_buffer = io.StringIO()
     test_line = (
         u"this is a test line that goes on for many characters and will eventually be "
         "truncated because it is far too long to display on a normal terminal so we will"

@@ -14,9 +14,8 @@ import time
 import unicodedata
 import warnings
 
-import six
-from six.moves import urllib_parse
-from six.moves.urllib import request as urllib_request
+from urllib import parse as urllib_parse
+from urllib import request as urllib_request
 
 from .backports.tempfile import _TemporaryFileWrapper
 from .compat import (
@@ -27,17 +26,14 @@ from .compat import (
     ResourceWarning,
     TemporaryDirectory,
     _fs_encoding,
-    _NamedTemporaryFile,
+    NamedTemporaryFile,
     finalize,
     fs_decode,
     fs_encode,
 )
 
 # fmt: off
-if six.PY3:
-    from urllib.parse import quote_from_bytes as quote
-else:
-    from urllib import quote
+from urllib.parse import quote_from_bytes as quote
 # fmt: on
 
 
@@ -58,10 +54,7 @@ if IS_TYPE_CHECKING:
         Union,
     )
 
-    if six.PY3:
-        TPath = os.PathLike
-    else:
-        TPath = Union[str, bytes]
+    TPath = os.PathLike
     TFunc = Callable[..., Any]
 
 __all__ = [
@@ -97,21 +90,17 @@ if os.name == "nt":
 def unicode_path(path):
     # type: (TPath) -> Text
     # Paths are supposed to be represented as unicode here
-    if six.PY2 and isinstance(path, six.binary_type):
-        return path.decode(_fs_encoding)
     return path
 
 
 def native_path(path):
     # type: (TPath) -> str
-    if six.PY2 and isinstance(path, six.text_type):
-        return path.encode(_fs_encoding)
     return str(path)
 
 
 # once again thank you django...
 # https://github.com/django/django/blob/fc6b90b/django/utils/_os.py
-if six.PY3 or os.name == "nt":
+if os.name == "nt":
     abspathu = os.path.abspath
 else:
 
@@ -121,7 +110,7 @@ else:
         the current working directory, thus avoiding a UnicodeDecodeError in
         join when the cwd has non-ASCII characters."""
         if not os.path.isabs(path):
-            path = os.path.join(os.getcwdu(), path)
+            path = os.path.join(os.getcwd(), path)
         return os.path.normpath(path)
 
 
@@ -167,7 +156,7 @@ def normalize_drive(path):
     from .misc import to_text
 
     if os.name != "nt" or not (
-        isinstance(path, six.string_types) or getattr(path, "__fspath__", None)
+        isinstance(path, str) or getattr(path, "__fspath__", None)
     ):
         return path  # type: ignore
 
@@ -244,7 +233,7 @@ def is_file_url(url):
 
     if not url:
         return False
-    if not isinstance(url, six.string_types):
+    if not isinstance(url, str):
         try:
             url = url.url
         except AttributeError:
@@ -338,8 +327,7 @@ def create_tracked_tempfile(*args, **kwargs):
     The return value is the file object.
     """
 
-    kwargs["wrapper_class_override"] = _TrackedTempfileWrapper
-    return _NamedTemporaryFile(*args, **kwargs)
+    return NamedTemporaryFile(*args, **kwargs)
 
 
 def _find_icacls_exe():
@@ -611,11 +599,9 @@ def get_converted_relative_path(path, relative_to=None):
     from .misc import to_text, to_bytes  # noqa
 
     if not relative_to:
-        relative_to = os.getcwdu() if six.PY2 else os.getcwd()
-    if six.PY2:
-        path = to_bytes(path, encoding="utf-8")
-    else:
-        path = to_text(path, encoding="utf-8")
+        relative_to = os.getcwd()
+
+    path = to_text(path, encoding="utf-8")
     relative_to = to_text(relative_to, encoding="utf-8")
     start_path = Path(relative_to)
     try:
@@ -645,7 +631,7 @@ def get_converted_relative_path(path, relative_to=None):
 def safe_expandvars(value):
     # type: (TPath) -> str
     """Call os.path.expandvars if value is a string, otherwise do nothing."""
-    if isinstance(value, six.string_types):
+    if isinstance(value, str):
         return os.path.expandvars(value)
     return value  # type: ignore
 

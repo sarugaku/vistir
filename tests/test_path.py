@@ -7,10 +7,9 @@ import shutil
 import stat
 
 import pytest
-import six
 from hypothesis import HealthCheck, assume, example, given, settings
 from hypothesis_fspaths import _PathLike, fspaths
-from six.moves.urllib import parse as urllib_parse
+from urllib import parse as urllib_parse
 
 import vistir
 
@@ -91,7 +90,7 @@ def test_mkdir_p(base_dir, subdir):
     with vistir.compat.TemporaryDirectory() as temp_dir:
         temp_dirname = (
             u"{}".format(temp_dir.name)
-            if isinstance(base_dir_path, six.text_type)
+            if isinstance(base_dir_path, str)
             else vistir.compat.fs_encode(u"{}".format(temp_dir.name))
         )
         joined_encoded_path = vistir.compat.fs_encode(
