@@ -235,13 +235,6 @@ class _WindowsConsoleWriter(_WindowsConsoleRawIOBase):
         return bytes_written
 
 
-def _wrap_std_stream(name):
-    # Python 2 & Windows 7 and below
-    if sys.version_info.major < 3 and sys.getwindowsversion()[:2] <= (6, 1) and name not in _wrapped_std_streams:
-        setattr(sys, name, WindowsChunkedWriter(getattr(sys, name)))
-        _wrapped_std_streams.add(name)
-
-
 class ConsoleStream(object):
     def __init__(self, text_stream, byte_stream):
         self._text_stream = text_stream

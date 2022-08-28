@@ -1142,7 +1142,7 @@ def get_text_stream(stream="stdout", encoding=None):
 
     stream_map = {"stdin": sys.stdin, "stdout": sys.stdout, "stderr": sys.stderr}
     if os.name == "nt" or sys.platform.startswith("win"):
-        from ._winconsole import _get_windows_console_stream, _wrap_std_stream
+        from ._winconsole import _get_windows_console_stream
 
     else:
         _get_windows_console_stream = lambda *args: None  # noqa
