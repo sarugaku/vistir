@@ -177,7 +177,7 @@ def spinner(
     has_yaspin = None
     try:
         import yaspin
-    except ImportError:
+    except (ImportError, ModuleNotFoundError):  # noqa
         has_yaspin = False
         if not nospin:
             raise RuntimeError(
