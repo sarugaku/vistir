@@ -5,7 +5,9 @@ import io
 import os
 import stat
 import sys
+
 from contextlib import closing, contextmanager
+from urllib import request
 
 from .compat import IS_TYPE_CHECKING, NamedTemporaryFile, Path
 from .path import is_file_url, is_valid_url, path_to_url, url_to_path
@@ -344,8 +346,7 @@ def open_file(
             else:
                 session = Session()
         if session is None:
-            import urllib.request
-            with closing(urllib.request.urlopen(link)) as f:
+            with closing(request.urlopen(link)) as f:
                 yield f
         else:
             with session.get(link, headers=headers, stream=stream) as resp:
