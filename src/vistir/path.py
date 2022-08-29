@@ -17,7 +17,6 @@ import warnings
 from urllib import parse as urllib_parse
 from urllib import request as urllib_request
 
-from .backports.tempfile import _TemporaryFileWrapper
 from .compat import (
     IS_TYPE_CHECKING,
     FileNotFoundError,
@@ -634,28 +633,3 @@ def safe_expandvars(value):
     if isinstance(value, str):
         return os.path.expandvars(value)
     return value  # type: ignore
-
-
-class _TrackedTempfileWrapper(_TemporaryFileWrapper, object):
-    def __init__(self, *args, **kwargs):
-        super(_TrackedTempfileWrapper, self).__init__(*args, **kwargs)
-        self._finalizer = finalize(self, self.cleanup)
-
-    @classmethod
-    def _cleanup(cls, fileobj):
-        try:
-            fileobj.close()
-        finally:
-            os.unlink(fileobj.name)
-
-    def cleanup(self):
-        if self._finalizer.detach():
-            try:
-                self.close()
-            finally:
-                os.unlink(self.name)
-        else:
-            try:
-                self.close()
-            except OSError:
-                pass

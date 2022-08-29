@@ -31,7 +31,7 @@ def fs_decode(path):
         return fs_decode(path)
 
 
-__all__ = ["finalize", "NamedTemporaryFile"]
+__all__ = ["finalize"]
 
 
 try:
