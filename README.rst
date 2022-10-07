@@ -90,16 +90,10 @@ You can import utilities directly from **vistir**:
 
 **vistir** provides several categories of functionality, including:
 
-    * Backports
     * Compatibility Shims
     * Context Managers
     * Miscellaneous Utilities
     * Path Utilities
-
-.. note::
-
-   The backports should be imported via ``vistir.compat`` which will provide the
-   native versions of the backported items if possible.
 
 
 🐉 Compatibility Shims
@@ -108,9 +102,6 @@ You can import utilities directly from **vistir**:
 Shims are provided for full API compatibility from python 2.7 through 3.7 for the following:
 
     * ``weakref.finalize``
-    * ``functools.partialmethod`` (via ``vistir.backports.functools.partialmethod``)
-    * ``tempfile.TemporaryDirectory`` (via ``vistir.backports.tempfile.TemporaryDirectory``)
-    * ``tempfile.NamedTemporaryFile`` (via ``vistir.backports.tempfile.NamedTemporaryFile``)
     * ``vistir.compat.Path``
     * ``vistir.compat.get_terminal_size``
     * ``vistir.compat.JSONDecodeError``
@@ -118,14 +109,6 @@ Shims are provided for full API compatibility from python 2.7 through 3.7 for th
     * ``vistir.compat.FileNotFoundError``
     * ``vistir.compat.PermissionError``
     * ``vistir.compat.IsADirectoryError``
-
-The following additional functions are provided for encoding strings to the filesystem
-default encoding:
-
-    * ``vistir.compat.fs_str``
-    * ``vistir.compat.to_native_string``
-    * ``vistir.compat.fs_encode``
-    * ``vistir.compat.fs_decode``
 
 
 🐉 Context Managers
