@@ -101,33 +101,6 @@ You can import utilities directly from **vistir**:
    The backports should be imported via :mod:`~vistir.compat` which will provide the
    native versions of the backported items if possible.
 
-
-🐉 Compatibility Shims
------------------------
-
-Shims are provided for full API compatibility from python 2.7 through 3.7 for the following:
-
-    * :func:`weakref.finalize`
-    * :func:`functools.partialmethod` (via :func:`~vistir.backports.functools.partialmethod`)
-    * :class:`tempfile.TemporaryDirectory` (via :class:`~vistir.backports.tempfile.TemporaryDirectory`)
-    * :class:`tempfile.NamedTemporaryFile` (via :class:`~vistir.backports.tempfile.NamedTemporaryFile`)
-    * :class:`~vistir.compat.Path`
-    * :func:`~vistir.compat.get_terminal_size`
-    * :class:`~vistir.compat.JSONDecodeError`
-    * :exc:`~vistir.compat.ResourceWarning`
-    * :exc:`~vistir.compat.FileNotFoundError`
-    * :exc:`~vistir.compat.PermissionError`
-    * :exc:`~vistir.compat.IsADirectoryError`
-
-The following additional function is provided for encoding strings to the filesystem
-default encoding:
-
-    * :func:`~vistir.compat.fs_str`
-    * :func:`~vistir.compat.to_native_string`
-    * :func:`~vistir.compat.fs_encode`
-    * :func:`vistir.compat.fs_decode`
-
-
 🐉 Context Managers
 --------------------
 
