@@ -7,16 +7,16 @@ import signal
 import sys
 import threading
 import time
+import typing
 from io import StringIO
 
 import colorama
 
-from .compat import IS_TYPE_CHECKING, to_native_string
 from .cursor import hide_cursor, show_cursor
 from .misc import decode_for_output, to_text
 from .termcolors import COLOR_MAP, COLORS, DISABLE_COLORS, colored
 
-if IS_TYPE_CHECKING:
+if typing.TYPE_CHECKING:
     from typing import (
         Any,
         Callable,

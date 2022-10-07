@@ -1,6 +1,3 @@
-# -*- coding=utf-8 -*-
-from __future__ import absolute_import
-
 import io
 import os
 import shutil
@@ -32,19 +29,6 @@ def test_abspathu(tmpdir):
         )
 
 
-def test_normalize_path():
-    with vistir.contextmanagers.temp_environ():
-        os.environ["PATH_VAR"] = "some_path"
-        try:
-            assert os.environ.get("HOME")
-        except AssertionError:
-            os.environ["HOME"] = os.getcwd()
-        orig_path = os.path.normcase(
-            str(vistir.compat.Path("~").expanduser() / "some_path" / "other_path")
-        )
-        assert vistir.path.normalize_path("~/${PATH_VAR}/other_path") == orig_path
-
-
 @pytest.mark.parametrize(
     "path, root, result",
     [
@@ -63,86 +47,6 @@ def test_safe_expandvars():
         expected = "https://myuser:some_password@myfakewebsite.com"
         sanitized = "https://myuser:${TEST_VAR}@myfakewebsite.com"
         assert vistir.path.safe_expandvars(sanitized) == expected
-
-
-@given(paths(), paths())
-@settings(suppress_health_check=(HealthCheck.filter_too_much,), deadline=None)
-def test_mkdir_p(base_dir, subdir):
-    # base_dir_path = base_dir._value if isinstance(base_dir, _PathLike) else base_dir
-    # subdir_path = subdir._value if isinstance(subdir, _PathLike) else subdir
-    base_dir_path = base_dir
-    subdir_path = subdir
-    assume(base_dir_path.strip() and subdir_path.strip())
-    # if not isinstance(base_dir_path, type(subdir_path)):
-    #     base_dir_path = vistir.compat.fs_decode(base_dir_path)
-    #     subdir_path = vistir.compat.fs_decode(subdir_path)
-    assume(
-        not any(
-            dir_name in [u"", u".", u"./", u".."]
-            for dir_name in [base_dir_path, subdir_path]
-        )
-    )
-    assume(not (os.path.relpath(subdir_path, start=base_dir_path) == u"."))
-    assume(
-        os.path.abspath(base_dir_path)
-        != os.path.abspath(os.path.join(base_dir_path, subdir_path))
-    )
-    with vistir.compat.TemporaryDirectory() as temp_dir:
-        temp_dirname = (
-            u"{}".format(temp_dir.name)
-            if isinstance(base_dir_path, str)
-            else vistir.compat.fs_encode(u"{}".format(temp_dir.name))
-        )
-        joined_encoded_path = vistir.compat.fs_encode(
-            os.path.join(temp_dirname, base_dir_path, subdir_path)
-        )
-        assume(len(joined_encoded_path) <= 255)
-        target = os.path.join(temp_dirname, base_dir_path, subdir_path)
-        assume(
-            vistir.path.abspathu(target)
-            != vistir.path.abspathu(os.path.join(temp_dirname, base_dir_path))
-        )
-        vistir.path.mkdir_p(target)
-        assert os.path.exists(target)
-
-
-@given(paths(), paths())
-@settings(suppress_health_check=(HealthCheck.filter_too_much,), deadline=None)
-def test_ensure_mkdir_p(base_dir, subdir):
-    base_dir_path = base_dir
-    subdir_path = subdir
-    assume(
-        not any(
-            dir_name in [u"", u".", u"./", u".."]
-            for dir_name in [base_dir_path, subdir_path]
-        )
-    )
-    assume(not (os.path.relpath(subdir_path, start=base_dir_path) == u"."))
-    assume(
-        os.path.abspath(base_dir_path)
-        != os.path.abspath(os.path.join(base_dir_path, subdir_path))
-    )
-    with vistir.compat.TemporaryDirectory() as temp_dir:
-        temp_dirname = (
-            u"{}".format(temp_dir.name)
-            if isinstance(temp_dir.name, type(base_dir_path))
-            else vistir.compat.fs_encode(u"{}".format(temp_dir.name))
-        )
-        joined_encoded_path = vistir.compat.fs_encode(
-            os.path.join(temp_dirname, base_dir_path, subdir_path)
-        )
-        assume(len(joined_encoded_path) <= 255)
-
-        @vistir.path.ensure_mkdir_p(mode=0o777)
-        def join_with_dir(_base_dir, _subdir, base=temp_dirname):
-            return os.path.join(base, _base_dir, _subdir)
-
-        target = join_with_dir(base_dir_path, subdir_path, base=temp_dirname)
-        assume(
-            vistir.path.abspathu(target)
-            != vistir.path.abspathu(os.path.join(temp_dirname, base_dir_path))
-        )
-        assert os.path.exists(target)
 
 
 @pytest.mark.xfail(raises=OSError)
@@ -242,7 +146,7 @@ def test_path_to_url(filepath):
         def __init__(self, url=None):
             self.url = url
 
-    filename = vistir.compat.fs_decode(filepath)
+    filename = str(filepath)
     if filepath and filename:
         assume(any(letter in filename for letter in url_alphabet))
     file_url = vistir.path.path_to_url(filename)

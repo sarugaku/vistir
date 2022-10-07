@@ -1,13 +1,5 @@
 # -*- coding=utf-8 -*-
-from __future__ import absolute_import, unicode_literals
 
-from .compat import (
-    NamedTemporaryFile,
-    StringIO,
-    TemporaryDirectory,
-    partialmethod,
-    to_native_string,
-)
 from .contextmanagers import (
     atomic_open_for_write,
     cd,
