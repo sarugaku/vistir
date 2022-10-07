@@ -11,29 +11,19 @@ import os
 import subprocess
 import sys
 import threading
+import typing
 from collections import OrderedDict
 from functools import partial
 from itertools import islice, tee
 from weakref import WeakKeyDictionary
 
 from queue import Empty, Queue
+from typing import Iterable
 
 from .cmdparse import Script
-from .compat import (
-    Iterable,
-    Path,
-    StringIO,
-    TimeoutError,
-    _fs_decode_errors,
-    _fs_encode_errors,
-    fs_str,
-    is_bytes,
-    partialmethod,
-    to_native_string,
-)
 from .contextmanagers import spinner as spinner
-from .environment import MYPY_RUNNING
-from .termcolors import ANSI_REMOVAL_RE, colorize
+
+_fs_encode_errors = "surrogatepass"
 
 if os.name != "nt":
 
@@ -62,7 +52,7 @@ __all__ = [
 ]
 
 
-if MYPY_RUNNING:
+if typing.TYPE_CHECKING:
     from typing import Any, Dict, Generator, IO, List, Optional, Text, Tuple, Union
     from .spin import VistirSpinner
 
@@ -381,7 +371,7 @@ class SubprocessStreamWrapper(object):
         if self.display_line:
             if new_line != self.display_line:
                 self.display_line_loops_displayed = 0
-                new_line = fs_str("{}".format(new_line))
+                new_line = "{}".format(new_line)
                 if len(new_line) > self.display_line_max_len:
                     new_line = "{}...".format(new_line[: self.display_line_max_len])
                 self.display_line = new_line
@@ -447,9 +437,7 @@ class SubprocessStreamWrapper(object):
                     line, "stderr", spinner=spinner, stdout_allowed=stdout_allowed
                 )
             if spinner:
-                spinner.text = to_native_string(
-                    "{} {}".format(spinner.text, self.display_line)
-                )
+                spinner.text = "{} {}".format(spinner.text, self.display_line)
         self.out = self.out.strip()
         self.err = self.err.strip()
 
@@ -486,11 +474,11 @@ def _handle_nonblocking_subprocess(c, spinner=None):
         c.wait()
     if spinner:
         if c.returncode != 0:
-            spinner.fail(to_native_string("Failed...cleaning up..."))
+            spinner.fail("Failed...cleaning up...")
         elif c.returncode == 0 and not os.name == "nt":
-            spinner.ok(to_native_string("✔ Complete"))
+            spinner.ok("✔ Complete")
         else:
-            spinner.ok(to_native_string("Complete"))
+            spinner.ok("Complete")
     return c
 
 
@@ -524,7 +512,7 @@ def _create_subprocess(
 
         formatted_tb = "".join(traceback.format_exception(*sys.exc_info()))
         sys.stderr.write(
-            "Error while executing command %s:" % to_native_string(" ".join(cmd._parts))
+            "Error while executing command %s:" % " ".join(cmd._parts)
         )
         sys.stderr.write(formatted_tb)
         raise exc
@@ -600,7 +588,7 @@ def run(
     if env:
         _env.update(env)
 
-    _env = {k: fs_str(v) for k, v in _env.items()}
+    _env = {k: v for k, v in _env.items()}
     if not spinner_name:
         spinner_name = "bouncingBar"
 
@@ -647,7 +635,7 @@ def load_path(python):
      '/home/user/.virtualenvs/requirementslib-5MhGuG3C/lib/python3.7/site-packages',
      '/home/user/git/requirementslib/src']
     """
-
+    from pathlib import Path
     python = Path(python).as_posix()
     out, err = run(
         [python, "-c", "import json, sys; print(json.dumps(sys.path))"], nospin=True
@@ -684,7 +672,7 @@ def partialclass(cls, *args, **kwargs):
     >>> new_source.__dict__
     {'url': 'https://pypi.org/simple', 'verify_ssl': True, 'name': 'pypi'}
     """
-
+    from functools import partialmethod
     name_attrs = [
         n
         for n in (getattr(cls, name, str(cls)) for name in ("__name__", "__qualname__"))
@@ -893,7 +881,6 @@ def decode_for_output(output, target_stream=None, translation_map=None):
     try:
         output = _encode(output, encoding=encoding, translation_map=translation_map)
     except (UnicodeDecodeError, UnicodeEncodeError):
-        output = to_native_string(output)
         output = _encode(
             output, encoding=encoding, errors="replace", translation_map=translation_map
         )
