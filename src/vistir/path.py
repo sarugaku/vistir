@@ -174,13 +174,13 @@ def path_to_url(path):
         # XXX: This enables us to handle half-surrogates that were never
         # XXX: actually part of a surrogate pair, but were just incidentally
         # XXX: passed in as a piece of a filename
-        quoted_path = quote(path)
+        quoted_path = quote(path, errors="backslashreplace")
         return "file:///{}:{}".format(drive, quoted_path)
     # XXX: This is also here to help deal with incidental dangling surrogates
     # XXX: on linux, by making sure they are preserved during encoding so that
     # XXX: we can urlencode the backslash correctly
     # bytes_path = to_bytes(normalized_path, errors="backslashreplace")
-    return "file://{}".format(quote(path))
+    return "file://{}".format(quote(path, errors="backslashreplace"))
 
 
 def url_to_path(url):
