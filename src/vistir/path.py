@@ -21,7 +21,7 @@ from typing import Optional, Callable
 from urllib import parse as urllib_parse
 from urllib import request as urllib_request
 
-from urllib.parse import quote_from_bytes as quote
+from urllib.parse import quote
 
 if typing.TYPE_CHECKING:
     from types import TracebackType
@@ -179,8 +179,8 @@ def path_to_url(path):
     # XXX: This is also here to help deal with incidental dangling surrogates
     # XXX: on linux, by making sure they are preserved during encoding so that
     # XXX: we can urlencode the backslash correctly
-    bytes_path = to_bytes(normalized_path, errors="backslashreplace")
-    return "file://{}".format(quote(bytes_path))
+    # bytes_path = to_bytes(normalized_path, errors="backslashreplace")
+    return "file://{}".format(quote(path))
 
 
 def url_to_path(url):
