@@ -264,7 +264,6 @@ def ensure_mkdir_p(mode=0o777):
     # type: (int) -> Callable[Callable[..., Any], Callable[..., Any]]
     """Decorator to ensure `mkdir_p` is called to the function's return
     value."""
-
     # This exists in shutil already
     def decorator(f):
         # type: (Callable[..., Any]) -> Callable[..., Any]
@@ -274,9 +273,7 @@ def ensure_mkdir_p(mode=0o777):
             path = f(*args, **kwargs)
             mkdir_p(path, mode=mode)
             return path
-
         return decorated
-
     return decorator
 
 
