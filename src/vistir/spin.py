@@ -1,6 +1,4 @@
 # -*- coding=utf-8 -*-
-from __future__ import absolute_import, print_function
-
 import functools
 import os
 import signal
@@ -88,7 +86,7 @@ class DummySpinner(object):
         # type: (str, Any) -> None
         if DISABLE_COLORS:
             colorama.init()
-        self.text = to_native_string(decode_output(text)) if text else ""
+        self.text = decode_output(text) if text else ""
         self.stdout = kwargs.get("stdout", sys.stdout)
         self.stderr = kwargs.get("stderr", sys.stderr)
         self.out_buff = StringIO()

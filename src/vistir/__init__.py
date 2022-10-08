@@ -50,7 +50,6 @@ __all__ = [
     "create_spinner",
     "create_tracked_tempdir",
     "create_tracked_tempfile",
-    "to_native_string",
     "decode_for_output",
     "to_text",
     "to_bytes",
