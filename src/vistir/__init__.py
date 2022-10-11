@@ -28,7 +28,7 @@ from .misc import (
 from .path import create_tracked_tempdir, create_tracked_tempfile, mkdir_p, rmtree
 from .spin import create_spinner
 
-__version__ = "0.7.0"
+__version__ = "0.7.1.dev0"
 
 
 __all__ = [
