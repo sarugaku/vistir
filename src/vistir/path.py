@@ -241,6 +241,9 @@ def is_readonly_path(fn):
 
 
 def mkdir_p(newdir, mode=0o777):
+    warnings.warn(
+        ('This function is deprecated and will be removed in version 0.8.'
+         'Use os.makedirs instead'), DeprecationWarning, stacklevel=2)
     # This exists in shutil already
     # type: (TPath, int) -> None
     """Recursively creates the target directory and all of its parents if they
@@ -264,6 +267,9 @@ def ensure_mkdir_p(mode=0o777):
     # type: (int) -> Callable[Callable[..., Any], Callable[..., Any]]
     """Decorator to ensure `mkdir_p` is called to the function's return
     value."""
+    warnings.warn('This function is deprecated and will be removed in version 0.8.',
+                  DeprecationWarning, stacklevel=2)
+
     # This exists in shutil already
     def decorator(f):
         # type: (Callable[..., Any]) -> Callable[..., Any]
