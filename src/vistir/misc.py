@@ -12,6 +12,8 @@ import subprocess
 import sys
 import threading
 import typing
+import warnings
+
 from collections import OrderedDict
 from functools import partial
 from itertools import islice, tee
@@ -135,6 +137,11 @@ def dedup(iterable):
     # type: (Iterable) -> Iterable
     """Deduplicate an iterable object like iter(set(iterable)) but order-
     preserved."""
+    warnings.warn(
+        ('This function is deprecated and will be removed in version 0.8.'
+         'Use instead: sorted(iter(dict.fromkeys(iterable)))'),
+        DeprecationWarning, stacklevel=2)
+
     return iter(OrderedDict.fromkeys(iterable))
 
 
