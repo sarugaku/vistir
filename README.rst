@@ -350,15 +350,12 @@ The following Miscellaneous utilities are available as helper methods:
 
     * ``vistir.misc.shell_escape``
     * ``vistir.misc.unnest``
-    * ``vistir.misc.dedup``
     * ``vistir.misc.run``
     * ``vistir.misc.load_path``
     * ``vistir.misc.partialclass``
     * ``vistir.misc.to_text``
     * ``vistir.misc.to_bytes``
-    * ``vistir.misc.divide``
     * ``vistir.misc.take``
-    * ``vistir.misc.chunked``
     * ``vistir.misc.decode_for_output``
     * ``vistir.misc.get_canonical_encoding_name``
     * ``vistir.misc.get_wrapped_stream``
