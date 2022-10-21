@@ -782,7 +782,10 @@ def divide(n, iterable):
     :return: a list of new iterables derived from the original iterable
     :rtype: list
     """
-
+    warnings.warn(
+        ('This function is deprecated and will be removed in version 0.8.'
+         'Use instead: more_itertools.divide(n, iterable)))'),
+        DeprecationWarning, stacklevel=2)
     seq = tuple(iterable)
     q, r = divmod(len(seq), n)
 
