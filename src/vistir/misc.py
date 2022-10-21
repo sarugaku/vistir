@@ -818,6 +818,10 @@ def chunked(n, iterable):
 
     from https://github.com/erikrose/more-itertools/blob/master/more_itertools/more.py
     """
+    warnings.warn(
+        ('This function is deprecated and will be removed in version 0.8.'
+         'Use instead: more_itertools.chunked(iterable, n)))'),
+        DeprecationWarning, stacklevel=2)
 
     return iter(partial(take, n, iter(iterable)), [])
 
