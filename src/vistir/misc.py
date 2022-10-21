@@ -642,6 +642,9 @@ def load_path(python):
      '/home/user/.virtualenvs/requirementslib-5MhGuG3C/lib/python3.7/site-packages',
      '/home/user/git/requirementslib/src']
     """
+    warnings.warn(
+        'This function is deprecated and will be removed in version 0.8.',
+        DeprecationWarning, stacklevel=2)
     from pathlib import Path
     python = Path(python).as_posix()
     out, err = run(
