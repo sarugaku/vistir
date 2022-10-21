@@ -807,6 +807,11 @@ def take(n, iterable):
     from https://github.com/erikrose/more-itertools/blob/master/more_itertools/recipes.py
     """
 
+    warnings.warn(
+        ('This function is deprecated and will be removed in version 0.8.'
+         'Use instead: list(islice(iterable, n))'),
+        DeprecationWarning, stacklevel=2)
+
     return list(islice(iterable, n))
 
 
