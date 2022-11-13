@@ -6,6 +6,8 @@ import sys
 import threading
 import time
 import typing
+import warnings
+
 from io import StringIO
 
 import colorama
@@ -36,16 +38,16 @@ if typing.TYPE_CHECKING:
 
 try:
     import yaspin
-except ImportError:  # pragma: no cover
-    yaspin = None
-    Spinners = None
-    SpinBase = None
-else:  # pragma: no cover
     import yaspin.spinners
     import yaspin.core
 
     Spinners = yaspin.spinners.Spinners
     SpinBase = yaspin.core.Yaspin
+
+except ImportError:  # pragma: no cover
+    yaspin = None
+    Spinners = None
+    SpinBase = None
 
 if os.name == "nt":  # pragma: no cover
 
@@ -482,6 +484,10 @@ class VistirSpinner(SpinBase):
 
 
 def create_spinner(*args, **kwargs):
+     warnings.warn(
+        ('This function is deprecated and will be removed in version 0.8.'
+         'Consider using yaspin directly instead, or user rich.status'),
+        DeprecationWarning, stacklevel=2)
     # type: (Any, Any) -> Union[DummySpinner, VistirSpinner]
     nospin = kwargs.pop("nospin", False)
     use_yaspin = kwargs.pop("use_yaspin", not nospin)
