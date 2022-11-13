@@ -95,22 +95,6 @@ You can import utilities directly from **vistir**:
     * Miscellaneous Utilities
     * Path Utilities
 
-
-🐉 Compatibility Shims
------------------------
-
-Shims are provided for full API compatibility from python 2.7 through 3.7 for the following:
-
-    * ``weakref.finalize``
-    * ``vistir.compat.Path``
-    * ``vistir.compat.get_terminal_size``
-    * ``vistir.compat.JSONDecodeError``
-    * ``vistir.compat.ResourceWarning``
-    * ``vistir.compat.FileNotFoundError``
-    * ``vistir.compat.PermissionError``
-    * ``vistir.compat.IsADirectoryError``
-
-
 🐉 Context Managers
 --------------------
 
@@ -121,7 +105,6 @@ Shims are provided for full API compatibility from python 2.7 through 3.7 for th
     * ``vistir.contextmanagers.open_file``
     * ``vistir.contextmanagers.replaced_stream``
     * ``vistir.contextmanagers.replaced_streams``
-    * ``vistir.contextmanagers.spinner``
     * ``vistir.contextmanagers.temp_environ``
     * ``vistir.contextmanagers.temp_path``
 
