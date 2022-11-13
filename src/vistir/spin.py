@@ -484,7 +484,7 @@ class VistirSpinner(SpinBase):
 
 
 def create_spinner(*args, **kwargs):
-     warnings.warn(
+    warnings.warn(
         ('This function is deprecated and will be removed in version 0.8.'
          'Consider using yaspin directly instead, or user rich.status'),
         DeprecationWarning, stacklevel=2)
