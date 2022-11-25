@@ -6,13 +6,6 @@ vistir package
     :undoc-members:
     :show-inheritance:
 
-Subpackages
------------
-
-.. toctree::
-
-    vistir.backports
-
 Submodules
 ----------
 
