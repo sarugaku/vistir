@@ -39,4 +39,4 @@ def __getattr__(name):
          DeprecationWarning)
     return getattr(importlib.import_module(__newpaths[name]), name)
 
-__version__ = "0.7.5"
+__version__ = "0.7.6.dev0"
