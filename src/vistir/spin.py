@@ -6,7 +6,6 @@ import sys
 import threading
 import time
 import typing
-import warnings
 
 from io import StringIO
 
@@ -481,16 +480,3 @@ class VistirSpinner(SpinBase):
     def _clear_line():
         # type: () -> None
         sys.stdout.write(CLEAR_LINE)
-
-
-def create_spinner(*args, **kwargs):
-    warnings.warn(
-        ('This function is deprecated and will be removed in version 0.8.'
-         'Consider using yaspin directly instead, or user rich.status'),
-        DeprecationWarning, stacklevel=2)
-    # type: (Any, Any) -> Union[DummySpinner, VistirSpinner]
-    nospin = kwargs.pop("nospin", False)
-    use_yaspin = kwargs.pop("use_yaspin", not nospin)
-    if nospin or not use_yaspin:
-        return DummySpinner(*args, **kwargs)
-    return VistirSpinner(*args, **kwargs)
