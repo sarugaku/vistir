@@ -11,7 +11,7 @@ import warnings
 
 import pytest
 
-import vistir
+from vistir import contextmanagers
 
 from .utils import read_file
 
@@ -158,7 +158,7 @@ class MockUrllib3Response(object):
 def test_path():
     old_path = sys.path
     new_path = sys.path[2:]
-    with vistir.temp_path():
+    with contextmanagers.temp_path():
         sys.path = new_path
         assert sys.path == new_path
     assert sys.path == old_path
@@ -168,7 +168,7 @@ def test_cd(tmpdir):
     second_dir = tmpdir.join("second_dir").mkdir()
     original_dir = os.path.abspath(os.curdir)
     assert original_dir != os.path.abspath(second_dir.strpath)
-    with vistir.contextmanagers.cd(second_dir.strpath):
+    with contextmanagers.cd(second_dir.strpath):
         assert os.path.abspath(os.curdir) == os.path.abspath(second_dir.strpath)
     assert os.path.abspath(os.curdir) == original_dir
 
@@ -176,7 +176,7 @@ def test_cd(tmpdir):
 def test_environ():
     os.environ["VISTIR_TEST_KEY"] = "test_value"
     assert os.environ.get("VISTIR_OTHER_KEY") is None
-    with vistir.contextmanagers.temp_environ():
+    with contextmanagers.temp_environ():
         os.environ["VISTIR_TEST_KEY"] = "temporary test value"
         os.environ["VISTIR_OTHER_KEY"] = "some_other_key_value"
         assert os.environ["VISTIR_TEST_KEY"] == "temporary test value"
@@ -193,7 +193,7 @@ def test_atomic_open(tmpdir, monkeypatch):
 
     # Raise an error to make sure we don't write text on errors
     def raise_exception_while_writing(filename, new_text):
-        with vistir.contextmanagers.atomic_open_for_write(filename) as fh:
+        with contextmanagers.atomic_open_for_write(filename) as fh:
             fh.write(new_text)
             raise RuntimeError("This should not overwrite the file")
 
@@ -206,7 +206,7 @@ def test_atomic_open(tmpdir, monkeypatch):
         pass
     # verify that the file is not overwritten
     assert read_file(test_file.strpath) == "some test text"
-    with vistir.contextmanagers.atomic_open_for_write(test_file.strpath) as fh:
+    with contextmanagers.atomic_open_for_write(test_file.strpath) as fh:
         fh.write(replace_with_text)
     # make sure that we now have the new text in the file
     assert read_file(test_file.strpath) == replace_with_text
@@ -215,7 +215,7 @@ def test_atomic_open(tmpdir, monkeypatch):
     more_text = "this is more test text"
     with monkeypatch.context() as m:
         m.setattr(os, "chmod", raise_oserror_on_chmod)
-        with vistir.contextmanagers.atomic_open_for_write(
+        with contextmanagers.atomic_open_for_write(
             another_test_file.strpath
         ) as fh:
             fh.write(more_text)
@@ -307,7 +307,7 @@ def test_open_file_without_requests(monkeypatch, tmpdir, stream, use_requests, u
             m.setattr(urllib.request, "urlopen", do_urlopen)
 
         with patch(module_name, _import):
-            with vistir.contextmanagers.open_file(target_file, stream=stream) as fp:
+            with contextmanagers.open_file(target_file, stream=stream) as fp:
                 if stream:
                     shutil.copyfileobj(fp, filecontents)
                 else:
@@ -317,14 +317,14 @@ def test_open_file_without_requests(monkeypatch, tmpdir, stream, use_requests, u
         fp.write(filecontents.read().decode())
 
     local_contents = b""
-    with vistir.contextmanagers.open_file(local_file.strpath) as fp:
+    with contextmanagers.open_file(local_file.strpath) as fp:
         for chunk in iter(lambda: fp.read(16384), b""):
             local_contents += chunk
     assert local_contents == filecontents.read()
 
 
 def test_replace_stream(capsys):
-    with vistir.contextmanagers.replaced_stream("stdout") as stdout:
+    with contextmanagers.replaced_stream("stdout") as stdout:
         sys.stdout.write("hello")
         assert stdout.getvalue() == "hello"
     out, err = capsys.readouterr()
@@ -332,7 +332,7 @@ def test_replace_stream(capsys):
 
 
 def test_replace_streams(capsys):
-    with vistir.contextmanagers.replaced_streams() as streams:
+    with contextmanagers.replaced_streams() as streams:
         stdout, stderr = streams
         sys.stdout.write("hello")
         sys.stderr.write("this is an error")
