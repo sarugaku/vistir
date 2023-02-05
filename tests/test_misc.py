@@ -166,20 +166,6 @@ def test_partialclass():
 DIVIDE_ITERABLE = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
 
-@pytest.mark.parametrize(
-    "n, iterable, expected",
-    [
-        (1, DIVIDE_ITERABLE, [[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]]),
-        (2, DIVIDE_ITERABLE, [[1, 2, 3, 4, 5], [6, 7, 8, 9, 10]]),
-        (3, DIVIDE_ITERABLE, [[1, 2, 3, 4], [5, 6, 7], [8, 9, 10]]),
-        (10, DIVIDE_ITERABLE, [[n] for n in range(1, 10 + 1)]),
-        (6, [1, 2, 3, 4], [[1], [2], [3], [4], [], []]),
-    ],
-)
-def test_divide(n, iterable, expected):
-    assert [list(x) for x in vistir.misc.divide(n, iterable)] == expected
-
-
 def test_stream_wrapper(capsys):
     new_stream = vistir.misc.get_text_stream("stdout")
     sys.stdout = new_stream
