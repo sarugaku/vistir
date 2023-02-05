@@ -571,25 +571,19 @@ def run(
     if block or not return_object:
         combine_stderr = False
     start_text = ""
-    with spinner(
-        spinner_name=spinner_name,
+    return _create_subprocess(
+        cmd,
+        env=_env,
+        return_object=return_object,
+        block=block,
+        cwd=cwd,
+        verbose=verbose,
+        spinner=None,
+        combine_stderr=combine_stderr,
         start_text=start_text,
-        nospin=nospin,
         write_to_stdout=write_to_stdout,
-    ) as sp:
-        return _create_subprocess(
-            cmd,
-            env=_env,
-            return_object=return_object,
-            block=block,
-            cwd=cwd,
-            verbose=verbose,
-            spinner=sp,
-            combine_stderr=combine_stderr,
-            start_text=start_text,
-            write_to_stdout=write_to_stdout,
-            encoding=encoding,
-        )
+        encoding=encoding,
+    )
 
 
 def load_path(python):
