@@ -1,3 +1,11 @@
+0.8.0 (2023-03-03)
+==================
+
+ * Drop spinner 
+ * Drop deprecated functions
+ * Drop ability to import all from the package,
+   instead user from ``vistir.<module>``.
+
 0.7.0 (2022-10-11)
 ==================
 
