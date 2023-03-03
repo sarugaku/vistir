@@ -54,7 +54,7 @@ jobs:
     - name: Install latest pip, setuptools, wheel
       run: |
         python -m pip install --upgrade pip setuptools wheel --upgrade-strategy=eager
-        python -m pip install --upgrade --pre pipenv
+        python -m pip install --upgrade pipenv
     - name: Run tests
       env:
         PIPENV_DEFAULT_PYTHON_VERSION: ${{ matrix.python-version }}
@@ -71,6 +71,6 @@ jobs:
       run: |
         git submodule sync
         git submodule update --init --recursive
-        python -m pip install pipenv --pre --upgrade
+        python -m pip install pipenv --upgrade
         python -m pipenv install --dev --python=${{ steps.python-path.outputs.path }}
         python -m pipenv run coverage run --concurrency=thread -m pytest -p no:xdist -ra tests/
